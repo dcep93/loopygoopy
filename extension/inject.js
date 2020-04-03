@@ -62,11 +62,7 @@ function previous() {
 
 function countIn() {
 	state.loop += 1;
-	element.playbackRate += getDiff(
-		state.value.tc,
-		state.value.tt,
-		state.value.tl
-	);
+	speedUp();
 	var ms = getMs(state.value.bpr);
 	timeout = setTimeout(begin, ms);
 }
@@ -79,7 +75,7 @@ function begin() {
 
 function finish() {
 	if (element.paused) return stop();
-	element.pause();
+	if (state.value.bpr != 0) element.pause();
 	element.currentTime = state.currentTime;
 	countIn();
 }
@@ -91,12 +87,21 @@ function getMs(beats) {
 }
 
 function move(forward) {
+	stop();
 	var ms = getMs(state.value.bpl);
 	var s = ms / 1000;
 	var toMove = forward ? s : -s;
 	state.currentTime += toMove;
-	stop();
+	element.currentTime = state.currentTime;
 	begin();
+}
+
+function speedUp() {
+	element.playbackRate += getDiff(
+		state.value.tc,
+		state.value.tt,
+		state.value.tl
+	);
 }
 
 function getDiff(start, target, loops) {
