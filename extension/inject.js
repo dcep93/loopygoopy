@@ -27,11 +27,19 @@ function loop() {
 	if (!stateInput.value) return;
 	if (state.lastValue != stateInput.value) {
 		state.lastValue = stateInput.value;
-		if (!element) alert("need to start a track first");
+		findElement();
+		if (!element) return alert("need to start a track first");
 		var json = JSON.parse(stateInput.value);
 		state.value = json.message;
 		functions[json.type](json.message);
 	}
+}
+
+function findElement() {
+	if (element) return;
+	element = document.getElementsByTagName("video")[0];
+	if (element) return;
+	element = document.getElementsByTagName("audio")[0];
 }
 
 var timeout = null;
