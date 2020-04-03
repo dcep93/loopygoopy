@@ -17,6 +17,11 @@ document.createElement = function(tag) {
 };
 `;
 
+// use this object to communicate with the page
+var stateId = "chrome_extension_content_script";
+// use this attr to receive data from the injected code
+var currentTimeAttr = "current-time";
+
 function injectScript(code) {
 	var script = document.createElement("script");
 	script.textContent = code;
@@ -25,10 +30,9 @@ function injectScript(code) {
 
 injectScript(inject);
 
-var stateId = "chrome_extension_content_script";
-var state = document.createElement("input");
-state.id = stateId;
-document.head.append(state);
+var stateInput = document.createElement("input");
+stateInput.id = stateId;
+document.head.append(stateInput);
 
 const url = chrome.runtime.getURL("inject.js");
 fetch(url)
@@ -38,5 +42,17 @@ fetch(url)
 chrome.runtime.onMessage.addListener(function(message) {
 	message.date = new Date();
 	console.log(message);
-	state.value = JSON.stringify(message);
+	stateInput.value = JSON.stringify(message);
 });
+
+var state = {};
+function loop() {
+	setTimeout(loop, 100);
+	var currentTime = stateInput.getAttribute(currentTimeAttr);
+	if (!currentTime) return;
+	if (currentTime == state.currentTime) return;
+	state.currentTime = currentTime;
+	chrome.runtime.sendMessage(state);
+}
+
+loop();

@@ -53,3 +53,8 @@ function tap() {
 document.getElementById("tap").onclick = tap;
 
 document.getElementsByTagName("html")[0].style.height = form.offsetHeight;
+
+var stInput = document.getElementById("st");
+chrome.runtime.onMessage.addListener(function(message) {
+	stInput.value = message.currentTime;
+});

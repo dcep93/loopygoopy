@@ -16,23 +16,23 @@
 // };
 
 // types: submit, start, stop, next, previous
-// fields: bpm, bpl, bpr, tc, tt, tl
+// fields: bpm, bpl, bpr, tc, tt, tl, st
 
 var stateId = "chrome_extension_content_script";
+var currentTimeAttr = "current-time";
 var stateInput = document.getElementById(stateId);
 // todo remember state
 var state = {};
 function loop() {
 	setTimeout(loop, 100);
 	if (!stateInput.value) return;
-	if (state.lastValue != stateInput.value) {
-		state.lastValue = stateInput.value;
-		findElement();
-		if (!element) return alert("need to start a track first");
-		var json = JSON.parse(stateInput.value);
-		state.value = json.message;
-		functions[json.type](json.message);
-	}
+	if (state.lastValue == stateInput.value) return;
+	state.lastValue = stateInput.value;
+	findElement();
+	if (!element) return alert("need to start a track first");
+	var json = JSON.parse(stateInput.value);
+	state.value = json.message;
+	functions[json.type](json.message);
 }
 
 function findElement() {
@@ -44,6 +44,11 @@ function findElement() {
 
 var timeout = null;
 function start() {
+	if (state.value.st) {
+		element.currentTime = state.value.st;
+	} else {
+		stateInput.setAttribute(currentTimeAttr, element.currentTime);
+	}
 	state.currentTime = element.currentTime;
 	stop();
 	begin();
@@ -101,6 +106,7 @@ function move(forward) {
 	var toMove = forward ? s : -s;
 	state.currentTime += toMove;
 	element.currentTime = state.currentTime;
+	stateInput.setAttribute(currentTimeAttr, element.currentTime);
 	begin();
 }
 
