@@ -5,4 +5,9 @@
 #submit {
 	display: flex;
 	height: auto;
+	align-items: center;
+}
+
+#buttons {
+	text-align: center;
 }
