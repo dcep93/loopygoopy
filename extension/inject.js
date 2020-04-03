@@ -16,7 +16,7 @@
 // };
 
 // types: submit, start, stop, next, previous
-// fields: bpm, bpl, bpr, pc, pt, pl, tc, tt, tl
+// fields: bpm, bpl, bpr, tc, tt, tl
 
 var stateId = "chrome_extension_content_script";
 var stateInput = document.getElementById(stateId);
@@ -50,8 +50,6 @@ function stop() {
 		state.currentTime = element.currentTime;
 	}
 	element.playbackRate = state.value.tc;
-	// todo
-	element.pitch = state.value.pc;
 	state.loop = 0;
 	timeout = null;
 }
@@ -69,8 +67,6 @@ function countIn() {
 		state.value.tt,
 		state.value.tl
 	);
-	// todo
-	element.pitch += getDiff(state.value.pc, state.value.pt, state.value.pl);
 	var ms = getMs(state.value.bpr);
 	timeout = setTimeout(begin, ms);
 }
@@ -104,7 +100,6 @@ function move(forward) {
 }
 
 function getDiff(start, target, loops) {
-	console.log([state.loop, loops]);
 	if (state.loop > loops) return 0;
 	var range = target - start;
 	return range / loops;
