@@ -1,6 +1,8 @@
 <form id="form">
 	<div class="column">
-		<span>Original BPM: <input name="bpm" type="number" value="80"/></span>
+		<span
+			>Original BPM: <input id="bpm" name="bpm" type="number" value="80"
+		/></span>
 		<span>Beats Per Loop: <input name="bpl" type="number" value="4"/></span>
 		<span>Beats to Rest: <input name="bpr" type="number" value="0"/></span>
 	</div>
@@ -15,8 +17,10 @@
 		<span>Tempo Target: <input name="tt" type="number" value="1"/></span>
 		<span>Tempo Loops: <input name="tl" type="number" value="0"/></span>
 	</div>
-	<!-- TODO - metronome -->
-	<!-- TODO - bpm-ometer -->
+	<div class="column">
+		<div>Tap To Determine BPM:</div>
+		<button type="button" id="tap">Tap</button>
+	</div>
 </form>
 <link rel="stylesheet" type="text/css" href="popup.css" />
 <script type="text/javascript" src="popup.js"></script>

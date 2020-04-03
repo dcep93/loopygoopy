@@ -35,4 +35,21 @@ buttonNames.forEach(type => {
 
 form.onsubmit = () => sendMessage("start");
 
+var taps = [];
+var numTaps = 10;
+var msPM = 1000 * 60;
+var bpmInput = document.getElementById("bpm");
+function tap() {
+	var now = new Date();
+	taps.push(now);
+	if (taps.length > numTaps) taps.shift();
+	var ms = now - taps[0];
+	var bpm = (msPM * (taps.length - 1)) / ms;
+	if (bpm && bpm !== Infinity) {
+		bpmInput.value = bpm.toFixed(2);
+	}
+}
+
+document.getElementById("tap").onclick = tap;
+
 document.getElementsByTagName("html")[0].style.height = form.offsetHeight;

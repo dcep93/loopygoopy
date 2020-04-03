@@ -1,5 +1,6 @@
 .column {
 	display: inline-block;
+	margin: 5px;
 }
 
 #form {
@@ -10,4 +11,8 @@
 
 #buttons {
 	text-align: center;
+}
+
+#tap {
+	margin: 10px;
 }
