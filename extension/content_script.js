@@ -35,6 +35,7 @@ var state = document.createElement("input");
 state.id = stateId;
 document.head.append(state);
 
-chrome.runtime.onMessage.addListener(function(request) {
-	state.value = request.message;
+chrome.runtime.onMessage.addListener(function(message) {
+	console.log(message);
+	state.value = JSON.stringify(message);
 });
