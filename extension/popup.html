@@ -1,19 +1,27 @@
 <form id="submit">
-	<span>BPM: </span><input name="bpm" type="number" value="100" />
-	<span>Beats Per Loop: </span><input name="bpl" type="number" value="16" />
-	<span>Beats to Rest: </span><input name="bpr" type="number" value="16" />
-
-	<button type="button" id="start">Start</button>
-	<button type="button" id="stop">Stop</button>
-	<button type="button" id="next">Next</button>
-	<button type="button" id="previous">Previous</button>
-
-	<span>Pitch Change: </span><input name="pc" type="number" value="16" />
-	<span>Pitch Target: </span><input name="pt" type="number" value="16" />
-	<span>Pitch Loops: </span><input name="pl" type="number" value="16" />
-
-	<span>Tempo Change: </span><input name="tc" type="number" value="16" />
-	<span>Tempo Target: </span><input name="tt" type="number" value="16" />
-	<span>Tempo Loops: </span><input name="tl" type="number" value="16" />
+	<div class="column">
+		<span>BPM: <input name="bpm" type="number" value="100"/></span>
+		<span
+			>Beats Per Loop: <input name="bpl" type="number" value="16"
+		/></span>
+		<span>Beats to Rest: <input name="bpr" type="number" value="16"/></span>
+	</div>
+	<div class="column">
+		<button type="button" id="start">Start</button>
+		<button type="button" id="stop">Stop</button>
+		<button type="button" id="next">Next</button>
+		<button type="button" id="previous">Previous</button>
+	</div>
+	<div class="column">
+		<span>Pitch Change: <input name="pc" type="number" value="16"/></span>
+		<span>Pitch Target: <input name="pt" type="number" value="16"/></span>
+		<span>Pitch Loops: <input name="pl" type="number" value="16"/></span>
+	</div>
+	<div class="column">
+		<span>Tempo Change: <input name="tc" type="number" value="16"/></span>
+		<span>Tempo Target: <input name="tt" type="number" value="16"/></span>
+		<span>Tempo Loops: <input name="tl" type="number" value="16"/></span>
+	</div>
 </form>
+<link rel="stylesheet" type="text/css" href="popup.css" />
 <script type="text/javascript" src="popup.js"></script>

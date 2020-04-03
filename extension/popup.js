@@ -38,3 +38,5 @@ function sendMessage(type, message) {
 }
 
 form.onsubmit = submit;
+
+document.getElementsByTagName("html")[0].style.height = form.offsetHeight;

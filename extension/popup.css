@@ -1,0 +1,8 @@
+.column {
+	display: inline-block;
+}
+
+#submit {
+	display: flex;
+	height: auto;
+}
