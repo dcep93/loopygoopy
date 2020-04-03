@@ -6,14 +6,14 @@
 
 var inject = `
 var defaultCreateElement = document.createElement;
-var elements = [];
+var element;
 
-document.createElement = function(domType) {
-	var element = defaultCreateElement.apply(this, arguments);
-	if (domType == "video" || domType == "audio") {
-		elements.push(element);
+document.createElement = function(tag) {
+	var thisElement = defaultCreateElement.apply(this, arguments);
+	if (tag == "video" || tag == "audio") {
+		element = thisElement;
 	}
-	return element;
+	return thisElement;
 };
 `;
 
