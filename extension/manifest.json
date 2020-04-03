@@ -1,0 +1,14 @@
+{
+	"name": "Spotify Loop Audio",
+	"description": "",
+	"version": "0.0.1",
+	"permissions": ["storage"],
+	"icons": {},
+	"content_scripts": [
+		{
+			"matches": ["https://open.spotify.com/*"],
+			"js": ["content_script.js"]
+		}
+	],
+	"manifest_version": 2
+}
