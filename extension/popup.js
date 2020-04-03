@@ -16,27 +16,23 @@ for (var i = 0; i < inputs.length; i++) {
 	);
 }
 
-var form = document.getElementById("submit");
+var form = document.getElementById("form");
 
-function submit() {
+function sendMessage(type) {
 	var formData = new FormData(form);
 	var message = {};
 	formData.forEach((value, key) => {
 		message[key] = value;
 	});
-	sendMessage("submit", message);
+	chrome.tabs.sendMessage(tabId, { type, message });
 	return false;
 }
 
 var buttonNames = ["start", "stop", "next", "previous"];
-buttonNames.forEach(name => {
-	document.getElementById(name).onclick = () => sendMessage(name);
+buttonNames.forEach(type => {
+	document.getElementById(type).onclick = () => sendMessage(type);
 });
 
-function sendMessage(type, message) {
-	chrome.tabs.sendMessage(tabId, { type, message });
-}
-
-form.onsubmit = submit;
+form.onsubmit = () => sendMessage("start");
 
 document.getElementsByTagName("html")[0].style.height = form.offsetHeight;

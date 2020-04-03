@@ -25,15 +25,15 @@ function injectScript(code) {
 
 injectScript(inject);
 
-const url = chrome.runtime.getURL("inject.js");
-fetch(url)
-	.then(response => response.text())
-	.then(injectScript);
-
 var stateId = "chrome_extension_content_script";
 var state = document.createElement("input");
 state.id = stateId;
 document.head.append(state);
+
+const url = chrome.runtime.getURL("inject.js");
+fetch(url)
+	.then(response => response.text())
+	.then(injectScript);
 
 chrome.runtime.onMessage.addListener(function(message) {
 	console.log(message);
