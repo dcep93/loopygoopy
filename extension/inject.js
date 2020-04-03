@@ -28,14 +28,14 @@ function loop() {
 	if (state.lastValue != stateInput.value) {
 		state.lastValue = stateInput.value;
 		if (!element) alert("need to start a track first");
-		var value = JSON.parse(stateInput.value);
-		functions[value.type](value.message);
+		var json = JSON.parse(stateInput.value);
+		state.value = json.message;
+		functions[json.type](json.message);
 	}
 }
 
 var timeout = null;
-function start(value) {
-	state.value = value;
+function start() {
 	state.currentTime = element.currentTime;
 	stop();
 	begin();
@@ -44,7 +44,15 @@ function start(value) {
 function stop() {
 	clearTimeout(timeout);
 	element.pause();
-	element.currentTime = state.currentTime;
+	if (state.currentTime !== undefined) {
+		element.currentTime = state.currentTime;
+	} else {
+		state.currentTime = element.currentTime;
+	}
+	element.playbackRate = state.value.tc;
+	// todo
+	element.pitch = state.value.pc;
+	state.loop = 0;
 	timeout = null;
 }
 function next() {
@@ -55,6 +63,14 @@ function previous() {
 }
 
 function countIn() {
+	state.loop += 1;
+	element.playbackRate += getDiff(
+		state.value.tc,
+		state.value.tt,
+		state.value.tl
+	);
+	// todo
+	element.pitch += getDiff(state.value.pc, state.value.pt, state.value.pl);
 	var ms = getMs(state.value.bpr);
 	timeout = setTimeout(begin, ms);
 }
@@ -66,6 +82,7 @@ function begin() {
 }
 
 function finish() {
+	if (element.paused) return stop();
 	element.pause();
 	element.currentTime = state.currentTime;
 	countIn();
@@ -73,16 +90,24 @@ function finish() {
 
 function getMs(beats) {
 	var msPerMinute = 60 * 1000;
-	return (beats * msPerMinute) / state.value.bpm;
+	var ms = (beats * msPerMinute) / state.value.bpm;
+	return ms / element.playbackRate;
 }
 
 function move(forward) {
 	var ms = getMs(state.value.bpl);
 	var s = ms / 1000;
 	var toMove = forward ? s : -s;
-	state.currentTime += s;
+	state.currentTime += toMove;
 	stop();
 	begin();
+}
+
+function getDiff(start, target, loops) {
+	console.log([state.loop, loops]);
+	if (state.loop > loops) return 0;
+	var range = target - start;
+	return range / loops;
 }
 
 var functions = { start, stop, next, previous };
