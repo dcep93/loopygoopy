@@ -15,6 +15,9 @@
 // 	return thisElement;
 // };
 
+// types: submit, start, stop, next, previous
+// fields: bpm, bpl, bpr, pc, pt, pl, tc, tt, tl
+
 var stateId = "chrome_extension_content_script";
 var state;
 function loop() {
