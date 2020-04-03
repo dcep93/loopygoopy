@@ -1,10 +1,8 @@
 <form id="form">
 	<div class="column">
 		<span>BPM: <input name="bpm" type="number" value="100"/></span>
-		<span
-			>Beats Per Loop: <input name="bpl" type="number" value="16"
-		/></span>
-		<span>Beats to Rest: <input name="bpr" type="number" value="16"/></span>
+		<span>Beats Per Loop: <input name="bpl" type="number" value="8"/></span>
+		<span>Beats to Rest: <input name="bpr" type="number" value="2"/></span>
 	</div>
 	<div class="column" id="buttons">
 		<button type="button" id="start">Start</button>
@@ -13,15 +11,17 @@
 		<button type="button" id="previous">Previous</button>
 	</div>
 	<div class="column">
-		<span>Pitch Change: <input name="pc" type="number" value="16"/></span>
-		<span>Pitch Target: <input name="pt" type="number" value="16"/></span>
-		<span>Pitch Loops: <input name="pl" type="number" value="16"/></span>
+		<span>Pitch Change: <input name="pc" type="number" value="0"/></span>
+		<span>Pitch Target: <input name="pt" type="number" value="0"/></span>
+		<span>Pitch Loops: <input name="pl" type="number" value="0"/></span>
 	</div>
 	<div class="column">
-		<span>Tempo Change: <input name="tc" type="number" value="16"/></span>
-		<span>Tempo Target: <input name="tt" type="number" value="16"/></span>
-		<span>Tempo Loops: <input name="tl" type="number" value="16"/></span>
+		<span>Tempo Change: <input name="tc" type="number" value="0"/></span>
+		<span>Tempo Target: <input name="tt" type="number" value="0"/></span>
+		<span>Tempo Loops: <input name="tl" type="number" value="0"/></span>
 	</div>
+	<!-- TODO - metronome -->
+	<!-- TODO - bpm-ometer -->
 </form>
 <link rel="stylesheet" type="text/css" href="popup.css" />
 <script type="text/javascript" src="popup.js"></script>

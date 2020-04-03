@@ -25,22 +25,25 @@ function loop() {
 	setTimeout(loop, 100);
 	if (!stateInput.value) return;
 	if (state.lastValue != stateInput.value) {
-		var value = JSON.parse(state.value);
-		functions[value.type](value.message);
 		state.lastValue = stateInput.value;
+		if (!element) alert("need to start a track first");
+		var value = JSON.parse(stateInput.value);
+		functions[value.type](value.message);
 	}
 }
 
 var timeout = null;
 function start(value) {
 	state.value = value;
+	state.currentTime = element.currentTime;
 	stop();
-	// todo
+	begin();
 }
+
 function stop() {
 	clearTimeout(timeout);
-	timeout = null;
 	element.pause();
+	timeout = null;
 }
 function next() {
 	move(True);
@@ -49,10 +52,32 @@ function previous() {
 	move(False);
 }
 
+function countIn() {
+	var ms = getMs(state.value.bpr);
+	timeout = setTimeout(begin, ms);
+}
+
+function begin() {
+	element.play();
+	var ms = getMs(state.value.bpl);
+	timeout = setTimeout(finish, ms);
+}
+
+function finish() {
+	element.pause();
+	element.currentTime = state.currentTime;
+	countIn();
+}
+
+function getMs(beats) {
+	var msPerMinute = 60 * 1000;
+	return (beats * msPerMinute) / state.value.bpm;
+}
+
 function move(forward) {
 	// todo
 }
 
-var functions = { submit, start, stop, next, previous };
+var functions = { start, stop, next, previous };
 
 loop();

@@ -36,6 +36,7 @@ fetch(url)
 	.then(injectScript);
 
 chrome.runtime.onMessage.addListener(function(message) {
+	message.date = new Date();
 	console.log(message);
 	state.value = JSON.stringify(message);
 });
