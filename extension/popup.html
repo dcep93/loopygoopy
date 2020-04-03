@@ -1,9 +1,19 @@
 <form id="submit">
-	<span>BPM: </span><input id="bpm" type="number" value="100" />
-	<input type="submit" style="display: none" />
-	<span>Beats Per Loop: </span><input id="bpl" type="number" value="16" />
-	<input type="submit" style="display: none" />
-	<span>Beats to Rest Between Loops: </span
-	><input id="bpr" type="number" value="16" />
+	<span>BPM: </span><input name="bpm" type="number" value="100" />
+	<span>Beats Per Loop: </span><input name="bpl" type="number" value="16" />
+	<span>Beats to Rest: </span><input name="bpr" type="number" value="16" />
+
+	<button type="button" id="start">Start</button>
+	<button type="button" id="stop">Stop</button>
+	<button type="button" id="next">Next</button>
+	<button type="button" id="previous">Previous</button>
+
+	<span>Pitch Change: </span><input name="pc" type="number" value="16" />
+	<span>Pitch Target: </span><input name="pt" type="number" value="16" />
+	<span>Pitch Loops: </span><input name="pl" type="number" value="16" />
+
+	<span>Tempo Change: </span><input name="tc" type="number" value="16" />
+	<span>Tempo Target: </span><input name="tt" type="number" value="16" />
+	<span>Tempo Loops: </span><input name="tl" type="number" value="16" />
 </form>
 <script type="text/javascript" src="popup.js"></script>
