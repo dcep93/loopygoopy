@@ -20,6 +20,7 @@
 
 var stateId = "chrome_extension_content_script";
 var stateInput = document.getElementById(stateId);
+// todo remember state
 var state = {};
 function loop() {
 	setTimeout(loop, 100);
@@ -43,13 +44,14 @@ function start(value) {
 function stop() {
 	clearTimeout(timeout);
 	element.pause();
+	element.currentTime = state.currentTime;
 	timeout = null;
 }
 function next() {
-	move(True);
+	move(true);
 }
 function previous() {
-	move(False);
+	move(false);
 }
 
 function countIn() {
@@ -75,7 +77,12 @@ function getMs(beats) {
 }
 
 function move(forward) {
-	// todo
+	var ms = getMs(state.value.bpl);
+	var s = ms / 1000;
+	var toMove = forward ? s : -s;
+	state.currentTime += s;
+	stop();
+	begin();
 }
 
 var functions = { start, stop, next, previous };
