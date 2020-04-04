@@ -6,11 +6,11 @@
 #form {
 	display: flex;
 	height: auto;
-	align-items: center;
 }
 
 #buttons {
 	text-align: center;
+	align-self: center;
 }
 
 #tapx {
