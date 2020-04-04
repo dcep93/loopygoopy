@@ -19,8 +19,6 @@ document.createElement = function(tag) {
 
 // use this object to communicate with the page
 var stateId = "chrome_extension_content_script";
-// use this attr to receive data from the injected code
-var currentTimeAttr = "current-time";
 
 function injectScript(code) {
 	var script = document.createElement("script");
@@ -48,11 +46,12 @@ chrome.runtime.onMessage.addListener(function(message) {
 var state = {};
 function loop() {
 	setTimeout(loop, 100);
-	var currentTime = stateInput.getAttribute(currentTimeAttr);
-	if (!currentTime) return;
-	if (currentTime == state.currentTime) return;
-	state.currentTime = currentTime;
-	chrome.runtime.sendMessage(state);
+	var stateInputState = stateInput.getAttribute("state");
+	if (!stateInputState) return;
+	var parsed = JSON.parse(stateInputState);
+	if (parsed == state.state) return;
+	state.state = parsed;
+	chrome.runtime.sendMessage(state.state);
 }
 
 loop();

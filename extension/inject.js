@@ -19,12 +19,12 @@
 // fields: bpm, bpl, bpr, tc, tt, tl, st
 
 var stateId = "chrome_extension_content_script";
-var currentTimeAttr = "current-time";
 var stateInput = document.getElementById(stateId);
 // todo remember state
 var state = {};
 function loop() {
 	setTimeout(loop, 100);
+	if (element) setId();
 	if (!stateInput.value) return;
 	if (state.lastValue == stateInput.value) return;
 	state.lastValue = stateInput.value;
@@ -33,6 +33,18 @@ function loop() {
 	var json = JSON.parse(stateInput.value);
 	state.value = json.message;
 	functions[json.type](json.message);
+}
+
+function setId() {
+	var id = `${window.location.host}-${element.duration}`;
+	sendMessage({ id });
+}
+
+function sendMessage(attrs) {
+	var currentState = stateInput.getAttribute("state");
+	var parsed = currentState ? JSON.parse(currentState) : {};
+	Object.assign(parsed, attrs);
+	stateInput.setAttribute("state", JSON.stringify(parsed));
 }
 
 function findElement() {
@@ -47,7 +59,7 @@ function start() {
 	if (state.value.st) {
 		element.currentTime = state.value.st;
 	} else {
-		stateInput.setAttribute(currentTimeAttr, element.currentTime);
+		sendMessage({ currentTime: element.currentTime });
 	}
 	state.currentTime = element.currentTime;
 	stop();
@@ -106,7 +118,7 @@ function move(forward) {
 	var toMove = forward ? s : -s;
 	state.currentTime += toMove;
 	element.currentTime = state.currentTime;
-	stateInput.setAttribute(currentTimeAttr, element.currentTime);
+	sendMessage({ currentTime: element.currentTime });
 	begin();
 }
 
