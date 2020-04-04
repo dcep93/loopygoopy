@@ -49,9 +49,11 @@ function loop() {
 	var stateInputState = stateInput.getAttribute("state");
 	if (!stateInputState) return;
 	if (stateInputState == state.state) return;
-	state.state = stateInputState;
 	var parsed = JSON.parse(stateInputState);
-	chrome.runtime.sendMessage(parsed);
+	console.log(parsed);
+	chrome.runtime.sendMessage(parsed, response => {
+		if (response) state.state = stateInputState;
+	});
 }
 
 loop();

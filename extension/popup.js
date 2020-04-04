@@ -24,7 +24,7 @@ function sendMessage(type) {
 	formData.forEach((value, key) => {
 		message[key] = value;
 	});
-	// todo save id -> message
+	chrome.storage.sync.set({ [state.id]: message });
 	chrome.tabs.sendMessage(tabId, { type, message });
 	return false;
 }
@@ -57,8 +57,15 @@ document.getElementsByTagName("html")[0].style.height = form.offsetHeight;
 
 var state = {};
 var stInput = document.getElementById("st");
-chrome.runtime.onMessage.addListener(function(message) {
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 	if (message.currentTime) stInput.value = message.currentTime;
-	if (state.id != message.id) alert(message.id); // todo load from storage
+	if (state.id != message.id) {
+		var key = message.id;
+		chrome.storage.sync.get([key], function(result) {
+			// todo populate form
+			// alert(JSON.stringify(result[key]));
+		});
+	}
 	state.id = message.id;
+	sendResponse(true);
 });
