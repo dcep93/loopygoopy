@@ -13,6 +13,10 @@
 	align-self: center;
 }
 
-#tapx {
-	margin: 10px;
+#tap_parent {
+	text-align: center;
+}
+
+#tap {
+	font-size: large;
 }
