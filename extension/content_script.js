@@ -38,8 +38,12 @@ fetch(url)
 	.then(injectScript);
 
 chrome.runtime.onMessage.addListener(function(message) {
-	message.date = new Date();
 	console.log(message);
+	if (message.type === "load") {
+		delete state.state;
+		return;
+	}
+	message.date = new Date();
 	stateInput.value = JSON.stringify(message);
 });
 
@@ -49,11 +53,10 @@ function loop() {
 	var stateInputState = stateInput.getAttribute("state");
 	if (!stateInputState) return;
 	if (stateInputState == state.state) return;
+	state.state = stateInputState;
 	var parsed = JSON.parse(stateInputState);
 	console.log(parsed);
-	chrome.runtime.sendMessage(parsed, response => {
-		if (response) state.state = stateInputState;
-	});
+	chrome.runtime.sendMessage(parsed);
 }
 
 loop();

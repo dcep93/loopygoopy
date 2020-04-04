@@ -1,6 +1,7 @@
 var tabId;
 chrome.tabs.query({ currentWindow: true, active: true }, function(tabs) {
 	tabId = tabs[0].id;
+	chrome.tabs.sendMessage(tabId, { type: "load" });
 });
 
 var submitInput = document.createElement("input");
