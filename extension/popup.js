@@ -62,8 +62,8 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 	if (state.id != message.id) {
 		var key = message.id;
 		chrome.storage.sync.get([key], function(result) {
-			// todo populate form
-			// alert(JSON.stringify(result[key]));
+			var object = result[key];
+			for (var name in object) form[name].value = object[name];
 		});
 	}
 	state.id = message.id;
