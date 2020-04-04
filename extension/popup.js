@@ -24,6 +24,7 @@ function sendMessage(type) {
 	formData.forEach((value, key) => {
 		message[key] = value;
 	});
+	// todo save id -> message
 	chrome.tabs.sendMessage(tabId, { type, message });
 	return false;
 }
@@ -58,6 +59,6 @@ var state = {};
 var stInput = document.getElementById("st");
 chrome.runtime.onMessage.addListener(function(message) {
 	if (message.currentTime) stInput.value = message.currentTime;
-	if (state.id != message.id) alert(message.id);
+	if (state.id != message.id) alert(message.id); // todo load from storage
 	state.id = message.id;
 });

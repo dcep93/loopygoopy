@@ -48,10 +48,10 @@ function loop() {
 	setTimeout(loop, 100);
 	var stateInputState = stateInput.getAttribute("state");
 	if (!stateInputState) return;
+	if (stateInputState == state.state) return;
+	state.state = stateInputState;
 	var parsed = JSON.parse(stateInputState);
-	if (parsed == state.state) return;
-	state.state = parsed;
-	chrome.runtime.sendMessage(state.state);
+	chrome.runtime.sendMessage(parsed);
 }
 
 loop();

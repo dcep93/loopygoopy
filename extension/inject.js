@@ -20,7 +20,6 @@
 
 var stateId = "chrome_extension_content_script";
 var stateInput = document.getElementById(stateId);
-// todo remember state
 var state = {};
 function loop() {
 	setTimeout(loop, 100);
@@ -36,6 +35,7 @@ function loop() {
 }
 
 function setId() {
+	if (!element.duration) return;
 	var id = `${window.location.host}-${element.duration}`;
 	sendMessage({ id });
 }
