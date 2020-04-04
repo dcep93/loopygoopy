@@ -59,7 +59,8 @@ function start() {
 	if (state.value.st) {
 		element.currentTime = state.value.st;
 	} else {
-		sendMessage({ currentTime: element.currentTime });
+		var st = element.currentTime.toFixed(2);
+		sendMessage({ currentTime: st });
 	}
 	state.currentTime = element.currentTime;
 	stop();
