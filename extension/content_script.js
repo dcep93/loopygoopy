@@ -34,10 +34,10 @@ document.head.append(stateInput);
 
 const url = chrome.runtime.getURL("inject.js");
 fetch(url)
-	.then(response => response.text())
+	.then((response) => response.text())
 	.then(injectScript);
 
-chrome.runtime.onMessage.addListener(function(message) {
+chrome.runtime.onMessage.addListener(function (message) {
 	console.log(message);
 	if (message.type === "load") {
 		delete state.state;
