@@ -10,7 +10,10 @@
 	},
 	"content_scripts": [
 		{
-			"matches": ["*://open.spotify.com/*", "*://*.youtube.com/*"],
+			"matches": [
+				"https://open.spotify.com/*",
+				"https://www.youtube.com/*"
+			],
 			"js": ["content_script.js"]
 		}
 	],
