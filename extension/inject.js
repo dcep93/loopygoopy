@@ -68,6 +68,10 @@ function start() {
 }
 
 function stop() {
+	if (state.title !== undefined) {
+		document.title = state.title;
+		delete state.title;
+	}
 	clearTimeout(timeout);
 	element.pause();
 	if (state.currentTime !== undefined) {
@@ -95,8 +99,16 @@ function countIn() {
 
 function begin() {
 	element.play();
+	setTimeout(setTitle, 1000);
 	var ms = getMs(state.value.bpl);
 	timeout = setTimeout(finish, ms);
+}
+
+function setTitle() {
+	if (state.title === undefined) state.title = document.title;
+	document.title = `${(element.playbackRate * 100).toFixed(2)}% - ${
+		state.title
+	}`;
 }
 
 function finish() {
