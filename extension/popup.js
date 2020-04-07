@@ -1,9 +1,64 @@
 var tabId;
 chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
 	tabId = tabs[0].id;
-	chrome.tabs.sendMessage(tabId, { type: "load" });
+	chrome.tabs.sendMessage(tabId, { type: "init" }, (response) => {
+		if (!response) return alert("Cannot use on this page");
+		if (response !== true) {
+			window.close();
+			return alert(response);
+		}
+	});
 });
 
+//
+
+var mediaId;
+
+var stInput = document.getElementById("st");
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+	// write start time based on state on the page
+	if (message.startTime) stInput.value = message.startTime.toFixed(2);
+	// load saved form data
+	if (mediaId !== message.mediaId) {
+		loadForm(message.id);
+		mediaId = message.id;
+	}
+	sendResponse(true);
+});
+
+//
+
+var form = document.getElementById("form");
+
+function saveForm(id) {
+	var formData = new FormData(form);
+	var message = {};
+	formData.forEach((value, key) => {
+		message[key] = value;
+	});
+	if (id) chrome.storage.sync.set({ [id]: message });
+	console.log("save", id, message);
+	return message;
+}
+
+function loadForm(id) {
+	console.log("load", id);
+	chrome.storage.sync.get([id], function (result) {
+		var object = result[id];
+		console.log("set", id, object);
+		for (var name in object) form[name].value = object[name];
+	});
+}
+
+function saveDefault() {
+	saveForm("default");
+}
+
+loadForm("default");
+
+//
+
+// you can hit 'enter' while focused on any input
 var submitInput = document.createElement("input");
 submitInput.type = "submit";
 submitInput.style = "display: none";
@@ -11,17 +66,21 @@ var inputsRaw = document.getElementsByTagName("input");
 var inputs = Array.from(inputsRaw);
 for (var i = 0; i < inputs.length; i++) {
 	var element = inputs[i];
+	// when the input changes, save the state as
+	// the last thing opened, 'default'
 	element.onchange = saveDefault;
 	element.parentElement.insertBefore(
 		submitInput.cloneNode(),
 		element.nextSibling
 	);
 }
+// chrome seems to size the popup strangely
+document.getElementsByTagName("html")[0].style.height = form.offsetHeight;
 
-var form = document.getElementById("form");
+//
 
 function sendMessage(type) {
-	var message = saveForm(state.id);
+	var message = saveForm(mediaId);
 	chrome.tabs.sendMessage(tabId, { type, message });
 	return false;
 }
@@ -32,6 +91,8 @@ buttonNames.forEach((type) => {
 });
 
 form.onsubmit = () => sendMessage("start");
+
+//
 
 var taps = [];
 var numTaps = 10;
@@ -47,46 +108,4 @@ function tap() {
 		bpmInput.value = bpm.toFixed(2);
 	}
 }
-
 document.getElementById("tap").onclick = tap;
-
-document.getElementsByTagName("html")[0].style.height = form.offsetHeight;
-
-var state = {};
-var stInput = document.getElementById("st");
-chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-	if (message.currentTime) stInput.value = message.currentTime;
-	if (state.id != message.id) {
-		setForm(message.id);
-	}
-	state.id = message.id;
-	sendResponse(true);
-});
-
-function saveDefault() {
-	saveForm("default");
-}
-
-function saveForm(id) {
-	var formData = new FormData(form);
-	var message = {};
-	formData.forEach((value, key) => {
-		message[key] = value;
-	});
-	chrome.storage.sync.set({ [id]: message });
-	console.log("save", id, message);
-	return message;
-}
-
-function setForm(id) {
-	console.log("set", id);
-	chrome.storage.sync.get([id], function (result) {
-		var object = result[id];
-		console.log("set", id, object);
-		for (var name in object) form[name].value = object[name];
-	});
-}
-
-if (!state.id) {
-	setForm("default");
-}

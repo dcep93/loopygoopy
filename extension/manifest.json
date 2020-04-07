@@ -17,7 +17,7 @@
 			"js": ["content_script.js"]
 		}
 	],
-	"web_accessible_resources": ["inject.js"],
+	"web_accessible_resources": ["inject_spotify.js"],
 	"browser_action": {
 		"default_popup": "popup.html",
 		"default_icon": "loopy_goopy_full.png"
