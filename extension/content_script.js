@@ -40,7 +40,7 @@ function sendData() {
 	var data = { mediaId, startTime };
 	var stringified = JSON.stringify(data);
 	if (state.sentData != stringified) {
-		console.log("send", data, state.sentData);
+		console.log("send", data);
 		state.sentData = stringified;
 		chrome.runtime.sendMessage(data);
 	}

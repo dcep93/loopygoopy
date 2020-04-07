@@ -16,12 +16,13 @@ var mediaId;
 
 var stInput = document.getElementById("st");
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+	console.log(message);
 	// write start time based on state on the page
 	if (message.startTime) stInput.value = message.startTime.toFixed(2);
 	// load saved form data
 	if (mediaId !== message.mediaId) {
-		loadForm(message.id);
-		mediaId = message.id;
+		mediaId = message.mediaId;
+		loadForm(mediaId);
 	}
 	sendResponse(true);
 });
