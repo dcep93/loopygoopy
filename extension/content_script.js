@@ -65,6 +65,7 @@ function start() {
 	}
 	state.currentTime = element.currentTime;
 	stop();
+	element.playbackRate = state.value.tc;
 	begin();
 }
 
@@ -80,7 +81,7 @@ function stop() {
 	} else {
 		state.currentTime = element.currentTime;
 	}
-	element.playbackRate = state.value.tc;
+	element.playbackRate = 1;
 	state.loop = 0;
 	state.timeout = null;
 }
@@ -128,7 +129,8 @@ function getMs(beats) {
 }
 
 function move(forward) {
-	stop();
+	element.pause();
+	state.loop = 0;
 	var ms = getMs(state.value.bpl);
 	var s = ms / 1000;
 	var toMove = forward ? s : -s;
