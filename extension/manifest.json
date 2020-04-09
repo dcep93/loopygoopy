@@ -8,6 +8,10 @@
 		"48": "loopy_goopy_full.png",
 		"128": "loopy_goopy_full.png"
 	},
+	"background": {
+		"scripts": ["background.js"],
+		"persistent": false
+	},
 	"content_scripts": [
 		{
 			"matches": [

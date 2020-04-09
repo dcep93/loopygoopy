@@ -1,14 +1,20 @@
 var tabId;
 chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
 	tabId = tabs[0].id;
-	chrome.tabs.sendMessage(tabId, { type: "init" }, (response) => {
-		if (!response) return alert("Cannot use on this page");
-		if (response !== true) {
+	chrome.tabs.sendMessage(tabId, { type: "init", tabId }, (response) => {
+		if (response === undefined) {
+			allowNonValidPage();
+		} else if (response !== true) {
 			window.close();
 			return alert(response);
 		}
 	});
 });
+
+function allowNonValidPage() {
+	// means this is a non-spotify/youtube page - this is fine
+	chrome.runtime.lastError;
+}
 
 //
 
@@ -82,7 +88,17 @@ document.getElementsByTagName("html")[0].style.height = form.offsetHeight;
 
 function sendMessage(type) {
 	var message = saveForm(mediaId);
-	chrome.tabs.sendMessage(tabId, { type, message });
+	var data = { type, message };
+	if (tabId !== undefined) {
+		chrome.tabs.sendMessage(tabId, data);
+	} else {
+		chrome.runtime.sendMessage(data, function (response) {
+			if (!response)
+				alert(
+					"Need to initialize on either youtube.com or open.spotify.com"
+				);
+		});
+	}
 	return false;
 }
 

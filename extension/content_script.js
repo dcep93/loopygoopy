@@ -13,29 +13,33 @@ if (window.location.host === "open.spotify.com") {
 // fields: bpm, bpl, bpr, tc, tt, tl, st
 
 var functions = { start, stop, next, previous };
+// element, interval, sentData, value, currentTime, title, timeout, loop
 var state = {};
-var element;
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-	console.log("receive", message);
+	console.log("receive", message, sender);
 	if (message.type === "init") {
 		state.sentData = null;
-		setInterval(sendData, 100);
+		state.interval = setInterval(sendData, 100);
 		if (!setElement())
 			sendResponse("no media element found - try starting it first");
-		return sendResponse(true);
+		sendResponse(true);
+		// send message to background
+		chrome.runtime.sendMessage({ tabId: message.tabId });
+	} else {
+		state.value = message.message;
+		var type = message.type;
+		sendResponse(true);
+		functions[type]();
 	}
-	state.value = message.message;
-	var type = message.type;
-	functions[type]();
 });
 
 function sendData() {
 	setElement();
-	if (!element) return;
-	var duration = element.duration;
+	if (!state.element) return;
+	var duration = state.element.duration;
 	if (!duration) return;
-	var mediaId = `${window.location.host}-${element.duration}`;
+	var mediaId = `${window.location.host}-${state.element.duration}`;
 	var startTime = state.currentTime;
 	var data = { mediaId, startTime };
 	var stringified = JSON.stringify(data);
@@ -47,8 +51,8 @@ function sendData() {
 }
 
 function setElement() {
-	element = get();
-	return element;
+	state.element = get();
+	return state.element;
 }
 
 function get() {
@@ -61,11 +65,11 @@ function get() {
 
 function start() {
 	if (state.value.st) {
-		element.currentTime = state.value.st;
+		state.element.currentTime = state.value.st;
 	}
-	state.currentTime = element.currentTime;
+	state.currentTime = state.element.currentTime;
 	stop();
-	element.playbackRate = state.value.tc;
+	state.element.playbackRate = state.value.tc;
 	begin();
 }
 
@@ -75,13 +79,13 @@ function stop() {
 		delete state.title;
 	}
 	clearTimeout(state.timeout);
-	element.pause();
+	state.element.pause();
 	if (state.currentTime !== undefined) {
-		element.currentTime = state.currentTime;
+		state.element.currentTime = state.currentTime;
 	} else {
-		state.currentTime = element.currentTime;
+		state.currentTime = state.element.currentTime;
 	}
-	element.playbackRate = 1;
+	state.element.playbackRate = 1;
 	state.loop = 0;
 	state.timeout = null;
 }
@@ -102,7 +106,7 @@ function countIn() {
 }
 
 function begin() {
-	element.play();
+	state.element.play();
 	setTimeout(setTitle, 1000);
 	var ms = getMs(state.value.bpl);
 	state.timeout = setTimeout(finish, ms);
@@ -110,37 +114,37 @@ function begin() {
 
 function setTitle() {
 	if (state.title === undefined) state.title = document.title;
-	document.title = `${(element.playbackRate * 100).toFixed(2)}% - ${
+	document.title = `${(state.element.playbackRate * 100).toFixed(2)}% - ${
 		state.title
 	}`;
 }
 
 function finish() {
-	if (element.paused) return stop();
-	if (state.value.bpr != 0) element.pause();
-	element.currentTime = state.currentTime;
+	if (state.element.paused) return stop();
+	if (state.value.bpr != 0) state.element.pause();
+	state.element.currentTime = state.currentTime;
 	countIn();
 }
 
 function getMs(beats) {
 	var msPerMinute = 60 * 1000;
 	var ms = (beats * msPerMinute) / state.value.bpm;
-	return ms / element.playbackRate;
+	return ms / state.element.playbackRate;
 }
 
 function move(forward) {
-	element.pause();
+	state.element.pause();
 	state.loop = 0;
 	var ms = getMs(state.value.bpl);
 	var s = ms / 1000;
 	var toMove = forward ? s : -s;
 	state.currentTime += toMove;
-	element.currentTime = state.currentTime;
+	state.element.currentTime = state.currentTime;
 	begin();
 }
 
 function speedUp() {
-	element.playbackRate += getDiff(
+	state.element.playbackRate += getDiff(
 		state.value.tc,
 		state.value.tt,
 		state.value.tl
