@@ -3,8 +3,12 @@ chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
 	tabId = tabs[0].id;
 	chrome.tabs.sendMessage(tabId, { type: "init", tabId }, (response) => {
 		if (response === undefined) {
+			tabId = undefined;
 			allowNonValidPage();
-		} else if (response !== true) {
+		} else if (response === true) {
+			// send message to background
+			chrome.runtime.sendMessage({ tabId });
+		} else {
 			window.close();
 			return alert(response);
 		}
@@ -22,7 +26,7 @@ var mediaId;
 
 var stInput = document.getElementById("st");
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-	console.log(message);
+	console.log(message, sender);
 	// write start time based on state on the page
 	if (message.startTime) stInput.value = message.startTime.toFixed(2);
 	// load saved form data

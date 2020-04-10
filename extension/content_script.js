@@ -24,8 +24,6 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 		if (!setElement())
 			sendResponse("no media element found - try starting it first");
 		sendResponse(true);
-		// send message to background
-		chrome.runtime.sendMessage({ tabId: message.tabId });
 	} else {
 		state.value = message.message;
 		var type = message.type;
