@@ -4,7 +4,8 @@
 	var defaultCreateElement = document.createElement;
 	document.createElement = function (tagName) {
 		var element = defaultCreateElement.apply(this, arguments);
-		if (tagName === "audio") document.head.appendChild(element);
+		if (tagName === "audio" || tagName == "video")
+			document.head.appendChild(element);
 		return element;
 	};
 })();
