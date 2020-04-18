@@ -1,12 +1,12 @@
 {
 	"name": "Loopy Goopy",
 	"description": "Practice tool that finds audio/video tags and allows you to loop or control speed.",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"permissions": ["storage"],
 	"icons": {
 		"16": "loopy_goopy_full.png",
 		"48": "loopy_goopy_full.png",
-		"128": "loopy_goopy_full.png"
+		"128": "loopy_goopy_128.png"
 	},
 	"background": {
 		"scripts": ["background.js"],
