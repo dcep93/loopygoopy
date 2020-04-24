@@ -6,6 +6,8 @@ This Chrome Extension enables musicians to practice a section of a piece by slow
 
 ### To Install
 
+Loopy Goopy is now available on the [web store](https://chrome.google.com/webstore/detail/loopy-goopy/addfplpnjjbiockjmfegacimgkcmfefn)
+
 1. Download [zip](https://github.com/dcep93/loopygoopy/releases) and unzip.
 2. Visit [chrome://extensions](chrome://extensions) and load "extension" folder as an unpacked extension.
 
