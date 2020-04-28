@@ -1,3 +1,4 @@
+const TIME_BEFORE_START = 1000;
 if (window.location.host === "open.spotify.com") {
 	const url = chrome.runtime.getURL("inject_spotify.js");
 	fetch(url)
@@ -68,7 +69,7 @@ function start() {
 	state.currentTime = state.element.currentTime;
 	stop();
 	state.element.playbackRate = state.value.tc;
-	begin();
+	setTimeout(begin, TIME_BEFORE_START);
 }
 
 function stop() {
