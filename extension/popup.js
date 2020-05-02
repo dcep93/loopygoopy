@@ -48,10 +48,6 @@ function saveForm(id) {
 	return message;
 }
 
-function saveDefault() {
-	saveForm(DEFAULT);
-}
-
 function loadForm(id) {
 	console.log("load", id);
 	chrome.storage.sync.get([id], function (result) {
@@ -73,12 +69,17 @@ var inputsRaw = document.getElementsByTagName("input");
 Array.from(inputsRaw).forEach((element) => {
 	// when the input changes, save the state as
 	// the last thing opened, 'default'
+	element.oninput = calculate;
 	element.onchange = saveDefault;
 	element.parentElement.insertBefore(
 		submitInput.cloneNode(),
 		element.nextSibling
 	);
 });
+
+function saveDefault() {
+	saveForm(DEFAULT);
+}
 
 //
 
@@ -121,6 +122,7 @@ var taps = [];
 var numTaps = 10;
 var msPM = 1000 * 60;
 var bpmInput = document.getElementById("bpm");
+var bplInput = document.getElementById("bpl");
 function tap() {
 	var now = new Date();
 	taps.push(now);
@@ -129,8 +131,35 @@ function tap() {
 	var bpm = (msPM * (taps.length - 1)) / ms;
 	if (bpm && bpm !== Infinity) {
 		bpmInput.value = bpm.toFixed(2);
+		calculateEndTime();
 	}
 }
 document.getElementById("tap").onclick = tap;
 
 //
+
+function calculate() {
+	switch (document.activeElement) {
+		case startTime:
+		case endTime:
+			calculateBPL();
+			return;
+		case bpmInput:
+		case bplInput:
+			calculateEndTime();
+			return;
+		default:
+			alert("d");
+			return;
+	}
+}
+
+function calculateBPL() {
+	bplInput.value = Math.random();
+	return;
+}
+
+function calculateEndTime() {
+	endTime.value = Math.random();
+	return;
+}
