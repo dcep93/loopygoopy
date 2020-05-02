@@ -1,13 +1,19 @@
+const DEFAULT = "default";
+
+// chrome seems to size the popup strangely
+document.getElementsByTagName("html")[0].style.height = form.offsetHeight;
+//
+
 var tabId;
+var mediaId;
 chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-	tabId = tabs[0].id;
-	chrome.tabs.sendMessage(tabId, { type: "init", tabId }, (response) => {
-		if (response === undefined) {
-			tabId = undefined;
+	var tabId_ = tabs[0].id;
+	chrome.tabs.sendMessage(tabId_, { type: "init", tabId }, (response) => {
+		if (response === undefined || response === null) {
 			allowNonValidPage();
-		} else if (response === true) {
-			// send message to background
-			chrome.runtime.sendMessage({ tabId });
+		} else if (response.success) {
+			tabId = tabId_;
+			init(response);
 		} else {
 			window.close();
 			return alert(response);
@@ -15,27 +21,18 @@ chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
 	});
 });
 
-function allowNonValidPage() {
-	// means this is a non-spotify/youtube page - this is fine
-	chrome.runtime.lastError;
+function init(response) {
+	mediaId = response.mediaId;
+	// send message to background
+	chrome.runtime.sendMessage({ tabId });
 }
 
-//
-
-var mediaId;
-
-var stInput = document.getElementById("st");
-chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-	console.log(message, sender);
-	// write start time based on state on the page
-	if (message.startTime) stInput.value = message.startTime.toFixed(2);
-	// load saved form data
-	if (mediaId !== message.mediaId) {
-		mediaId = message.mediaId;
-		loadForm(mediaId);
-	}
-	sendResponse(true);
-});
+function allowNonValidPage() {
+	// means this is an invalid page domain
+	// this is fine as we can also connect through background
+	// to the recently initialzed valid page
+	chrome.runtime.lastError;
+}
 
 //
 
@@ -52,6 +49,10 @@ function saveForm(id) {
 	return message;
 }
 
+function saveDefault() {
+	saveForm(DEFAULT);
+}
+
 function loadForm(id) {
 	console.log("load", id);
 	chrome.storage.sync.get([id], function (result) {
@@ -61,11 +62,7 @@ function loadForm(id) {
 	});
 }
 
-function saveDefault() {
-	saveForm("default");
-}
-
-loadForm("default");
+loadForm(DEFAULT);
 
 //
 
@@ -74,9 +71,7 @@ var submitInput = document.createElement("input");
 submitInput.type = "submit";
 submitInput.style = "display: none";
 var inputsRaw = document.getElementsByTagName("input");
-var inputs = Array.from(inputsRaw);
-for (var i = 0; i < inputs.length; i++) {
-	var element = inputs[i];
+Array.from(inputsRaw).forEach((element) => {
 	// when the input changes, save the state as
 	// the last thing opened, 'default'
 	element.onchange = saveDefault;
@@ -84,9 +79,7 @@ for (var i = 0; i < inputs.length; i++) {
 		submitInput.cloneNode(),
 		element.nextSibling
 	);
-}
-// chrome seems to size the popup strangely
-document.getElementsByTagName("html")[0].style.height = form.offsetHeight;
+});
 
 //
 
@@ -130,3 +123,5 @@ function tap() {
 	}
 }
 document.getElementById("tap").onclick = tap;
+
+//
