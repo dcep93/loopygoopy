@@ -18,7 +18,7 @@ var functions = { start, stop };
 var state = {};
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-	console.log("receive", message, sender);
+	console.log("receive", message);
 	if (message.type === "init") {
 		state.element = get();
 		if (state.element) {

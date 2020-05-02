@@ -1,6 +1,7 @@
 const DEFAULT = "default";
 
 // chrome seems to size the popup strangely
+var form = document.getElementById("form");
 document.getElementsByTagName("html")[0].style.height = form.offsetHeight;
 //
 
@@ -35,8 +36,6 @@ function allowNonValidPage() {
 }
 
 //
-
-var form = document.getElementById("form");
 
 function saveForm(id) {
 	var formData = new FormData(form);
@@ -83,6 +82,17 @@ Array.from(inputsRaw).forEach((element) => {
 
 //
 
+var startTime = document.getElementById("st");
+var endTime = document.getElementById("et");
+function move(direction) {
+	var magnitude = endTime.value - startTime.value;
+	var shift = magnitude * direction;
+	startTime.value += shift;
+	endTime.value += shift;
+}
+
+//
+
 function sendMessage(type) {
 	var message = saveForm(mediaId);
 	var data = { type, message };
@@ -99,12 +109,11 @@ function sendMessage(type) {
 	return false;
 }
 
-var buttonNames = ["start", "stop", "next", "previous"];
-buttonNames.forEach((type) => {
-	document.getElementById(type).onclick = () => sendMessage(type);
-});
-
-form.onsubmit = () => sendMessage("start");
+document.getElementById("start").onclick = form.onsubmit = () =>
+	sendMessage("start");
+document.getElementById("stop").onclick = () => sendMessage("stop");
+document.getElementById("next").onclick = () => move(1);
+document.getElementById("previous").onclick = () => move(-1);
 
 //
 

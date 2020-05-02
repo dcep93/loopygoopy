@@ -6,6 +6,7 @@
 #form {
 	display: flex;
 	height: auto;
+	margin: 0;
 }
 
 #buttons {
@@ -14,11 +15,14 @@
 }
 
 #tap_parent {
-	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 }
 
 #tap {
 	font-size: large;
+	width: 6ch;
 }
 
 #notes_div {
