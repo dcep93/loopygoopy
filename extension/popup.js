@@ -69,15 +69,15 @@ var inputsRaw = document.getElementsByTagName("input");
 Array.from(inputsRaw).forEach((element) => {
 	// when the input changes, save the state as
 	// the last thing opened, 'default'
-	element.oninput = calculate;
-	element.onchange = saveDefault;
+	element.oninput = element.onchange = calculateAndSaveDefault;
 	element.parentElement.insertBefore(
 		submitInput.cloneNode(),
 		element.nextSibling
 	);
 });
 
-function saveDefault() {
+function calculateAndSaveDefault() {
+	calculate();
 	saveForm(DEFAULT);
 }
 
@@ -153,19 +153,19 @@ function calculate() {
 			calculateEndTime();
 			return;
 		default:
-			alert("d");
 			return;
 	}
 }
 
 function calculateBPL() {
-	var bpl = (60 * getDuration()) / parseFloat(bpm.value);
-	if (bpl <= 0) return;
-	bplInput.value = bpl;
+	var bpl = (parseFloat(bpmInput.value) * getDuration()) / 60;
+	if (bpl <= 0.01 || !isFinite(bpl)) return;
+	bplInput.value = bpl.toFixed(2);
 }
 
 function calculateEndTime() {
 	var duration = (60 * bplInput.value) / bpmInput.value;
-	if (duration <= 0) return;
-	endTime.value = parseFloat(startTime.value) + duration;
+	if (duration <= 0.01 || !isFinite(duration)) return;
+	var endTimeValue = parseFloat(startTime.value) + duration;
+	endTime.value = endTimeValue.toFixed(2);
 }
