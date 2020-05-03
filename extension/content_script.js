@@ -49,6 +49,7 @@ function get() {
 //
 
 function start() {
+	if (state.value.bpl < 0) return alert("invalid payload");
 	stop();
 	if (state.value.st !== undefined)
 		state.element.currentTime = state.value.st;
