@@ -166,6 +166,6 @@ function calculateBPL() {
 
 function calculateEndTime() {
 	var duration = (60 * bplInput.value) / bpmInput.value;
-	if (duration < 0) return;
+	if (duration <= 0) return;
 	endTime.value = parseFloat(startTime.value) + duration;
 }
