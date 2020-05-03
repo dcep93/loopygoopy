@@ -86,10 +86,14 @@ function saveDefault() {
 var startTime = document.getElementById("st");
 var endTime = document.getElementById("et");
 function move(direction) {
-	var magnitude = endTime.value - startTime.value;
+	var magnitude = getDuration();
 	var shift = magnitude * direction;
-	startTime.value += shift;
-	endTime.value += shift;
+	startTime.value = parseFloat(startTime.value) + shift;
+	endTime.value = parseFloat(endTime.value) + shift;
+}
+
+function getDuration() {
+	return endTime.value - startTime.value;
 }
 
 //
@@ -155,11 +159,13 @@ function calculate() {
 }
 
 function calculateBPL() {
-	bplInput.value = Math.random();
-	return;
+	var bpl = (60 * getDuration()) / parseFloat(bpm.value);
+	if (bpl <= 0) return;
+	bplInput.value = bpl;
 }
 
 function calculateEndTime() {
-	endTime.value = Math.random();
-	return;
+	var duration = (60 * bplInput.value) / bpmInput.value;
+	if (duration < 0) return;
+	endTime.value = parseFloat(startTime.value) + duration;
 }
