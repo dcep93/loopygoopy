@@ -1,8 +1,8 @@
 const DEFAULT = "default";
 
 // chrome seems to size the popup strangely
-var form = document.getElementById("form");
-document.getElementsByTagName("html")[0].style.height = form.offsetHeight;
+var documentHeight = document.getElementById("form").offsetHeight;
+document.getElementsByTagName("html")[0].style.height = documentHeight;
 //
 
 var tabId;
@@ -24,6 +24,7 @@ chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
 
 function init(response) {
 	mediaId = response.mediaId;
+	loadForm(mediaId);
 	// send message to background
 	chrome.runtime.sendMessage({ tabId });
 }
@@ -37,6 +38,7 @@ function allowNonValidPage() {
 
 //
 
+var form = document.getElementById("form");
 function saveForm(id) {
 	var formData = new FormData(form);
 	var message = {};
@@ -55,6 +57,7 @@ function loadForm(id) {
 		console.log("set", id, object);
 		for (var name in object) form[name].value = object[name];
 	});
+	loadProfiles();
 }
 
 loadForm(DEFAULT);
@@ -67,13 +70,14 @@ submitInput.type = "submit";
 submitInput.style = "display: none";
 var inputsRaw = document.getElementsByTagName("input");
 Array.from(inputsRaw).forEach((element) => {
-	// when the input changes, save the state as
-	// the last thing opened, 'default'
-	element.oninput = element.onchange = calculateAndSaveDefault;
+	if (element.parentElement.id == "profile_parent") return;
 	element.parentElement.insertBefore(
 		submitInput.cloneNode(),
 		element.nextSibling
 	);
+	// when the input changes, save the state as
+	// the last thing opened, 'default'
+	element.oninput = element.onchange = calculateAndSaveDefault;
 });
 
 function calculateAndSaveDefault() {
@@ -99,6 +103,10 @@ function getDuration() {
 //
 
 function sendMessage(type) {
+	if (document.activeElement === profileInput) {
+		saveProfile();
+		return false;
+	}
 	var message = saveForm(mediaId);
 	var data = { type, message };
 	if (tabId !== undefined) {
@@ -168,4 +176,65 @@ function calculateEndTime() {
 	if (duration <= 0.01 || !isFinite(duration)) return;
 	var endTimeValue = parseFloat(startTime.value) + duration;
 	endTime.value = endTimeValue.toFixed(2);
+}
+
+//
+
+var profiles = {};
+var profileInput = document.getElementById("profile");
+var profilesSelect = document.getElementById("profiles");
+document.getElementById("save_profile").onclick = saveProfile;
+document.getElementById("delete_profile").onclick = deleteProfile;
+function saveProfile() {
+	if (!mediaId) return alert("cannot save for unknown media");
+	var profileName = profileInput.value;
+	var data = saveForm();
+	profiles[profileName] = data;
+	saveProfileHelper();
+	alert("saved");
+}
+
+function saveProfileHelper() {
+	var id = `profile-${mediaId}`;
+	chrome.storage.sync.set({ [id]: profiles });
+	loadProfiles();
+}
+
+function loadProfiles() {
+	if (!mediaId) {
+		profiles = {};
+		displayProfiles();
+		return;
+	}
+	var id = `profile-${mediaId}`;
+	chrome.storage.sync.get([id], function (result) {
+		profiles = result[id];
+		displayProfiles();
+	});
+}
+
+function displayProfiles() {
+	// uhh idk
+	if (!profilesSelect) return;
+	profilesSelect.innerHTML = "";
+	for (p in profiles) {
+		var option = document.createElement("option");
+		option.text = p;
+		profilesSelect.add(option);
+	}
+	profilesSelect.value = profileInput.value;
+	profilesSelect.onchange = loadFromProfile.bind(profilesSelect);
+}
+
+function loadFromProfile() {
+	var selected = profilesSelect.options[profilesSelect.selectedIndex].value;
+	var profileValues = profiles[selected];
+	for (var name in profileValues) form[name].value = profileValues[name];
+}
+
+function deleteProfile() {
+	var selected = profilesSelect.options[profilesSelect.selectedIndex].value;
+	delete profiles[selected];
+	saveProfileHelper();
+	alert(`deleted ${selected}`);
 }

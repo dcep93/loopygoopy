@@ -40,9 +40,17 @@
 		<button type="button" id="next">Next</button>
 		<button type="button" id="previous">Previous</button>
 	</div>
-	<div id="notes_div">
+	<div class="column" id="notes_div">
 		<div><span>Notes:</span></div>
 		<textarea id="notes" name="notes"></textarea>
+	</div>
+	<div class="column">
+		<div id="profile_parent">
+			Profile:&nbsp;<input id="profile" size="10" />
+		</div>
+		<button type="button" id="save_profile">Save</button>
+		<button type="button" id="delete_profile">Delete</button>
+		<select id="profiles"></select>
 	</div>
 </form>
 <link rel="stylesheet" type="text/css" href="popup.css" />

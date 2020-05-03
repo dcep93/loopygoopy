@@ -1,12 +1,15 @@
-.column {
-	display: inline-block;
-	margin: 5px;
+#top {
+	height: auto;
+	margin: 0;
 }
 
 #form {
 	display: flex;
-	height: auto;
-	margin: 0;
+}
+
+.column {
+	display: inline-block;
+	margin: 5px;
 }
 
 #buttons {
@@ -32,4 +35,8 @@
 
 #notes {
 	flex-grow: 1;
+}
+
+#profile_parent {
+	display: flex;
 }
