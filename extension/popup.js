@@ -10,8 +10,14 @@ var mediaId;
 chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
 	var tabId_ = tabs[0].id;
 	chrome.tabs.sendMessage(tabId_, { type: "init", tabId }, (response) => {
-		if (response === undefined || response === null) {
+		if (response === undefined) {
 			allowNonValidPage();
+			chrome.runtime.sendMessage(null, function (response) {
+				mediaId = response.mediaId;
+				loadForm(mediaId);
+			});
+		} else if (response === null) {
+			alert("uh oh something went wrong");
 		} else if (response.success) {
 			tabId = tabId_;
 			init(response);
@@ -26,7 +32,7 @@ function init(response) {
 	mediaId = response.mediaId;
 	loadForm(mediaId);
 	// send message to background
-	chrome.runtime.sendMessage({ tabId });
+	chrome.runtime.sendMessage({ tabId, mediaId });
 }
 
 function allowNonValidPage() {
@@ -191,7 +197,7 @@ function saveProfile() {
 	var data = saveForm();
 	profiles[profileName] = data;
 	saveProfileHelper();
-	alert("saved");
+	alert(`saved ${profileName}`);
 }
 
 function saveProfileHelper() {
