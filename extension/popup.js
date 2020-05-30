@@ -215,6 +215,7 @@ function loadProfiles() {
 	var id = `profile-${mediaId}`;
 	chrome.storage.sync.get([id], function (result) {
 		profiles = result[id];
+		if (!profiles) profiles = {};
 		displayProfiles();
 	});
 }
