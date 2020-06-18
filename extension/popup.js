@@ -237,6 +237,7 @@ function loadFromProfile() {
 	var selected = profilesSelect.options[profilesSelect.selectedIndex].value;
 	var profileValues = profiles[selected];
 	for (var name in profileValues) form[name].value = profileValues[name];
+	profileInput.value = selected;
 }
 
 function deleteProfile() {
