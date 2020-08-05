@@ -98,8 +98,8 @@ var endTime = document.getElementById("et");
 function move(direction) {
   var magnitude = getDuration();
   var shift = magnitude * direction;
-  startTime.value = parseFloat(startTime.value) + shift;
-  endTime.value = parseFloat(endTime.value) + shift;
+  startTime.value = (parseFloat(startTime.value) + shift).toFixed(2);
+  endTime.value = (parseFloat(endTime.value) + shift).toFixed(2);
 }
 
 function getDuration() {
