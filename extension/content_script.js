@@ -1,13 +1,13 @@
 const TIME_BEFORE_START = 1000;
 if (window.location.host === "open.spotify.com") {
-	const url = chrome.runtime.getURL("inject_spotify.js");
-	fetch(url)
-		.then((response) => response.text())
-		.then((code) => {
-			var script = document.createElement("script");
-			script.textContent = code;
-			document.head.appendChild(script);
-		});
+  const url = chrome.runtime.getURL("inject_spotify.js");
+  fetch(url)
+    .then((response) => response.text())
+    .then((code) => {
+      var script = document.createElement("script");
+      script.textContent = code;
+      document.head.appendChild(script);
+    });
 }
 
 // types: start, stop, next, previous
@@ -18,105 +18,103 @@ var functions = { start, stop };
 var state = {};
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-	console.log("receive", message);
-	if (message.type === "init") {
-		state.element = get();
-		if (state.element) {
-			var duration = state.element.duration;
-			if (duration) {
-				var mediaId = `${window.location.host}-${state.element.duration}`;
-				sendResponse({ success: true, mediaId });
-				return;
-			}
-		}
-		sendResponse("no media element found - try starting it first");
-	} else {
-		state.value = message.message;
-		var type = message.type;
-		functions[type]();
-		sendResponse(true);
-	}
+  console.log("receive", message);
+  if (message.type === "init") {
+    state.element = get();
+    if (state.element) {
+      var duration = state.element.duration;
+      if (duration) {
+        var mediaId = `${window.location.host}-${state.element.duration}`;
+        sendResponse({ success: true, mediaId });
+        return;
+      }
+    }
+    sendResponse("no media element found - try starting it first");
+  } else {
+    state.value = message.message;
+    var type = message.type;
+    functions[type]();
+    sendResponse(true);
+  }
 });
 
 function get() {
-	var video = document.getElementsByTagName("video")[0];
-	if (video) return video;
-	var audio = document.getElementsByTagName("audio")[0];
-	if (audio) return audio;
-	return false;
+  var video = document.getElementsByTagName("video")[0];
+  if (video) return video;
+  var audio = document.getElementsByTagName("audio")[0];
+  if (audio) return audio;
+  return false;
 }
 
 //
 
 function start() {
-	if (state.value.bpl < 0) return alert("invalid payload");
-	stop();
-	if (state.value.st !== undefined)
-		state.element.currentTime = state.value.st;
-	state.currentTime = state.element.currentTime;
-	state.element.playbackRate = state.value.tc;
-	state.loop = 0;
-	state.timeout = setTimeout(begin, TIME_BEFORE_START);
+  if (state.value.bpl < 0) return alert("invalid payload");
+  stop();
+  if (state.value.st !== undefined) state.element.currentTime = state.value.st;
+  state.currentTime = state.element.currentTime;
+  state.element.playbackRate = state.value.tc;
+  state.loop = 0;
+  state.timeout = setTimeout(begin, TIME_BEFORE_START);
 }
 
 function stop() {
-	if (state.title !== undefined) {
-		document.title = state.title;
-		delete state.title;
-	}
-	clearTimeout(state.timeout);
-	state.timeout = null;
-	state.element.pause();
-	if (state.currentTime !== undefined) {
-		state.element.currentTime = state.currentTime;
-	} else {
-		state.currentTime = state.element.currentTime;
-	}
-	state.element.playbackRate = 1;
+  if (state.title !== undefined) {
+    document.title = state.title;
+    delete state.title;
+  }
+  clearTimeout(state.timeout);
+  state.timeout = null;
+  state.element.pause();
+  if (state.currentTime !== undefined) {
+    state.element.currentTime = state.currentTime;
+  } else {
+    state.currentTime = state.element.currentTime;
+  }
+  state.element.playbackRate = 1;
 }
 
 //
 
 function begin() {
-	state.element.currentTime = state.currentTime;
-	state.element.play();
-	if (state.title === undefined) state.title = document.title;
-	var playbackPercent = state.element.playbackRate * 100;
-	document.title = `${playbackPercent.toFixed(2)}% - ${state.title}`;
-	var ms = getMs(state.value.bpl);
-	state.timeout = setTimeout(finish, ms);
+  state.element.currentTime = state.currentTime;
+  state.element.play();
+  if (state.title === undefined) state.title = document.title;
+  var playbackPercent = state.element.playbackRate * 100;
+  document.title = `${playbackPercent.toFixed(2)}% - ${state.title}`;
+  var ms = getMs(state.value.bpl);
+  state.timeout = setTimeout(finish, ms);
 }
 
 function finish() {
-	if (state.element.paused) return stop();
-	countIn();
+  if (state.element.paused) return stop();
+  countIn();
 }
 
 function countIn() {
-	state.loop += 1;
-	state.element.playbackRate += getDiff(
-		state.value.tc,
-		state.value.tt,
-		state.value.tl
-	);
-	var ms = getMs(state.value.bpr);
-	if (ms) {
-		state.element.pause();
-		state.timeout = setTimeout(begin, ms);
-	} else {
-		begin();
-	}
+  state.loop += 1;
+  state.element.playbackRate += getDiff(
+    state.value.tc,
+    state.value.tt,
+    state.value.tl
+  );
+  var ms = getMs(state.value.bpr);
+  if (ms) {
+    state.element.pause();
+    state.timeout = setTimeout(begin, ms);
+  } else {
+    begin();
+  }
 }
 
 function getMs(beats) {
-	var msPerMinute = 60 * 1000;
-	return (
-		(beats * msPerMinute) / (state.value.bpm * state.element.playbackRate)
-	);
+  var msPerMinute = 60 * 1000;
+  return (beats * msPerMinute) / (state.value.bpm * state.element.playbackRate);
 }
 
 function getDiff(start, target, loops) {
-	if (state.loop > loops) return 0;
-	var range = target - start;
-	return range / loops;
+  if (!target) return 0;
+  if (state.loop > loops) return 0;
+  var range = target - start;
+  return range / loops;
 }

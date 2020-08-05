@@ -1,5 +1,6 @@
 var tabId;
 var mediaId;
+console.log("background");
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 	console.log(tabId, message, sender);
 	if (sender.tab !== undefined) return;
