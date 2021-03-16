@@ -58,7 +58,7 @@ function saveForm(id) {
 
 function loadForm(id) {
   console.log("load", id);
-  chrome.storage.sync.get([id], function (result) {
+  chrome.storage.sync.get(id, function (result) {
     var object = result[id];
     console.log("set", id, object);
     for (var name in object) form[name].value = object[name];

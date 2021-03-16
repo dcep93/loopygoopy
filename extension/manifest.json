@@ -15,6 +15,7 @@
 	"content_scripts": [
 		{
 			"matches": [
+				"https://dcep93.github.io/moviedate/*",
 				"https://open.spotify.com/*",
 				"https://www.youtube.com/*",
 				"file:///*"
