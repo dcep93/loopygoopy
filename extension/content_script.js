@@ -65,6 +65,7 @@ function stop() {
   }
   clearTimeout(state.timeout);
   state.timeout = null;
+  console.log('stop pause')
   state.element.pause();
   if (state.currentTime !== undefined) {
     state.element.currentTime = state.currentTime;
@@ -78,6 +79,7 @@ function stop() {
 
 function begin() {
   state.element.currentTime = state.currentTime;
+  console.log('begin play')
   state.element.play();
   if (state.title === undefined) state.title = document.title;
   var playbackPercent = state.element.playbackRate * 100;
@@ -100,6 +102,7 @@ function countIn() {
   );
   var ms = getMs(state.value.bpr);
   if (ms) {
+    console.log('countIn pause')
     state.element.pause();
     state.timeout = setTimeout(begin, ms);
   } else {
