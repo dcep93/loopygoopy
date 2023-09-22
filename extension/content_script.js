@@ -1,14 +1,4 @@
 const TIME_BEFORE_START = 1000;
-if (window.location.host === "open.spotify.com") {
-  const url = chrome.runtime.getURL("inject_spotify.js");
-  fetch(url)
-    .then((response) => response.text())
-    .then((code) => {
-      var script = document.createElement("script");
-      script.textContent = code;
-      document.head.appendChild(script);
-    });
-}
 
 // types: start, stop, next, previous
 // fields: bpm, bpl, bpr, tc, tt, tl, st
@@ -65,7 +55,7 @@ function stop() {
   }
   clearTimeout(state.timeout);
   state.timeout = null;
-  console.log('stop pause')
+  console.log("stop pause");
   state.element.pause();
   if (state.currentTime !== undefined) {
     state.element.currentTime = state.currentTime;
@@ -79,7 +69,7 @@ function stop() {
 
 function begin() {
   state.element.currentTime = state.currentTime;
-  console.log('begin play')
+  console.log("begin play");
   state.element.play();
   if (state.title === undefined) state.title = document.title;
   var playbackPercent = state.element.playbackRate * 100;
@@ -102,7 +92,7 @@ function countIn() {
   );
   var ms = getMs(state.value.bpr);
   if (ms) {
-    console.log('countIn pause')
+    console.log("countIn pause");
     state.element.pause();
     state.timeout = setTimeout(begin, ms);
   } else {

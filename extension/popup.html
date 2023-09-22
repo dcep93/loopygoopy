@@ -1,57 +1,56 @@
 <form id="form">
-	<div class="column">
-		<span
-			>Original BPM:
-			<input id="bpm" name="bpm" type="number" step="0.01" value="80"
-		/></span>
-		<span
-			>Beats Per Loop:
-			<input id="bpl" name="bpl" type="number" step="0.01" value="4"
-		/></span>
-		<span
-			>Beats to Rest:
-			<input name="bpr" type="number" step="0.01" value="0"
-		/></span>
-	</div>
-	<div class="column">
-		<div>Start Time:</div>
-		<input id="st" name="st" type="number" step="0.01" value="" />
-		<div>End Time:</div>
-		<input id="et" name="et" type="number" step="0.01" value="" />
-		<div id="tap_parent">
-			<span>Tap For <br />BPM:</span
-			><span><button type="button" id="tap">Tap</button></span>
-		</div>
-	</div>
-	<div class="column">
-		<span
-			>Tempo Change: <input name="tc" type="number" step="0.01" value="1"
-		/></span>
-		<span
-			>Tempo Target: <input name="tt" type="number" step="0.01" value="1"
-		/></span>
-		<span
-			>Tempo Loops: <input name="tl" type="number" step="0.01" value="0"
-		/></span>
-	</div>
-	<div class="column" id="buttons">
-		<button type="button" id="start">Start</button>
-		<button type="button" id="stop">Stop</button>
-		<button type="button" id="next">Next</button>
-		<button type="button" id="previous">Previous</button>
-	</div>
-	<div class="column">
-		<div id="profile_parent">
-			Profile:&nbsp;<input id="profile" size="10" />
-		</div>
-		<button type="button" id="save_profile">Save</button>
-		<button type="button" id="delete_profile">Delete</button>
-		<select id="profiles"></select>
-	</div>
-	<div class="column" id="notes_div">
-		<div><span>Notes:</span></div>
-		<textarea id="notes" name="notes"></textarea>
-	</div>
+  <div>
+    <span
+      >Original BPM:
+      <input id="bpm" name="bpm" type="number" step="0.01" value="80"
+    /></span>
+    <span
+      >Beats Per Loop:
+      <input id="bpl" name="bpl" type="number" step="0.01" value="4"
+    /></span>
+    <span
+      >Beats to Rest: <input name="bpr" type="number" step="0.01" value="0"
+    /></span>
+  </div>
+  <div>
+    <div>Start Time:</div>
+    <input id="st" name="st" type="number" step="0.01" value="" />
+    <div>End Time:</div>
+    <input id="et" name="et" type="number" step="0.01" value="" />
+    <div id="tap_parent">
+      <span>Tap For <br />BPM:</span
+      ><span><button type="button" id="tap">Tap</button></span>
+    </div>
+  </div>
+  <div>
+    <span
+      >Tempo Change: <input name="tc" type="number" step="0.01" value="1"
+    /></span>
+    <span
+      >Tempo Target: <input name="tt" type="number" step="0.01" value="1"
+    /></span>
+    <span
+      >Tempo Loops: <input name="tl" type="number" step="0.01" value="0"
+    /></span>
+  </div>
+  <div id="buttons">
+    <button type="button" id="start">Start</button>
+    <button type="button" id="stop">Stop</button>
+    <button type="button" id="next">Next</button>
+    <button type="button" id="previous">Previous</button>
+  </div>
+  <div>
+    <div id="profile_parent">
+      Profile:&nbsp;<input id="profile" size="10" />
+    </div>
+    <button type="button" id="save_profile">Save</button>
+    <button type="button" id="delete_profile">Delete</button>
+    <select id="profiles"></select>
+  </div>
+  <div id="notes_div">
+    <div><span>Notes:</span></div>
+    <textarea id="notes" name="notes"></textarea>
+  </div>
 </form>
 <link rel="stylesheet" type="text/css" href="popup.css" />
 <script type="text/javascript" src="popup.js"></script>

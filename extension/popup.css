@@ -1,37 +1,36 @@
-#top {
-	height: auto;
-	margin: 0;
-}
-
 #form {
-	display: flex;
+  display: inline-flex;
+  overflow: scroll;
 }
 
-.column {
-	display: inline-block;
-	margin: 5px;
+#form > * {
+  margin: 5px;
+}
+
+input {
+  width: 100px;
 }
 
 #buttons {
-	text-align: center;
-	align-self: center;
+  text-align: center;
+  align-self: center;
 }
 
 #tap_parent {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 #notes_div {
-	display: flex;
-	flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 #notes {
-	flex-grow: 1;
+  flex-grow: 1;
 }
 
 #profile_parent {
-	display: flex;
+  display: flex;
 }
