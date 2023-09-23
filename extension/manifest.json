@@ -1,7 +1,7 @@
 {
   "name": "Loopy Goopy",
-  "description": "Practice tool that finds audio/video tags and allows you to loop or control speed.",
-  "version": "1.2.0",
+  "description": "Musician practice tool that finds audio/video tags and allows you to loop or control speed.",
+  "version": "2.0.0",
   "permissions": ["storage"],
   "icons": {
     "16": "loopy_goopy_full.png",
@@ -9,8 +9,7 @@
     "128": "loopy_goopy_128.png"
   },
   "background": {
-    "scripts": ["background.js"],
-    "persistent": false
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
@@ -18,9 +17,9 @@
       "js": ["content_script.js"]
     }
   ],
-  "browser_action": {
+  "action": {
     "default_popup": "popup.html",
     "default_icon": "loopy_goopy_full.png"
   },
-  "manifest_version": 2
+  "manifest_version": 3
 }

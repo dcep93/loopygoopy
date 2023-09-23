@@ -1,6 +1,5 @@
 #form {
   display: inline-flex;
-  overflow: scroll;
 }
 
 #form > * {

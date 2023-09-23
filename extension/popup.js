@@ -192,7 +192,7 @@ document.getElementById("delete_profile").onclick = deleteProfile;
 function saveProfile() {
   if (!mediaId) return alert("cannot save for unknown media");
   var profileName = profileInput.value;
-  var data = saveForm();
+  var data = saveForm(mediaId);
   profiles[profileName] = data;
   saveProfileHelper();
   alert(`saved ${profileName}`);
