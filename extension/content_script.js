@@ -85,11 +85,15 @@ function finish() {
 
 function countIn() {
   state.loop += 1;
-  state.element.playbackRate += getDiff(
-    state.value.tc,
-    state.value.tt,
-    state.value.tl
-  );
+  if (state.value.tt) {
+    const ratio = state.loop / state.value.tl;
+    if (ratio === 1) {
+      state.element.playbackRate = state.value.tt;
+    } else if (ratio < 1) {
+      state.element.playbackRate =
+        parseFloat(state.value.tc) + (state.value.tt - state.value.tc) * ratio;
+    }
+  }
   var ms = getMs(state.value.bpr);
   if (ms) {
     console.log("countIn pause");
@@ -103,11 +107,4 @@ function countIn() {
 function getMs(beats) {
   var msPerMinute = 60 * 1000;
   return (beats * msPerMinute) / (state.value.bpm * state.element.playbackRate);
-}
-
-function getDiff(start, target, loops) {
-  if (!target) return 0;
-  if (state.loop > loops) return 0;
-  var range = target - start;
-  return range / loops;
 }
