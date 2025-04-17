@@ -1,4 +1,4 @@
-import { Field, updateInput } from "./brain";
+import { Field, updateInput } from "./utils";
 
 export default function Tap() {
   return (

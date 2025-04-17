@@ -1,5 +1,5 @@
-import { Field, getRefs, getState, updateInput } from "./brain";
 import { storageKey } from "./storage";
+import { Field, getRefs, getState, updateInput } from "./utils";
 
 // @ts-ignore
 import { debounce } from "lodash"; // todo
