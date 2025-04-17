@@ -15,7 +15,8 @@ export default function NumberInput(props: { field: Field }) {
         {props.field === Field.count__in_style ? (
           <select
             style={{ width: "100%" }}
-            defaultValue={CountInStyle[state[props.field]]}
+            defaultValue={CountInStyle[parseInt(state[props.field])]}
+            onChange={(e) => alert(e.target.value)} // todo
           >
             {Object.keys(CountInStyle)
               .map((k) => parseInt(k))

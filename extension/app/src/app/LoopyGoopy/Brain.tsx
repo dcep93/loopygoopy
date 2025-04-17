@@ -11,6 +11,7 @@ export enum Field {
   train_loops,
   start_time,
   end_time,
+  notes,
 }
 
 export enum CountInStyle {
@@ -33,7 +34,7 @@ export const refs = Object.fromEntries(
     .map((k) => [k, React.createRef() as React.RefObject<HTMLInputElement>])
 );
 
-export const state: { [f in Field]: number } = load() || {};
+export const state: { [f in Field]: string } = load() || {};
 
 export function updateInput(
   field: Field,
@@ -42,7 +43,7 @@ export function updateInput(
 ) {
   const value = parseFloat(valueStr);
   if (!(value < Number.POSITIVE_INFINITY)) return;
-  state[field] = value;
+  state[field] = valueStr;
   save(state);
   if (isRecursive) {
     refs[field].current.value = valueStr;
@@ -54,8 +55,9 @@ export function updateInput(
       updateInput(
         Field.end_time,
         (
-          (state[Field.beats_per_loop] * 60) / state[Field.original_BPM] +
-          state[Field.start_time]
+          (parseFloat(state[Field.beats_per_loop]) * 60) /
+            parseFloat(state[Field.original_BPM]) +
+          parseFloat(state[Field.start_time])
         ).toFixed(2),
         true
       );
@@ -64,8 +66,9 @@ export function updateInput(
       updateInput(
         Field.beats_per_loop,
         (
-          ((state[Field.end_time] - state[Field.start_time]) *
-            state[Field.original_BPM]) /
+          ((parseFloat(state[Field.end_time]) -
+            parseFloat(state[Field.start_time])) *
+            parseFloat(state[Field.original_BPM])) /
           60
         ).toFixed(2),
         true
