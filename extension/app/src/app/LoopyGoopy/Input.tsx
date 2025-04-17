@@ -1,6 +1,6 @@
 import { CountInStyle, Field, refs, state, updateInput } from "./Brain";
 
-export default function NumberInput(props: { field: Field }) {
+export default function Input(props: { field: Field }) {
   return (
     <div
       style={{
@@ -15,14 +15,8 @@ export default function NumberInput(props: { field: Field }) {
         {props.field === Field.count__in_style ? (
           <select
             style={{ width: "100%" }}
-            defaultValue={CountInStyle[parseInt(state[props.field])]}
-            onChange={(e) =>
-              updateInput(
-                props.field,
-                CountInStyle[e.target.value as unknown as number],
-                false
-              )
-            }
+            defaultValue={state[props.field]}
+            onChange={(e) => updateInput(props.field, e.target.value, false)}
           >
             {Object.keys(CountInStyle)
               .map((k) => parseInt(k))

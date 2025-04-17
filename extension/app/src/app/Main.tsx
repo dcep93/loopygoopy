@@ -1,7 +1,7 @@
 import ActionButton from "./LoopyGoopy/ActionButton";
 import { Action, Field } from "./LoopyGoopy/Brain";
+import Input from "./LoopyGoopy/Input";
 import Notes from "./LoopyGoopy/Notes";
-import NumberInput from "./LoopyGoopy/NumberInput";
 import Tap from "./LoopyGoopy/Tap";
 
 const padding = <div style={{ width: "2em" }}></div>;
@@ -16,22 +16,22 @@ export default function Main() {
       }}
     >
       <div>
-        <NumberInput field={Field.original_BPM} />
-        <NumberInput field={Field.beats_per_loop} />
-        <NumberInput field={Field.count__in_beats} />
-        <NumberInput field={Field.count__in_style} />
+        <Input field={Field.original_BPM} />
+        <Input field={Field.beats_per_loop} />
+        <Input field={Field.count__in_beats} />
+        <Input field={Field.count__in_style} />
       </div>
       {padding}
       <div>
-        <NumberInput field={Field.start_time} />
-        <NumberInput field={Field.end_time} />
+        <Input field={Field.start_time} />
+        <Input field={Field.end_time} />
         <Tap />
       </div>
       {padding}
       <div>
-        <NumberInput field={Field.tempo_change} />
-        <NumberInput field={Field.train_target} />
-        <NumberInput field={Field.train_loops} />
+        <Input field={Field.tempo_change} />
+        <Input field={Field.train_target} />
+        <Input field={Field.train_loops} />
       </div>
       {padding}
       <div

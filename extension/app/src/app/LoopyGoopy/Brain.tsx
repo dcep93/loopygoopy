@@ -48,7 +48,7 @@ export function updateInput(
       delete state[field];
       save(state);
     }
-    return;
+    if (![Field.count__in_style, Field.notes].includes(field)) return;
   }
   state[field] = valueStr;
   save(state);
