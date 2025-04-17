@@ -1,11 +1,5 @@
 import { save } from "./storage";
-import {
-  CountInStyle,
-  Field,
-  getNumberState,
-  getRefs,
-  getState,
-} from "./utils";
+import { CountInStyle, Field, getRefs, getState } from "./utils";
 
 export default function Input(props: { field: Field }) {
   return (
@@ -92,4 +86,13 @@ export function updateInput(
       );
       break;
   }
+}
+
+export function getNumberState() {
+  return Object.fromEntries(
+    Object.entries(getState())
+      .map(([k, v]) => ({ k, v: parseFloat(v) }))
+      .filter(({ v }) => !Number.isNaN(v))
+      .map(({ k, v }) => [k, v])
+  );
 }

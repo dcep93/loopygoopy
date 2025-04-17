@@ -1,7 +1,7 @@
 import { MessageType } from "./contentScript";
-import { updateInput } from "./Input";
+import { getNumberState, updateInput } from "./Input";
 import { sendMessage } from "./message";
-import { Action, Field, getNumberState } from "./utils";
+import { Action, Field } from "./utils";
 
 export default function ActionButton(props: { action: Action }) {
   return (

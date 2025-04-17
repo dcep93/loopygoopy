@@ -1,3 +1,7 @@
+// todo
+// initialize listener
+// get tabid, mediaid
+// fetch from storage
 export const storageKey = "loopygoopy";
 const version = "v0.0.1";
 

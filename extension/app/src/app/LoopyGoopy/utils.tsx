@@ -27,32 +27,23 @@ export enum Action {
   previous,
 }
 
-var refs: { [field: string]: React.RefObject<HTMLInputElement> };
+var _refs: { [field: string]: React.RefObject<HTMLInputElement> };
 export function getRefs() {
-  if (!refs) {
-    refs = Object.fromEntries(
+  if (!_refs) {
+    _refs = Object.fromEntries(
       Object.keys(Field)
         .map((k) => parseInt(k))
         .filter((k) => !Number.isNaN(k))
         .map((k) => [k, React.createRef() as React.RefObject<HTMLInputElement>])
     );
   }
-  return refs;
+  return _refs;
 }
 
-var state: { [f in Field]: string };
+var _state: { [f in Field]: string };
 export function getState() {
-  if (!state) {
-    state = load() || {};
+  if (!_state) {
+    _state = load() || {};
   }
-  return state;
-}
-
-export function getNumberState() {
-  return Object.fromEntries(
-    Object.entries(getState())
-      .map(([k, v]) => ({ k, v: parseFloat(v) }))
-      .filter(({ v }) => !Number.isNaN(v))
-      .map(({ k, v }) => [k, v])
-  );
+  return _state;
 }

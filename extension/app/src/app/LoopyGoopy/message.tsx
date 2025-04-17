@@ -1,35 +1,75 @@
-export function sendMessage(data: any) {
-  if (tabId !== undefined) {
-    chrome.tabs.sendMessage(tabId, data);
-  } else {
-    chrome.runtime.sendMessage(
-      data,
-      (response) => response.alert && alert(response.alert)
-    );
+import { MessageType } from "./contentScript";
+
+declare global {
+  interface Window {
+    chrome: any;
   }
 }
 
-export function listenForMessage(
-  f: (mType: MessageType, payload: any) => void
-) {
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("receive", message);
-    if (message.type === "init") {
-      state.element = get();
-      if (state.element) {
-        var duration = state.element.duration;
-        if (duration) {
-          var mediaId = `${window.location.host}-${state.element.duration}`;
-          sendResponse({ success: true, mediaId });
-          return;
-        }
-      }
-      sendResponse("no media element found - try starting it first");
+var _tab: { id?: string; mediaId?: string };
+function getTab(): Promise<typeof _tab> {
+  return Promise.resolve()
+    .then(() =>
+      _tab !== undefined
+        ? null
+        : new Promise<{}>((resolve, reject) => {
+            window.chrome.tabs.query(
+              { currentWindow: true, active: true },
+              (tabs: { id: string }[]) => {
+                const tabId = tabs[0].id;
+                window.chrome.tabs.sendMessage(
+                  tabId,
+                  { mType: MessageType.init, tabId },
+                  (response: any) => {
+                    if (response === undefined) {
+                      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                      window.chrome.runtime.lastError;
+                      window.chrome.runtime.sendMessage(
+                        null,
+                        (bkResponse: typeof _tab) => resolve(bkResponse)
+                      );
+                    } else if (response === null) {
+                      reject("message.response.null");
+                    } else if (response.success) {
+                      window.chrome.runtime.sendMessage(_tab);
+                      resolve({ id: tabId, ...response });
+                    } else {
+                      window.close();
+                      reject(JSON.stringify(response));
+                    }
+                  }
+                );
+              }
+            );
+          })
+            .then((__tab) => (_tab = __tab))
+            .catch((e) => {
+              alert(e);
+              throw e;
+            })
+    )
+    .then(() => _tab);
+}
+
+export function sendMessage(data: any) {
+  getTab().then((tab) => {
+    if (tab.id !== null) {
+      window.chrome.tabs.sendMessage(tab.id, data);
     } else {
-      state.value = message.message;
-      var type = message.type;
-      functions[type]();
-      sendResponse(true);
+      window.chrome.runtime.sendMessage(
+        data,
+        (response: any) => response.alert && alert(response.alert)
+      );
     }
   });
+}
+
+export function listenForMessage(
+  f: (data: any, sendResponse: (sendData: any) => void) => void
+) {
+  window.chrome.runtime.onMessage.addListener(
+    (data: any, _sender: any, sendResponse: (sendData: any) => void) => {
+      f(data, sendResponse);
+    }
+  );
 }
