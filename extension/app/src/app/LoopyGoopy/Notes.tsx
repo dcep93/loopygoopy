@@ -2,8 +2,7 @@ import { updateInput } from "./Input";
 import { storageKey } from "./storage";
 import { Field, getRefs, getState } from "./utils";
 
-// @ts-ignore
-import { debounce } from "lodash"; // todo
+import { debounce } from "lodash";
 
 export default function Notes() {
   const ref = getRefs()[
