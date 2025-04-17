@@ -8,8 +8,8 @@ export default function Tap() {
         onClick={() =>
           Promise.resolve(tapAndGetBpm().toFixed(2)).then((bpm) =>
             Promise.resolve()
-              .then(() => updateInput(Field.original_BPM, bpm, false))
               .then(() => updateInput(Field.original_BPM, bpm, true))
+              .then(() => updateInput(Field.original_BPM, bpm, false))
           )
         }
       >
