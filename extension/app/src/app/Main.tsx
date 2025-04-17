@@ -14,7 +14,7 @@ export default function Main() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   useEffect(() => {
     getTab()
-      .then((tab) => tab.mediaId || "empty")
+      .then((tab) => tab.mediaId || "Main.tab.mediaId.empty")
       .then((storageKey) =>
         Promise.resolve()
           .then(() => setStorageKey(storageKey))
