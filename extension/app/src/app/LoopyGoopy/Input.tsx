@@ -12,7 +12,7 @@ export default function Input(props: { field: Field }) {
       <div>
         {Field[props.field].replaceAll("__", "-").replaceAll("_", " ")}:
       </div>
-      <div style={{ width: "8em", paddingLeft: "0.5em" }}>
+      <div style={{ width: "6em", paddingLeft: "0.5em" }}>
         {props.field === Field.count__in_style ? (
           <select
             style={{ width: "100%" }}

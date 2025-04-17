@@ -7,7 +7,7 @@ import { setStorageKey, storageKey } from "./LoopyGoopy/storage";
 import Tap from "./LoopyGoopy/Tap";
 import { Action, Field, getState } from "./LoopyGoopy/utils";
 
-const padding = <div style={{ width: "2em" }}></div>;
+const padding = <div style={{ width: "1em" }}></div>;
 
 export default function Main() {
   const [_storageKey, updateStorageKey] = useState(storageKey);
@@ -25,6 +25,7 @@ export default function Main() {
   return (
     <div
       style={{
+        width: "800px", // popup.html width
         display: "inline-flex",
         backgroundColor: "#aaaaaa",
         padding: "0.5em",
@@ -63,7 +64,11 @@ export default function Main() {
         <ActionButton action={Action.previous} />
       </div>
       {padding}
-      <div>
+      <div
+        style={{
+          flexGrow: 1,
+        }}
+      >
         <Notes />
       </div>
     </div>

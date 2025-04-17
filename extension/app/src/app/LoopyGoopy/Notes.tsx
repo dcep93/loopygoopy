@@ -14,7 +14,13 @@ export default function Notes() {
     { leading: true, trailing: true }
   );
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+      }}
+    >
       <div>notes: {storageKey}</div>
       <textarea
         ref={ref}
