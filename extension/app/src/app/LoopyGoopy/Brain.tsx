@@ -35,6 +35,7 @@ export const refs = Object.fromEntries(
 );
 
 export const state: { [f in Field]: string } = load() || {};
+console.log({ state });
 
 export function updateInput(
   field: Field,
@@ -42,7 +43,13 @@ export function updateInput(
   isRecursive: boolean
 ) {
   const value = parseFloat(valueStr);
-  if (!(value < Number.POSITIVE_INFINITY)) return;
+  if (!(value < Number.POSITIVE_INFINITY)) {
+    if (valueStr === "") {
+      delete state[field];
+      save(state);
+    }
+    return;
+  }
   state[field] = valueStr;
   save(state);
   if (isRecursive) {
