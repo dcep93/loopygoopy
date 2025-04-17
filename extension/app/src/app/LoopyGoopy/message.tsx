@@ -4,5 +4,7 @@ export enum MessageType {
   init,
 }
 
-export function sendMessage(mType: MessageType, state: any) {}
+export function sendMessage(mType: MessageType, payload: any) {}
 // todo
+
+export function receiveMessage(mType: MessageType, payload: any) {}
