@@ -1,4 +1,4 @@
-const storageKey = "loopygoopy";
+export const storageKey = "loopygoopy";
 const version = "v0.0.1";
 
 export function save(state: any) {

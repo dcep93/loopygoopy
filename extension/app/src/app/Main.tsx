@@ -12,6 +12,7 @@ export default function Main() {
       style={{
         display: "inline-flex",
         backgroundColor: "#aaaaaa",
+        padding: "0.5em",
       }}
     >
       <div>
