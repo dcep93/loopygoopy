@@ -1,14 +1,15 @@
-import { Field, updateInput } from "./Brain";
+import { Field, state, updateInput } from "./Brain";
 import { storageKey } from "./storage";
 
 // @ts-ignore
-import lodash from "lodash";
+import lodash from "lodash"; // todo
 
 export default function Notes() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div>notes: {storageKey}</div>
       <textarea
+        defaultValue={state[Field.notes]}
         style={{ flexGrow: 1 }}
         onChange={(e) =>
           lodash.debounce(
