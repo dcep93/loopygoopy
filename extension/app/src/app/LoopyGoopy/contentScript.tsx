@@ -3,3 +3,5 @@ export enum MessageType {
   stop,
   init,
 }
+
+alert("contentScript.tsx2");
