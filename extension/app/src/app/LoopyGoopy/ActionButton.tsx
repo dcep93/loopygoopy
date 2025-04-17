@@ -1,4 +1,4 @@
-import { Action, actionButton } from "./Brain";
+import { Action, actionButton } from "./brain";
 
 export default function ActionButton(props: { action: Action }) {
   return (

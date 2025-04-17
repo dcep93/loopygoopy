@@ -1,4 +1,4 @@
-import { CountInStyle, Field, refs, state, updateInput } from "./Brain";
+import { CountInStyle, Field, refs, state, updateInput } from "./brain";
 
 export default function Input(props: { field: Field }) {
   return (

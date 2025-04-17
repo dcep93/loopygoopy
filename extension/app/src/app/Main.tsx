@@ -1,5 +1,5 @@
 import ActionButton from "./LoopyGoopy/ActionButton";
-import { Action, Field } from "./LoopyGoopy/Brain";
+import { Action, Field } from "./LoopyGoopy/brain";
 import Input from "./LoopyGoopy/Input";
 import Notes from "./LoopyGoopy/Notes";
 import Tap from "./LoopyGoopy/Tap";

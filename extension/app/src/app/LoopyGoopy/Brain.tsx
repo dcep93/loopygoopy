@@ -43,7 +43,6 @@ export function updateInput(
   isRecursive: boolean
 ) {
   if (state[field] === valueStr) return;
-  console.log("updateInput", valueStr);
   const value = parseFloat(valueStr);
   if (!(value < Number.POSITIVE_INFINITY)) {
     if (valueStr === "") {

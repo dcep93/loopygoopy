@@ -1,4 +1,4 @@
-import { Field, state, updateInput } from "./Brain";
+import { Field, state, updateInput } from "./brain";
 import { storageKey } from "./storage";
 
 // @ts-ignore
