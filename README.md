@@ -16,5 +16,5 @@ alternatively, you can install locally
 ### To Use
 
 1. Install.
-2. Visit spotify or open a local file.
+2. Visit youtube or open a local file.
 3. Click chrome extension icon.
