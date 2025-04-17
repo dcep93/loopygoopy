@@ -27,15 +27,27 @@ export enum Action {
   previous,
 }
 
-export const refs = Object.fromEntries(
-  Object.keys(Field)
-    .map((k) => parseInt(k))
-    .filter((k) => !Number.isNaN(k))
-    .map((k) => [k, React.createRef() as React.RefObject<HTMLInputElement>])
-);
+var refs: { [field: string]: React.RefObject<HTMLInputElement> };
 
-export const state: { [f in Field]: string } = load() || {};
-console.log({ state });
+export function getRefs() {
+  if (!refs) {
+    refs = Object.fromEntries(
+      Object.keys(Field)
+        .map((k) => parseInt(k))
+        .filter((k) => !Number.isNaN(k))
+        .map((k) => [k, React.createRef() as React.RefObject<HTMLInputElement>])
+    );
+  }
+  return refs;
+}
+
+var state: { [f in Field]: string };
+export function getState() {
+  if (!state) {
+    state = load() || {};
+  }
+  return state;
+}
 
 export function updateInput(
   field: Field,
