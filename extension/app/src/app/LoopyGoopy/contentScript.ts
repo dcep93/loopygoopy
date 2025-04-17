@@ -3,3 +3,9 @@ export enum MessageType {
   stop,
   init,
 }
+
+function activate() {
+  alert("activated");
+}
+
+if (window.exports) activate();

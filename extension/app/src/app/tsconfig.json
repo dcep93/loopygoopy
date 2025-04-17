@@ -1,18 +1,3 @@
 {
-  "files": ["./LoopyGoopy/contentScript.ts"],
-  "compilerOptions": {
-    "target": "ESNext", // Makes sure it's compatible with older browsers
-    "module": "ESNext", // Good for bundlers like Webpack/Rollup/Vite
-    "moduleResolution": "Node",
-    "jsx": "react",
-    "lib": ["DOM", "ESNext"],
-    "allowJs": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": false, // Ensure files are emitted
-    "strict": true
-  }
+  "files": ["./LoopyGoopy/contentScript.ts"]
 }

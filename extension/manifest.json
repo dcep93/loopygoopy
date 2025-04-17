@@ -15,8 +15,8 @@
     {
       "matches": ["https://www.youtube.com/*", "file:///*"],
       "js": [
-        "app/src/app/LoopyGoopy/contentScript.js",
-        "app/src/app/LoopyGoopy/activateContentScript.js"
+        "app/src/app/LoopyGoopy/activateContentScript.js",
+        "app/src/app/LoopyGoopy/contentScript.js"
       ]
     }
   ],

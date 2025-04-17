@@ -1,1 +1,1 @@
-alert("activateContentScript");
+window.exports = { activated: true };
