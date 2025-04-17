@@ -4,4 +4,4 @@ export enum MessageType {
   init,
 }
 
-alert("contentScript.tsx2");
+alert("contentScript.tsx8");

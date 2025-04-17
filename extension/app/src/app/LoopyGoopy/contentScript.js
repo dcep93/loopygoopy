@@ -7,4 +7,4 @@ var MessageType;
     MessageType[MessageType["stop"] = 1] = "stop";
     MessageType[MessageType["init"] = 2] = "init";
 })(MessageType || (exports.MessageType = MessageType = {}));
-alert("contentScript.tsx");
+alert("contentScript.tsx7");
