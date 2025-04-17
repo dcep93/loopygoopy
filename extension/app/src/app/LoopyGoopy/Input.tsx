@@ -47,8 +47,7 @@ export function updateInput(
 ) {
   const state = getState();
   if (state[field] === valueStr) return;
-  const numberState = getNumberState();
-  if (!(numberState[field] < Number.POSITIVE_INFINITY)) {
+  if (!(parseFloat(valueStr) < Number.POSITIVE_INFINITY)) {
     if (valueStr === "") {
       delete state[field];
       save(state);
@@ -61,6 +60,7 @@ export function updateInput(
     getRefs()[field].current.value = valueStr;
     return;
   }
+  const numberState = getNumberState();
   switch (field) {
     case Field.original_BPM:
     case Field.beats_per_loop:

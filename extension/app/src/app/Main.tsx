@@ -1,12 +1,27 @@
+import { useEffect, useState } from "react";
 import ActionButton from "./LoopyGoopy/ActionButton";
 import Input from "./LoopyGoopy/Input";
+import { getTab } from "./LoopyGoopy/message";
 import Notes from "./LoopyGoopy/Notes";
+import { setStorageKey, storageKey } from "./LoopyGoopy/storage";
 import Tap from "./LoopyGoopy/Tap";
-import { Action, Field } from "./LoopyGoopy/utils";
+import { Action, Field, getState } from "./LoopyGoopy/utils";
 
 const padding = <div style={{ width: "2em" }}></div>;
 
 export default function Main() {
+  const [_storageKey, updateStorageKey] = useState(storageKey);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  useEffect(() => {
+    getTab()
+      .then((tab) => tab.mediaId || "empty")
+      .then((storageKey) =>
+        Promise.resolve()
+          .then(() => setStorageKey(storageKey))
+          .then(() => getState(true))
+          .then(() => updateStorageKey(storageKey))
+      );
+  }, []);
   return (
     <div
       style={{
@@ -14,6 +29,7 @@ export default function Main() {
         backgroundColor: "#aaaaaa",
         padding: "0.5em",
       }}
+      key={_storageKey}
     >
       <div>
         <Input field={Field.original_BPM} />

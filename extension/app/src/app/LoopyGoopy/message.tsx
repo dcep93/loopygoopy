@@ -7,7 +7,10 @@ declare global {
 }
 
 var _tab: { id?: string; mediaId?: string };
-function getTab(): Promise<typeof _tab> {
+export function getTab(): Promise<typeof _tab> {
+  if (window.chrome?.tabs === undefined) {
+    _tab = { mediaId: "localhost" };
+  }
   return Promise.resolve()
     .then(() =>
       _tab !== undefined

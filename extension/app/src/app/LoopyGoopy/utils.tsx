@@ -41,8 +41,8 @@ export function getRefs() {
 }
 
 var _state: { [f in Field]: string };
-export function getState() {
-  if (!_state) {
+export function getState(reset: boolean = false) {
+  if (reset || !_state) {
     _state = load() || {};
   }
   return _state;
