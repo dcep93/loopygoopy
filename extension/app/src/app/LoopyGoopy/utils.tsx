@@ -1,6 +1,5 @@
 import React from "react";
-import sendMessage, { MessageType } from "./sendMessage";
-import { load, save } from "./storage";
+import { load } from "./storage";
 
 export enum Field {
   original_BPM,
@@ -48,73 +47,3 @@ export function getState() {
   }
   return state;
 }
-
-export function updateInput(
-  field: Field,
-  valueStr: string,
-  isRecursive: boolean
-) {
-  if (state[field] === valueStr) return;
-  const value = parseFloat(valueStr);
-  if (!(value < Number.POSITIVE_INFINITY)) {
-    if (valueStr === "") {
-      delete state[field];
-      save(state);
-    }
-    if (![Field.count__in_style, Field.notes].includes(field)) return;
-  }
-  state[field] = valueStr;
-  save(state);
-  if (isRecursive) {
-    refs[field].current.value = valueStr;
-    return;
-  }
-  switch (field) {
-    case Field.original_BPM:
-    case Field.beats_per_loop:
-      updateInput(
-        Field.end_time,
-        (
-          (parseFloat(state[Field.beats_per_loop]) * 60) /
-            parseFloat(state[Field.original_BPM]) +
-          parseFloat(state[Field.start_time])
-        ).toFixed(2),
-        true
-      );
-      break;
-    case Field.end_time:
-      updateInput(
-        Field.beats_per_loop,
-        (
-          ((parseFloat(state[Field.end_time]) -
-            parseFloat(state[Field.start_time])) *
-            parseFloat(state[Field.original_BPM])) /
-          60
-        ).toFixed(2),
-        true
-      );
-      break;
-  }
-}
-
-export function actionButton(action: Action) {
-  switch (action) {
-    case Action.start:
-    case Action.stop:
-      sendMessage(
-        action === Action.start ? MessageType.start : MessageType.stop,
-        state
-      );
-      break;
-    case Action.previous:
-    case Action.next:
-      const diff =
-        ((parseFloat(state[Field.beats_per_loop]) * 60) /
-          parseFloat(state[Field.original_BPM])) *
-        (action === Action.previous ? -1 : 1);
-      [Field.start_time, Field.end_time].forEach((f) =>
-        updateInput(f, (f + diff).toFixed(2), true)
-      );
-      break;
-  }
-} // todo

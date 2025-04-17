@@ -1,4 +1,5 @@
-import { Field, updateInput } from "./utils";
+import { updateInput } from "./Input";
+import { Field } from "./utils";
 
 export default function Tap() {
   return (
