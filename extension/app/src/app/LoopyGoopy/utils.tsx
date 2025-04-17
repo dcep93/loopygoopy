@@ -1,4 +1,5 @@
 import React from "react";
+import sendMessage, { MessageType } from "./sendMessage";
 import { load, save } from "./storage";
 
 export enum Field {
@@ -28,7 +29,6 @@ export enum Action {
 }
 
 var refs: { [field: string]: React.RefObject<HTMLInputElement> };
-
 export function getRefs() {
   if (!refs) {
     refs = Object.fromEntries(
@@ -97,4 +97,24 @@ export function updateInput(
   }
 }
 
-export function actionButton(action: Action) {} // todo
+export function actionButton(action: Action) {
+  switch (action) {
+    case Action.start:
+    case Action.stop:
+      sendMessage(
+        action === Action.start ? MessageType.start : MessageType.stop,
+        state
+      );
+      break;
+    case Action.previous:
+    case Action.next:
+      const diff =
+        ((parseFloat(state[Field.beats_per_loop]) * 60) /
+          parseFloat(state[Field.original_BPM])) *
+        (action === Action.previous ? -1 : 1);
+      [Field.start_time, Field.end_time].forEach((f) =>
+        updateInput(f, (f + diff).toFixed(2), true)
+      );
+      break;
+  }
+} // todo
