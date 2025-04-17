@@ -1,5 +1,11 @@
 import { save } from "./storage";
-import { CountInStyle, Field, getRefs, getState } from "./utils";
+import {
+  CountInStyle,
+  Field,
+  getNumberState,
+  getRefs,
+  getState,
+} from "./utils";
 
 export default function Input(props: { field: Field }) {
   return (
@@ -47,8 +53,8 @@ export function updateInput(
 ) {
   const state = getState();
   if (state[field] === valueStr) return;
-  const value = parseFloat(valueStr);
-  if (!(value < Number.POSITIVE_INFINITY)) {
+  const numberState = getNumberState();
+  if (!(numberState[field] < Number.POSITIVE_INFINITY)) {
     if (valueStr === "") {
       delete state[field];
       save(state);
@@ -67,9 +73,9 @@ export function updateInput(
       updateInput(
         Field.end_time,
         (
-          (parseFloat(state[Field.beats_per_loop]) * 60) /
-            parseFloat(state[Field.original_BPM]) +
-          parseFloat(state[Field.start_time])
+          (numberState[Field.beats_per_loop] * 60) /
+            numberState[Field.original_BPM] +
+          numberState[Field.start_time]
         ).toFixed(2),
         true
       );
@@ -78,9 +84,8 @@ export function updateInput(
       updateInput(
         Field.beats_per_loop,
         (
-          ((parseFloat(state[Field.end_time]) -
-            parseFloat(state[Field.start_time])) *
-            parseFloat(state[Field.original_BPM])) /
+          ((numberState[Field.end_time] - numberState[Field.start_time]) *
+            numberState[Field.original_BPM]) /
           60
         ).toFixed(2),
         true

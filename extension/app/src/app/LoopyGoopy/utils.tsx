@@ -47,3 +47,12 @@ export function getState() {
   }
   return state;
 }
+
+export function getNumberState() {
+  return Object.fromEntries(
+    Object.entries(getState())
+      .map(([k, v]) => ({ k, v: parseFloat(v) }))
+      .filter(({ v }) => !Number.isNaN(v))
+      .map(({ k, v }) => [k, v])
+  );
+}
