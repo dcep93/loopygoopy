@@ -9,16 +9,19 @@
     "128": "loopy_goopy_128.png"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "app/src/app/LoopyGoopy/background.js"
   },
   "content_scripts": [
     {
       "matches": ["https://www.youtube.com/*", "file:///*"],
-      "js": ["app/src/app/LoopyGoopy/contentScript.js", "content_script.js"]
+      "js": [
+        "app/src/app/LoopyGoopy/contentScript.js",
+        "app/src/app/LoopyGoopy/activateContentScript.js"
+      ]
     }
   ],
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "app/build/index.html",
     "default_icon": "loopy_goopy_full.png"
   },
   "manifest_version": 3
