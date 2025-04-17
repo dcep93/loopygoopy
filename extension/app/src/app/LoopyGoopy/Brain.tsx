@@ -44,7 +44,7 @@ export function updateInput(
   isRecursive: boolean
 ) {
   const value = parseFloat(_value);
-  if (Number.isNaN(value)) return;
+  if (!(value < Number.POSITIVE_INFINITY)) return;
   fields[field].value = value;
   if (isRecursive) {
     fields[field].ref.current.value = _value;

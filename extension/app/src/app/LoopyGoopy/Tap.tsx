@@ -19,7 +19,23 @@ export default function Tap() {
   );
 }
 
+const max_taps = 32;
+const taps: number[] = [];
+
 function tapAndGetBpm(): number {
-  // todo
-  return 102.7;
+  taps.unshift(Date.now());
+  if (taps.length > max_taps) taps.pop();
+  const distances = taps.slice(1).map((t, i) => taps[i] - t);
+  const avg_distance = distances.reduce((a, b) => a + b, 0) / distances.length;
+  const stddev = Math.pow(
+    distances
+      .map((d) => Math.pow(d - avg_distance, 2))
+      .reduce((a, b) => a + b, 0) / distances.length,
+    0.5
+  );
+  if (Math.abs((distances[0] - avg_distance) / stddev) > 4) {
+    taps.splice(1);
+    return Number.POSITIVE_INFINITY;
+  }
+  return (60 * 1000) / avg_distance;
 }
