@@ -4,8 +4,24 @@ export enum MessageType {
   init,
 }
 
+declare global {
+  interface Window {
+    chrome: any;
+  }
+}
+
+export function listenForMessage(
+  f: (data: any, sendResponse: (sendData: any) => void) => void
+) {
+  window.chrome.runtime.onMessage.addListener(
+    (data: any, _sender: any, sendResponse: (sendData: any) => void) => {
+      f(data, sendResponse);
+    }
+  );
+}
+
 function activate() {
-  alert("activated");
+  listenForMessage(() => alert("acc"));
 }
 
 if (window.exports) activate();

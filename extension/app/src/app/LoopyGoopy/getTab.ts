@@ -7,7 +7,7 @@ declare global {
 }
 
 var _tab: { id?: string; mediaId?: string };
-export function getTab(): Promise<typeof _tab> {
+export default function getTab(): Promise<typeof _tab> {
   if (window.chrome?.tabs === undefined) {
     _tab = { mediaId: "localhost" };
   }
@@ -52,27 +52,4 @@ export function getTab(): Promise<typeof _tab> {
             })
     )
     .then(() => _tab);
-}
-
-export function sendMessage(data: any) {
-  getTab().then((tab) => {
-    if (tab.id !== null) {
-      window.chrome.tabs.sendMessage(tab.id, data);
-    } else {
-      window.chrome.runtime.sendMessage(
-        data,
-        (response: any) => response.alert && alert(response.alert)
-      );
-    }
-  });
-}
-
-export function listenForMessage(
-  f: (data: any, sendResponse: (sendData: any) => void) => void
-) {
-  window.chrome.runtime.onMessage.addListener(
-    (data: any, _sender: any, sendResponse: (sendData: any) => void) => {
-      f(data, sendResponse);
-    }
-  );
 }

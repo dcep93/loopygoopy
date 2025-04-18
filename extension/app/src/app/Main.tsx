@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ActionButton from "./LoopyGoopy/ActionButton";
+import getTab from "./LoopyGoopy/getTab";
 import Input from "./LoopyGoopy/Input";
-import { getTab } from "./LoopyGoopy/message";
 import Notes from "./LoopyGoopy/Notes";
 import { setStorageKey, storageKey } from "./LoopyGoopy/storage";
 import Tap from "./LoopyGoopy/Tap";

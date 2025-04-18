@@ -1,6 +1,6 @@
 import { MessageType } from "./contentScript";
+import getTab from "./getTab";
 import { getNumberState, updateInput } from "./Input";
-import { sendMessage } from "./message";
 import { Action, Field } from "./utils";
 
 export default function ActionButton(props: { action: Action }) {
@@ -33,4 +33,17 @@ function actionButton(action: Action) {
       updateInput(Field.end_time, (newStart + diff).toFixed(2), true);
       break;
   }
+}
+
+function sendMessage(data: any) {
+  getTab().then((tab) => {
+    if (tab.id !== null) {
+      window.chrome.tabs.sendMessage(tab.id, data);
+    } else {
+      window.chrome.runtime.sendMessage(
+        data,
+        (response: any) => response.alert && alert(response.alert)
+      );
+    }
+  });
 }
