@@ -38,22 +38,32 @@ function getState() {
         element: document.getElementsByTagName("video")[0] ||
             document.getElementsByTagName("audio")[0] ||
             null,
-        timeout: undefined
+        timeout: undefined,
+        config: undefined
     }); });
 }
 var messageTasks = (_a = {},
-    _a[MessageType.start] = function () { return alert("start"); },
+    _a[MessageType.start] = function (payload) {
+        return Promise.resolve()
+            .then(function () { return (_state.config = payload.config); })
+            .then(countIn);
+    },
     _a[MessageType.stop] = function (payload) {
-        var timeout = _state.timeout;
-        _state.timeout = undefined;
-        clearTimeout(timeout);
+        return Promise.resolve()
+            .then(function () { return (_state.config = undefined); })
+            .then(function () { return clearTimeout(_state.timeout); });
     },
     _a[MessageType.init] = function (payload) {
         return Promise.resolve()
-            .then(getState)
-            .then(function (state) {
-            _state = state;
-            return state;
+            .then(function () {
+            return (_state === null || _state === void 0 ? void 0 : _state.config) !== undefined
+                ? _state
+                : Promise.resolve()
+                    .then(getState)
+                    .then(function (state) {
+                    _state = state;
+                    return state;
+                });
         })
             .then(function (state) {
             return state.element === null
@@ -75,6 +85,28 @@ function activate() {
             throw e;
         });
     });
+}
+function countIn() {
+    var config = _state.config;
+    if (config === undefined)
+        return;
+    var bpm = getBpm();
+    if (bpm === 0) {
+        return;
+    }
+    var countInBeats = parseFloat(config[Field.count__in_beats]);
+    if (countInBeats > 0) {
+        _state.timeout = setTimeout(start, (countInBeats * 60 * 1000) / bpm);
+    }
+    else {
+        start();
+    }
+}
+function getBpm() {
+    return 0; // todo
+}
+function start() {
+    // todo
 }
 if (window.exports)
     activate();

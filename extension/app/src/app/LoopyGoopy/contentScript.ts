@@ -44,6 +44,7 @@ function listenForMessage(
 var _state: {
   element: HTMLVideoElement | HTMLAudioElement | null;
   timeout: NodeJS.Timeout | undefined;
+  config: ConfigType | undefined;
 };
 
 function getState(): Promise<typeof _state> {
@@ -53,23 +54,31 @@ function getState(): Promise<typeof _state> {
       document.getElementsByTagName("audio")[0] ||
       null,
     timeout: undefined,
+    config: undefined,
   }));
 }
 
 const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
-  [MessageType.start]: () => alert("start"),
-  [MessageType.stop]: (payload) => {
-    const timeout = _state.timeout;
-    _state.timeout = undefined;
-    clearTimeout(timeout);
-  },
+  [MessageType.start]: (payload: { config: ConfigType }) =>
+    Promise.resolve()
+      .then(() => (_state.config = payload.config))
+      .then(countIn),
+  [MessageType.stop]: (payload) =>
+    Promise.resolve()
+      .then(() => (_state.config = undefined))
+      .then(() => clearTimeout(_state.timeout)),
   [MessageType.init]: (payload: { tabId: number }) =>
     Promise.resolve()
-      .then(getState)
-      .then((state) => {
-        _state = state;
-        return state;
-      })
+      .then(() =>
+        _state?.config !== undefined
+          ? _state
+          : Promise.resolve()
+              .then(getState)
+              .then((state) => {
+                _state = state;
+                return state;
+              })
+      )
       .then((state) =>
         state.element === null
           ? undefined
@@ -93,6 +102,29 @@ function activate() {
         throw e;
       })
   );
+}
+
+function countIn() {
+  const config = _state.config;
+  if (config === undefined) return;
+  const bpm = getBpm();
+  if (bpm === 0) {
+    return;
+  }
+  const countInBeats = parseFloat(config[Field.count__in_beats]);
+  if (countInBeats > 0) {
+    _state.timeout = setTimeout(start, (countInBeats * 60 * 1000) / bpm);
+  } else {
+    start();
+  }
+}
+
+function getBpm(): number {
+  return 0; // todo
+}
+
+function start() {
+  // todo
 }
 
 if (window.exports) activate();
