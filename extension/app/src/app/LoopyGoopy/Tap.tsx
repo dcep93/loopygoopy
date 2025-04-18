@@ -8,10 +8,17 @@ export default function Tap() {
       <div>determine BPM:</div>
       <button
         onClick={() =>
-          Promise.resolve(tapAndGetBpm().toFixed(2)).then((bpm) =>
-            Promise.resolve()
-              .then(() => updateInput(Field.original_BPM, bpm, false))
-              .then(() => (getRefs()[Field.original_BPM].current.value = bpm))
+          Promise.resolve(tapAndGetBpm()).then((bpm) =>
+            !bpm
+              ? null
+              : Promise.resolve(bpm.toFixed(2)).then((bpmStr) =>
+                  Promise.resolve()
+                    .then(() => updateInput(Field.original_BPM, bpmStr, false))
+                    .then(
+                      () =>
+                        (getRefs()[Field.original_BPM].current.value = bpmStr)
+                    )
+                )
           )
         }
       >

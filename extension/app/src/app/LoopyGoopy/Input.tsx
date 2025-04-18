@@ -18,7 +18,13 @@ export default function Input(props: { field: Field }) {
           <select
             style={{ width: "100%" }}
             defaultValue={getConfig()[props.field]}
-            onChange={(e) => updateInput(props.field, e.target.value, false)}
+            onChange={(e) =>
+              updateInput(
+                props.field,
+                CountInStyle[e.target.value as unknown as number].toString(),
+                false
+              )
+            }
           >
             {Object.keys(CountInStyle)
               .map((k) => parseInt(k))
@@ -41,7 +47,6 @@ export default function Input(props: { field: Field }) {
   );
 }
 
-// todo pink when not sent
 export function updateInput(
   field: Field,
   valueStr: string,
