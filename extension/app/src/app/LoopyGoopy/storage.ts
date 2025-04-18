@@ -6,21 +6,17 @@ export function setStorageKey(_storageKey: string) {
 }
 
 export function save(config: any) {
-  if (storageKey === undefined) return;
+  if (storageKey === undefined || !window.chrome.storage) return;
   window.chrome.storage.sync.set({
-    [storageKey]: JSON.stringify({ version, config }),
+    [storageKey]: { version, config },
   });
 }
 
 export function load() {
+  if (!window.chrome.storage) return Promise.resolve();
   return new Promise((resolve) =>
-    window.chrome.storage.sync.get(storageKey, (result: string) => {
-      var loaded: any = {};
-      try {
-        loaded = JSON.parse(result);
-      } catch (e) {
-        console.log(e);
-      }
+    window.chrome.storage.sync.get(storageKey, (result: any) => {
+      const loaded = result[storageKey];
       if (loaded.version === version)
         resolve(loaded.version === version ? loaded.config : {});
     })

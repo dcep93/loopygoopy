@@ -17,21 +17,15 @@ export default function Notes() {
   return (
     <div
       style={{
-        display: "flex",
+        display: "inline-flex",
         flexDirection: "column",
         height: "100%",
+        width: "100%",
       }}
     >
-      <div>
-        notes:{" "}
-        <div
-          style={{
-            display: "inline",
-            position: "absolute",
-            textWrap: "nowrap",
-          }}
-        >
-          {storageKey}
+      <div style={{ overflow: "scroll", width: "100%" }}>
+        <div style={{ textWrap: "nowrap", width: 0 }}>
+          {storageKey} asdfasdf asfadfdsf asdfadfs asdfsdf
         </div>
       </div>
       <textarea
