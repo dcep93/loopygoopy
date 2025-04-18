@@ -32,6 +32,7 @@ var _state: {
   element: HTMLVideoElement | HTMLAudioElement;
   config: NumberConfigType | undefined;
   iter: number;
+  loopId: number;
 };
 
 declare global {
@@ -42,14 +43,16 @@ declare global {
 
 const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
   [MessageType.start]: (payload: { config: NumberConfigType }) =>
-    Promise.resolve()
-      .then(() => (_state.config = payload.config))
-      .then(() => _state.element.pause())
-      .then(() => sleepPromise(START_SLEEP_MS))
-      .then(loop),
+    Promise.resolve(Math.random()).then((loopId) =>
+      Promise.resolve()
+        .then(() => Object.assign(_state, { ...payload, loopId }))
+        .then(() => _state.element.pause())
+        .then(() => sleepPromise(START_SLEEP_MS))
+        .then(() => loop(loopId))
+    ),
   [MessageType.stop]: () =>
     Promise.resolve()
-      .then(() => (_state.config = undefined))
+      .then(() => (_state.loopId = -1))
       .then(() =>
         Promise.resolve()
           .then(() => _state.element.pause())
@@ -105,6 +108,7 @@ function init() {
                 document.getElementsByTagName("audio")[0],
               config: undefined,
               iter: 0,
+              loopId: -1,
             };
           })
     )
@@ -121,9 +125,10 @@ function init() {
     );
 }
 
-function loop(): Promise<void> {
-  const config = _state.config;
-  if (config === undefined) return Promise.resolve();
+function loop(loopId: number): Promise<void> {
+  if (_state.loopId !== loopId) return Promise.resolve();
+  _state.element.pause();
+  const config = _state.config!;
   const rawOriginalBPM = config[Field.original_BPM];
   const bpm = rawOriginalBPM! > 0 ? rawOriginalBPM! : DEFAULT_BPM;
   const tempoChange = config[Field.tempo_change] || 1;
@@ -163,6 +168,5 @@ function loop(): Promise<void> {
     )
     .then(() => _state.element.play())
     .then(() => sleepPromise(((endTime - startTime) * 1000) / playbackRate))
-    .then(() => _state.element.pause())
-    .then(loop);
+    .then(() => loop(loopId));
 }

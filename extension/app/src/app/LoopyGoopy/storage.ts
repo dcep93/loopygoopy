@@ -17,8 +17,7 @@ export function load() {
   return new Promise((resolve) =>
     window.chrome.storage.sync.get(storageKey, (result: any) => {
       const loaded = result[storageKey];
-      if (loaded.version === version)
-        resolve(loaded.version === version ? loaded.config : {});
+      resolve(loaded?.version === version ? loaded.config : {});
     })
   );
 }

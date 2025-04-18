@@ -1,5 +1,6 @@
 import { updateInput } from "./Input";
 import { Field } from "./contentScript";
+import { getRefs } from "./utils";
 
 export default function Tap() {
   return (
@@ -9,8 +10,8 @@ export default function Tap() {
         onClick={() =>
           Promise.resolve(tapAndGetBpm().toFixed(2)).then((bpm) =>
             Promise.resolve()
-              .then(() => updateInput(Field.original_BPM, bpm, true))
               .then(() => updateInput(Field.original_BPM, bpm, false))
+              .then(() => (getRefs()[Field.original_BPM].current.value = bpm))
           )
         }
       >
