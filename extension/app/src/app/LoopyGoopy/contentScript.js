@@ -48,12 +48,12 @@ var messageTasks = (_a = {},
             .then(function () { return (_state.config = payload.config); })
             .then(countIn);
     },
-    _a[MessageType.stop] = function (payload) {
+    _a[MessageType.stop] = function () {
         return Promise.resolve()
             .then(function () { return (_state.config = undefined); })
             .then(function () { return clearTimeout(_state.timeout); });
     },
-    _a[MessageType.init] = function (payload) {
+    _a[MessageType.init] = function () {
         return Promise.resolve()
             .then(function () {
             return (_state === null || _state === void 0 ? void 0 : _state.config) !== undefined

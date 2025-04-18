@@ -63,11 +63,11 @@ const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
     Promise.resolve()
       .then(() => (_state.config = payload.config))
       .then(countIn),
-  [MessageType.stop]: (payload) =>
+  [MessageType.stop]: () =>
     Promise.resolve()
       .then(() => (_state.config = undefined))
       .then(() => clearTimeout(_state.timeout)),
-  [MessageType.init]: (payload: { tabId: number }) =>
+  [MessageType.init]: () =>
     Promise.resolve()
       .then(() =>
         _state?.config !== undefined

@@ -25,7 +25,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "runonsave": "cd src/app && tsc && rm -f app/build/index.html && PUBLIC_URL=/app/build/ yarn build"
+    "runonsave": "bash ./runonsave.sh"
   },
   "eslintConfig": {
     "extends": [
