@@ -26,6 +26,7 @@ export enum CountInStyle {
 export type ConfigType = { [f in Field]: string };
 
 const START_SLEEP_MS = 1000;
+const DEFAULT_BPM = 60;
 
 var _state: {
   element: HTMLVideoElement | HTMLAudioElement | null;
@@ -45,11 +46,19 @@ const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
     Promise.resolve()
       .then(() => (_state.config = payload.config))
       .then(() => sleepPromise(START_SLEEP_MS))
-      .then(countIn),
+      .then(loop),
   [MessageType.stop]: () =>
     Promise.resolve()
       .then(() => (_state.config = undefined))
-      .then(() => clearTimeout(_state.timeout)),
+      .then(() => clearTimeout(_state.timeout))
+      .then(() =>
+        _state.element === null
+          ? null
+          : Promise.resolve()
+              .then(() => _state.element!.pause())
+              .then(() => (_state.element!.playbackRate = 1))
+      )
+      .then(() => (document.title = initialTitle)),
   [MessageType.init]: () => Promise.resolve().then(init),
 };
 
@@ -63,7 +72,10 @@ function listenForMessage(
   );
 }
 
+var initialTitle: string;
+
 function activate() {
+  initialTitle = document.title;
   listenForMessage((data: { mType: MessageType; payload: any }, sendResponse) =>
     Promise.resolve(data.payload)
       .then(messageTasks[data.mType])
@@ -114,34 +126,34 @@ function init() {
     );
 }
 
-function countIn() {
+function loop() {
   const config = _state.config;
-  if (config === undefined) throw new Error("countIn.config.undefined");
-  const startTime = parseFloat(config[Field.start_time]);
-  if (!(startTime >= 0)) throw new Error("countIn.startTime.zero");
-  const endTime = parseFloat(config[Field.start_time]);
-  if (!(endTime >= 0)) throw new Error("countIn.endTime.zero");
-  const bpm = getBpm();
-  if (!(bpm > 0)) throw new Error("countIn.bpm.zero");
+  if (config === undefined) throw new Error("loop.config.undefined");
+  if (_state.element === null) throw new Error("loop.element.null");
+  const startTime = Math.max(
+    0,
+    parseFloat(config[Field.start_time]) || Number.NEGATIVE_INFINITY
+  );
+  const endTime = Math.min(
+    _state.element.duration,
+    parseFloat(config[Field.start_time]) || Number.POSITIVE_INFINITY
+  );
+  if (endTime <= startTime) throw new Error("loop.startTime.endTime");
+  const rawOriginalBPM = parseFloat(config[Field.original_BPM]);
+  const playbackRate = 1; // todo
+  _state.element.playbackRate = playbackRate;
   const countInMs =
-    (parseFloat(config[Field.count__in_beats]) * 60 * 1000) / bpm;
-  return Promise.resolve()
-    .then(() =>
-      ({
-        [CountInStyle.metronome]: () => {
-          throw new Error("countIn.CountInStyle.metronome");
-        },
-        [CountInStyle.track]: () => sleepPromise(countInMs - startTime * 1000),
-        [CountInStyle.silent]: () => sleepPromise(countInMs),
-      }[parseInt(config[Field.count__in_style]) as CountInStyle]())
-    )
-    .then(start);
-}
-
-function getBpm(): number {
-  return 0; // todo
-}
-
-function start() {
-  // todo
+    (parseFloat(config[Field.count__in_beats]) * 60 * 1000) / rawOriginalBPM > 0
+      ? rawOriginalBPM
+      : DEFAULT_BPM / playbackRate;
+  document.title = `${(playbackRate * 100).toFixed(2)}% - ${initialTitle}`;
+  return Promise.resolve().then(() =>
+    ({
+      [CountInStyle.metronome]: () => {
+        throw new Error("loop.CountInStyle.metronome");
+      },
+      [CountInStyle.track]: () => sleepPromise(countInMs - startTime * 1000),
+      [CountInStyle.silent]: () => sleepPromise(countInMs),
+    }[parseInt(config[Field.count__in_style]) as CountInStyle]())
+  ); // todo
 }

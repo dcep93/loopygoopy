@@ -1,7 +1,3 @@
-// todo
-// initialize listener
-// get tabid, mediaid
-// fetch from storage
 const version = "v0.0.1";
 
 export var storageKey: string;

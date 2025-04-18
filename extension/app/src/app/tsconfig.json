@@ -1,3 +1,6 @@
 {
-  "files": ["./LoopyGoopy/contentScript.ts"]
+  "files": ["./LoopyGoopy/contentScript.ts"],
+  "compilerOptions": {
+    "strict": true
+  }
 }
