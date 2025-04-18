@@ -23,6 +23,7 @@ export default function Input(props: { field: Field }) {
             {Object.keys(CountInStyle)
               .map((k) => parseInt(k))
               .filter((k) => !Number.isNaN(k))
+              .filter((k) => k !== CountInStyle.metronome) // todo
               .map((k) => (
                 <option key={k}>{CountInStyle[k]}</option>
               ))}

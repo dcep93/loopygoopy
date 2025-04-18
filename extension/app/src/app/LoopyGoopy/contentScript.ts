@@ -76,6 +76,7 @@ function activate() {
 }
 
 function sleepPromise(sleepMs: number) {
+  if (!(sleepMs > 0)) return Promise.resolve();
   return new Promise((resolve) => setTimeout(resolve, sleepMs));
 }
 
@@ -116,18 +117,23 @@ function init() {
 function countIn() {
   const config = _state.config;
   if (config === undefined) throw new Error("countIn.config.undefined");
+  const startTime = parseFloat(config[Field.start_time]);
+  if (!(startTime >= 0)) throw new Error("countIn.startTime.zero");
+  const endTime = parseFloat(config[Field.start_time]);
+  if (!(endTime >= 0)) throw new Error("countIn.endTime.zero");
   const bpm = getBpm();
   if (!(bpm > 0)) throw new Error("countIn.bpm.zero");
-  const countInBeats = parseFloat(config[Field.count__in_beats]);
+  const countInMs =
+    (parseFloat(config[Field.count__in_beats]) * 60 * 1000) / bpm;
   return Promise.resolve()
     .then(() =>
-      !(countInBeats > 0) ||
-      parseFloat(config[Field.count__in_style]) === CountInStyle.track
-        ? null
-        : {
-            [CountInStyle.silent]: () =>
-              sleepPromise((countInBeats * 60 * 1000) / bpm),
-          }
+      ({
+        [CountInStyle.metronome]: () => {
+          throw new Error("countIn.CountInStyle.metronome");
+        },
+        [CountInStyle.track]: () => sleepPromise(countInMs - startTime * 1000),
+        [CountInStyle.silent]: () => sleepPromise(countInMs),
+      }[parseInt(config[Field.count__in_style]) as CountInStyle]())
     )
     .then(start);
 }
