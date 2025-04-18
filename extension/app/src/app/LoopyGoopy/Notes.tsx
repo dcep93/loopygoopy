@@ -1,6 +1,7 @@
+import { Field } from "./contentScript";
 import { updateInput } from "./Input";
 import { storageKey } from "./storage";
-import { Field, getRefs, getState } from "./utils";
+import { getConfig, getRefs } from "./utils";
 
 import { debounce } from "lodash";
 
@@ -21,10 +22,21 @@ export default function Notes() {
         height: "100%",
       }}
     >
-      <div>notes: {storageKey}</div>
+      <div>
+        notes:{" "}
+        <div
+          style={{
+            display: "inline",
+            position: "absolute",
+            textWrap: "nowrap",
+          }}
+        >
+          {storageKey}
+        </div>
+      </div>
       <textarea
         ref={ref}
-        defaultValue={getState()[Field.notes]}
+        defaultValue={getConfig()[Field.notes]}
         style={{ flexGrow: 1 }}
         onChange={debouncer}
       ></textarea>

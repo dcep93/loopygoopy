@@ -1,7 +1,13 @@
-import { MessageType } from "./contentScript";
+import { Field, MessageType } from "./contentScript";
 import getTab from "./getTab";
-import { getNumberState, updateInput } from "./Input";
-import { Action, Field } from "./utils";
+import { getNumberConfig, updateInput } from "./Input";
+
+export enum Action {
+  start,
+  stop,
+  next,
+  previous,
+}
 
 export default function ActionButton(props: { action: Action }) {
   return (
@@ -14,21 +20,21 @@ export default function ActionButton(props: { action: Action }) {
 }
 
 function actionButton(action: Action) {
-  const state = getNumberState();
+  const config = getNumberConfig();
   switch (action) {
     case Action.start:
     case Action.stop:
       sendMessage({
         mType: action === Action.start ? MessageType.start : MessageType.stop,
-        payload: { state },
+        payload: { config },
       });
       break;
     case Action.previous:
     case Action.next:
       const diff =
-        (state[Field.beats_per_loop] * 60) / state[Field.original_BPM];
+        (config[Field.beats_per_loop] * 60) / config[Field.original_BPM];
       const newStart =
-        state[Field.start_time] + diff * (action === Action.previous ? -1 : 1);
+        config[Field.start_time] + diff * (action === Action.previous ? -1 : 1);
       updateInput(Field.start_time, newStart.toFixed(2), true);
       updateInput(Field.end_time, (newStart + diff).toFixed(2), true);
       break;

@@ -1,5 +1,6 @@
+import { CountInStyle, Field } from "./contentScript";
 import { save } from "./storage";
-import { CountInStyle, Field, getRefs, getState } from "./utils";
+import { getConfig, getRefs } from "./utils";
 
 export default function Input(props: { field: Field }) {
   return (
@@ -16,7 +17,7 @@ export default function Input(props: { field: Field }) {
         {props.field === Field.count__in_style ? (
           <select
             style={{ width: "100%" }}
-            defaultValue={getState()[props.field]}
+            defaultValue={getConfig()[props.field]}
             onChange={(e) => updateInput(props.field, e.target.value, false)}
           >
             {Object.keys(CountInStyle)
@@ -31,7 +32,7 @@ export default function Input(props: { field: Field }) {
             ref={getRefs()[props.field]}
             style={{ width: "100%" }}
             onChange={(e) => updateInput(props.field, e.target.value, false)}
-            defaultValue={getState()[props.field]}
+            defaultValue={getConfig()[props.field]}
           ></input>
         )}
       </div>
@@ -45,31 +46,31 @@ export function updateInput(
   valueStr: string,
   isRecursive: boolean
 ) {
-  const state = getState();
-  if (state[field] === valueStr) return;
+  const config = getConfig();
+  if (config[field] === valueStr) return;
   if (!(parseFloat(valueStr) < Number.POSITIVE_INFINITY)) {
     if (valueStr === "") {
-      delete state[field];
-      save(state);
+      delete config[field];
+      save(config);
     }
     if (![Field.count__in_style, Field.notes].includes(field)) return;
   }
-  state[field] = valueStr;
-  save(state);
+  config[field] = valueStr;
+  save(config);
   if (isRecursive) {
     getRefs()[field].current.value = valueStr;
     return;
   }
-  const numberState = getNumberState();
+  const numberConfig = getNumberConfig();
   switch (field) {
     case Field.original_BPM:
     case Field.beats_per_loop:
       updateInput(
         Field.end_time,
         (
-          (numberState[Field.beats_per_loop] * 60) /
-            numberState[Field.original_BPM] +
-          numberState[Field.start_time]
+          (numberConfig[Field.beats_per_loop] * 60) /
+            numberConfig[Field.original_BPM] +
+          numberConfig[Field.start_time]
         ).toFixed(2),
         true
       );
@@ -78,8 +79,8 @@ export function updateInput(
       updateInput(
         Field.beats_per_loop,
         (
-          ((numberState[Field.end_time] - numberState[Field.start_time]) *
-            numberState[Field.original_BPM]) /
+          ((numberConfig[Field.end_time] - numberConfig[Field.start_time]) *
+            numberConfig[Field.original_BPM]) /
           60
         ).toFixed(2),
         true
@@ -88,9 +89,9 @@ export function updateInput(
   }
 }
 
-export function getNumberState() {
+export function getNumberConfig() {
   return Object.fromEntries(
-    Object.entries(getState())
+    Object.entries(getConfig())
       .map(([k, v]) => ({ k, v: parseFloat(v) }))
       .filter(({ v }) => !Number.isNaN(v))
       .map(({ k, v }) => [k, v])

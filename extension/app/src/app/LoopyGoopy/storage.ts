@@ -9,9 +9,9 @@ export function setStorageKey(_storageKey: string) {
   storageKey = _storageKey;
 }
 
-export function save(state: any) {
+export function save(config: any) {
   if (storageKey === undefined) return;
-  localStorage.setItem(storageKey, JSON.stringify({ version, state }));
+  localStorage.setItem(storageKey, JSON.stringify({ version, config }));
 }
 
 export function load() {
@@ -20,7 +20,7 @@ export function load() {
     const s = localStorage.getItem(storageKey);
     if (s === null) return null;
     const loaded = JSON.parse(s);
-    if (loaded.version === version) return loaded.state;
+    if (loaded.version === version) return loaded.config;
     return null;
   } catch (e) {
     console.error(e);

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import ActionButton from "./LoopyGoopy/ActionButton";
+import ActionButton, { Action } from "./LoopyGoopy/ActionButton";
+import { Field } from "./LoopyGoopy/contentScript";
 import getTab from "./LoopyGoopy/getTab";
 import Input from "./LoopyGoopy/Input";
 import Notes from "./LoopyGoopy/Notes";
 import { setStorageKey, storageKey } from "./LoopyGoopy/storage";
 import Tap from "./LoopyGoopy/Tap";
-import { Action, Field, getState } from "./LoopyGoopy/utils";
+import { getConfig } from "./LoopyGoopy/utils";
 
 const padding = <div style={{ width: "1em" }}></div>;
 
@@ -18,7 +19,7 @@ export default function Main() {
       .then((storageKey) =>
         Promise.resolve()
           .then(() => setStorageKey(storageKey))
-          .then(() => getState(true))
+          .then(() => getConfig(true))
           .then(() => updateStorageKey(storageKey))
       );
   }, []);

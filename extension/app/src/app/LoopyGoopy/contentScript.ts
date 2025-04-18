@@ -4,6 +4,27 @@ export enum MessageType {
   init,
 }
 
+export enum Field {
+  original_BPM,
+  beats_per_loop,
+  count__in_beats,
+  count__in_style,
+  tempo_change,
+  train_target,
+  train_loops,
+  start_time,
+  end_time,
+  notes,
+}
+
+export enum CountInStyle {
+  track,
+  silent,
+  metronome,
+}
+
+export type ConfigType = { [f in Field]: string };
+
 declare global {
   interface Window {
     chrome: any;
@@ -20,7 +41,10 @@ function listenForMessage(
   );
 }
 
-var _state: { element: HTMLVideoElement | HTMLAudioElement | null };
+var _state: {
+  element: HTMLVideoElement | HTMLAudioElement | null;
+  timeout: NodeJS.Timeout | undefined;
+};
 
 function getState(): Promise<typeof _state> {
   return Promise.resolve().then(() => ({
@@ -28,12 +52,17 @@ function getState(): Promise<typeof _state> {
       document.getElementsByTagName("video")[0] ||
       document.getElementsByTagName("audio")[0] ||
       null,
+    timeout: undefined,
   }));
 }
 
 const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
   [MessageType.start]: () => alert("start"),
-  [MessageType.stop]: () => alert("stop"),
+  [MessageType.stop]: (payload) => {
+    const timeout = _state.timeout;
+    _state.timeout = undefined;
+    clearTimeout(timeout);
+  },
   [MessageType.init]: (payload: { tabId: number }) =>
     Promise.resolve()
       .then(getState)

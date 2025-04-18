@@ -1,31 +1,6 @@
 import React from "react";
+import { ConfigType, Field } from "./contentScript";
 import { load } from "./storage";
-
-export enum Field {
-  original_BPM,
-  beats_per_loop,
-  count__in_beats,
-  count__in_style,
-  tempo_change,
-  train_target,
-  train_loops,
-  start_time,
-  end_time,
-  notes,
-}
-
-export enum CountInStyle {
-  track,
-  silent,
-  metronome,
-}
-
-export enum Action {
-  start,
-  stop,
-  next,
-  previous,
-}
 
 var _refs: { [field: string]: React.RefObject<HTMLInputElement> };
 export function getRefs() {
@@ -40,10 +15,10 @@ export function getRefs() {
   return _refs;
 }
 
-var _state: { [f in Field]: string };
-export function getState(reset: boolean = false) {
-  if (reset || !_state) {
-    _state = load() || {};
+var _config: ConfigType;
+export function getConfig(reset: boolean = false) {
+  if (reset || !_config) {
+    _config = load() || {};
   }
-  return _state;
+  return _config;
 }
