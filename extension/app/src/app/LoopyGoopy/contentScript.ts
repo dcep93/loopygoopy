@@ -23,7 +23,7 @@ export enum CountInStyle {
   metronome,
 }
 
-export type ConfigType = { [f in Field]: string };
+export type NumberConfigType = { [f in Field]?: number };
 
 const START_SLEEP_MS = 1000;
 const DEFAULT_BPM = 60;
@@ -31,7 +31,7 @@ const DEFAULT_BPM = 60;
 var _state: {
   element: HTMLVideoElement | HTMLAudioElement | null;
   timeout: NodeJS.Timeout | undefined;
-  config: ConfigType | undefined;
+  config: NumberConfigType | undefined;
   iter: number;
 };
 
@@ -42,7 +42,7 @@ declare global {
 }
 
 const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
-  [MessageType.start]: (payload: { config: ConfigType }) =>
+  [MessageType.start]: (payload: { config: NumberConfigType }) =>
     Promise.resolve()
       .then(() => (_state.config = payload.config))
       .then(() => sleepPromise(START_SLEEP_MS))
@@ -132,20 +132,27 @@ function loop() {
   if (_state.element === null) throw new Error("loop.element.null");
   const startTime = Math.max(
     0,
-    parseFloat(config[Field.start_time]) || Number.NEGATIVE_INFINITY
+    config[Field.start_time] || Number.NEGATIVE_INFINITY
   );
   const endTime = Math.min(
     _state.element.duration,
-    parseFloat(config[Field.start_time]) || Number.POSITIVE_INFINITY
+    config[Field.start_time] || Number.POSITIVE_INFINITY
   );
   if (endTime <= startTime) throw new Error("loop.startTime.endTime");
-  const rawOriginalBPM = parseFloat(config[Field.original_BPM]);
-  const playbackRate = 1; // todo
+  const rawOriginalBPM = config[Field.original_BPM];
+  const tempoChange = config[Field.tempo_change] || 1;
+  const trainTarget = config[Field.train_target] || tempoChange;
+  const playbackRate =
+    _state.iter < config[Field.train_loops]!
+      ? tempoChange +
+        (_state.iter++ / config[Field.train_loops]!) *
+          (trainTarget - tempoChange)
+      : trainTarget;
   _state.element.playbackRate = playbackRate;
   const countInMs =
-    (parseFloat(config[Field.count__in_beats]) * 60 * 1000) / rawOriginalBPM > 0
-      ? rawOriginalBPM
-      : DEFAULT_BPM / playbackRate;
+    ((config[Field.count__in_beats] || 0) * 60 * 1000) /
+    (rawOriginalBPM! > 0 ? rawOriginalBPM! : DEFAULT_BPM) /
+    playbackRate;
   document.title = `${(playbackRate * 100).toFixed(2)}% - ${initialTitle}`;
   return Promise.resolve().then(() =>
     ({
@@ -154,6 +161,6 @@ function loop() {
       },
       [CountInStyle.track]: () => sleepPromise(countInMs - startTime * 1000),
       [CountInStyle.silent]: () => sleepPromise(countInMs),
-    }[parseInt(config[Field.count__in_style]) as CountInStyle]())
+    }[config[Field.count__in_style] as CountInStyle]())
   ); // todo
 }

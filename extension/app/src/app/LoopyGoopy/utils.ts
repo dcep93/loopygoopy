@@ -1,5 +1,5 @@
 import React from "react";
-import { ConfigType, Field } from "./contentScript";
+import { Field } from "./contentScript";
 import { load } from "./storage";
 
 var _refs: { [field: string]: React.RefObject<HTMLInputElement> };
@@ -15,7 +15,7 @@ export function getRefs() {
   return _refs;
 }
 
-var _config: ConfigType;
+var _config: { [f in Field]: string };
 export function getConfig(reset: boolean = false) {
   if (reset || !_config) {
     _config = load() || {};
