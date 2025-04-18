@@ -6,7 +6,7 @@ import Input from "./LoopyGoopy/Input";
 import Notes from "./LoopyGoopy/Notes";
 import { setStorageKey, storageKey } from "./LoopyGoopy/storage";
 import Tap from "./LoopyGoopy/Tap";
-import { getConfig } from "./LoopyGoopy/utils";
+import { loadConfig } from "./LoopyGoopy/utils";
 
 const padding = <div style={{ width: "1em" }}></div>;
 
@@ -19,7 +19,7 @@ export default function Main() {
       .then((storageKey) =>
         Promise.resolve()
           .then(() => setStorageKey(storageKey))
-          .then(() => getConfig(true))
+          .then(loadConfig)
           .then(() => updateStorageKey(storageKey))
       );
   }, []);

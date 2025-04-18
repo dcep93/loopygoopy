@@ -71,7 +71,7 @@ export function updateInput(
         (
           (numberConfig[Field.beats_per_loop] * 60) /
             numberConfig[Field.original_BPM] +
-          numberConfig[Field.start_time]
+          (numberConfig[Field.start_time] || 0)
         ).toFixed(2),
         true
       );
@@ -80,7 +80,8 @@ export function updateInput(
       updateInput(
         Field.beats_per_loop,
         (
-          ((numberConfig[Field.end_time] - numberConfig[Field.start_time]) *
+          ((numberConfig[Field.end_time] -
+            (numberConfig[Field.start_time] || 0)) *
             numberConfig[Field.original_BPM]) /
           60
         ).toFixed(2),

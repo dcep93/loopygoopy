@@ -15,10 +15,11 @@ export function getRefs() {
   return _refs;
 }
 
+export function loadConfig() {
+  return load().then((config: any) => (_config = config));
+}
+
 var _config: { [f in Field]: string };
-export function getConfig(reset: boolean = false) {
-  if (reset || !_config) {
-    _config = load() || {};
-  }
-  return _config;
+export function getConfig() {
+  return _config || {};
 }

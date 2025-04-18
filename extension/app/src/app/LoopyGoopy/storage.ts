@@ -7,19 +7,22 @@ export function setStorageKey(_storageKey: string) {
 
 export function save(config: any) {
   if (storageKey === undefined) return;
-  localStorage.setItem(storageKey, JSON.stringify({ version, config }));
+  window.chrome.storage.sync.set({
+    [storageKey]: JSON.stringify({ version, config }),
+  });
 }
 
 export function load() {
-  if (storageKey === undefined) return null;
-  try {
-    const s = localStorage.getItem(storageKey);
-    if (s === null) return null;
-    const loaded = JSON.parse(s);
-    if (loaded.version === version) return loaded.config;
-    return null;
-  } catch (e) {
-    console.error(e);
-    return null;
-  }
+  return new Promise((resolve) =>
+    window.chrome.storage.sync.get(storageKey, (result: string) => {
+      var loaded: any = {};
+      try {
+        loaded = JSON.parse(result);
+      } catch (e) {
+        console.log(e);
+      }
+      if (loaded.version === version)
+        resolve(loaded.version === version ? loaded.config : {});
+    })
+  );
 }

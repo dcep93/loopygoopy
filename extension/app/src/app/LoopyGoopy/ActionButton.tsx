@@ -34,7 +34,8 @@ function actionButton(action: Action) {
       const diff =
         (config[Field.beats_per_loop] * 60) / config[Field.original_BPM];
       const newStart =
-        config[Field.start_time] + diff * (action === Action.previous ? -1 : 1);
+        (config[Field.start_time] || 0) +
+        diff * (action === Action.previous ? -1 : 1);
       updateInput(Field.start_time, newStart.toFixed(2), true);
       updateInput(Field.end_time, (newStart + diff).toFixed(2), true);
       break;
