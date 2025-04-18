@@ -76,6 +76,17 @@ export function updateInput(
         true
       );
       break;
+    case Field.start_time:
+      updateInput(
+        Field.end_time,
+        (
+          (numberConfig[Field.beats_per_loop] * 60) /
+            numberConfig[Field.original_BPM] +
+          (numberConfig[Field.start_time] || 0)
+        ).toFixed(2),
+        true
+      );
+      break;
     case Field.end_time:
       updateInput(
         Field.beats_per_loop,

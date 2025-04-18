@@ -24,9 +24,7 @@ export default function Notes() {
       }}
     >
       <div style={{ overflow: "scroll", width: "100%" }}>
-        <div style={{ textWrap: "nowrap", width: 0 }}>
-          {storageKey} asdfasdf asfadfdsf asdfadfs asdfsdf
-        </div>
+        <div style={{ textWrap: "nowrap", width: 0 }}>{storageKey}</div>
       </div>
       <textarea
         ref={ref}
