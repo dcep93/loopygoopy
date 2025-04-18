@@ -27,25 +27,13 @@ var CountInStyle;
     CountInStyle[CountInStyle["silent"] = 1] = "silent";
     CountInStyle[CountInStyle["metronome"] = 2] = "metronome";
 })(CountInStyle = exports.CountInStyle || (exports.CountInStyle = {}));
-function listenForMessage(f) {
-    window.chrome.runtime.onMessage.addListener(function (data, _sender, sendResponse) {
-        f(data, sendResponse);
-    });
-}
+var START_SLEEP_MS = 1000;
 var _state;
-function getState() {
-    return Promise.resolve().then(function () { return ({
-        element: document.getElementsByTagName("video")[0] ||
-            document.getElementsByTagName("audio")[0] ||
-            null,
-        timeout: undefined,
-        config: undefined
-    }); });
-}
 var messageTasks = (_a = {},
     _a[MessageType.start] = function (payload) {
         return Promise.resolve()
             .then(function () { return (_state.config = payload.config); })
+            .then(function () { return sleepPromise(START_SLEEP_MS); })
             .then(countIn);
     },
     _a[MessageType.stop] = function () {
@@ -53,29 +41,13 @@ var messageTasks = (_a = {},
             .then(function () { return (_state.config = undefined); })
             .then(function () { return clearTimeout(_state.timeout); });
     },
-    _a[MessageType.init] = function () {
-        return Promise.resolve()
-            .then(function () {
-            return (_state === null || _state === void 0 ? void 0 : _state.config) !== undefined
-                ? _state
-                : Promise.resolve()
-                    .then(getState)
-                    .then(function (state) {
-                    _state = state;
-                    return state;
-                });
-        })
-            .then(function (state) {
-            return state.element === null
-                ? undefined
-                : {
-                    success: true,
-                    mediaId: "".concat(document.title, "-").concat(window.location.host ||
-                        Array.from(state.element.children)[0].src, "-").concat(state.element.duration)
-                };
-        });
-    },
+    _a[MessageType.init] = function () { return Promise.resolve().then(init); },
     _a);
+function listenForMessage(f) {
+    window.chrome.runtime.onMessage.addListener(function (data, _sender, sendResponse) {
+        f(data, sendResponse);
+    });
+}
 function activate() {
     listenForMessage(function (data, sendResponse) {
         return Promise.resolve(data.payload)
@@ -86,21 +58,59 @@ function activate() {
         });
     });
 }
+function sleepPromise(sleepMs) {
+    return new Promise(function (resolve) { return setTimeout(resolve, sleepMs); });
+}
+if (window.exports)
+    activate();
+//
+function init() {
+    return Promise.resolve()
+        .then(function () {
+        return (_state === null || _state === void 0 ? void 0 : _state.config) !== undefined
+            ? null
+            : Promise.resolve().then(function () {
+                _state = {
+                    element: document.getElementsByTagName("video")[0] ||
+                        document.getElementsByTagName("audio")[0] ||
+                        null,
+                    timeout: undefined,
+                    config: undefined,
+                    iter: 0
+                };
+            });
+    })
+        .then(function () {
+        return _state.element === null
+            ? undefined
+            : {
+                success: true,
+                mediaId: "".concat(document.title, "-").concat(window.location.host ||
+                    Array.from(_state.element.children)[0].src, "-").concat(_state.element.duration)
+            };
+    });
+}
 function countIn() {
     var config = _state.config;
     if (config === undefined)
-        return;
+        throw new Error("countIn.config.undefined");
     var bpm = getBpm();
-    if (bpm === 0) {
-        return;
-    }
+    if (!(bpm > 0))
+        throw new Error("countIn.bpm.zero");
     var countInBeats = parseFloat(config[Field.count__in_beats]);
-    if (countInBeats > 0) {
-        _state.timeout = setTimeout(start, (countInBeats * 60 * 1000) / bpm);
-    }
-    else {
-        start();
-    }
+    return Promise.resolve()
+        .then(function () {
+        var _a;
+        return !(countInBeats > 0) ||
+            parseFloat(config[Field.count__in_style]) === CountInStyle.track
+            ? null
+            : (_a = {},
+                _a[CountInStyle.silent] = function () {
+                    return sleepPromise((countInBeats * 60 * 1000) / bpm);
+                },
+                _a);
+    })
+        .then(start);
 }
 function getBpm() {
     return 0; // todo
@@ -108,5 +118,3 @@ function getBpm() {
 function start() {
     // todo
 }
-if (window.exports)
-    activate();
