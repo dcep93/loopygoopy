@@ -18,8 +18,8 @@ export enum Field {
 }
 
 export enum CountInStyle {
-  track,
   silent,
+  track,
   metronome,
 }
 
@@ -29,8 +29,7 @@ const START_SLEEP_MS = 1000;
 const DEFAULT_BPM = 60;
 
 var _state: {
-  element: HTMLVideoElement | HTMLAudioElement | null;
-  timeout: NodeJS.Timeout | undefined;
+  element: HTMLVideoElement | HTMLAudioElement;
   config: NumberConfigType | undefined;
   iter: number;
 };
@@ -45,18 +44,16 @@ const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
   [MessageType.start]: (payload: { config: NumberConfigType }) =>
     Promise.resolve()
       .then(() => (_state.config = payload.config))
+      .then(() => _state.element.pause())
       .then(() => sleepPromise(START_SLEEP_MS))
       .then(loop),
   [MessageType.stop]: () =>
     Promise.resolve()
       .then(() => (_state.config = undefined))
-      .then(() => clearTimeout(_state.timeout))
       .then(() =>
-        _state.element === null
-          ? null
-          : Promise.resolve()
-              .then(() => _state.element!.pause())
-              .then(() => (_state.element!.playbackRate = 1))
+        Promise.resolve()
+          .then(() => _state.element.pause())
+          .then(() => (_state.element.playbackRate = 1))
       )
       .then(() => (document.title = initialTitle)),
   [MessageType.init]: () => Promise.resolve().then(init),
@@ -105,16 +102,14 @@ function init() {
             _state = {
               element:
                 document.getElementsByTagName("video")[0] ||
-                document.getElementsByTagName("audio")[0] ||
-                null,
-              timeout: undefined,
+                document.getElementsByTagName("audio")[0],
               config: undefined,
               iter: 0,
             };
           })
     )
     .then(() =>
-      _state.element === null
+      !_state.element
         ? undefined
         : {
             success: true,
@@ -126,20 +121,11 @@ function init() {
     );
 }
 
-function loop() {
+function loop(): Promise<void> {
   const config = _state.config;
-  if (config === undefined) throw new Error("loop.config.undefined");
-  if (_state.element === null) throw new Error("loop.element.null");
-  const startTime = Math.max(
-    0,
-    config[Field.start_time] || Number.NEGATIVE_INFINITY
-  );
-  const endTime = Math.min(
-    _state.element.duration,
-    config[Field.start_time] || Number.POSITIVE_INFINITY
-  );
-  if (endTime <= startTime) throw new Error("loop.startTime.endTime");
+  if (config === undefined) return Promise.resolve();
   const rawOriginalBPM = config[Field.original_BPM];
+  const bpm = rawOriginalBPM! > 0 ? rawOriginalBPM! : DEFAULT_BPM;
   const tempoChange = config[Field.tempo_change] || 1;
   const trainTarget = config[Field.train_target] || tempoChange;
   const playbackRate =
@@ -149,18 +135,34 @@ function loop() {
           (trainTarget - tempoChange)
       : trainTarget;
   _state.element.playbackRate = playbackRate;
-  const countInMs =
-    ((config[Field.count__in_beats] || 0) * 60 * 1000) /
-    (rawOriginalBPM! > 0 ? rawOriginalBPM! : DEFAULT_BPM) /
-    playbackRate;
+  const countInS =
+    ((config[Field.count__in_beats] || 0) * 60) / bpm / playbackRate;
+  const rawStartTime = Math.max(
+    0,
+    config[Field.start_time] || Number.NEGATIVE_INFINITY
+  );
+  const startTime =
+    config[Field.count__in_style] === CountInStyle.track
+      ? Math.max(0, rawStartTime - countInS)
+      : rawStartTime;
+  _state.element.currentTime = startTime;
+  const rawEndTime = config[Field.end_time] || _state.element.duration;
+  const endTime =
+    rawEndTime > rawStartTime ? rawEndTime : _state.element.duration;
   document.title = `${(playbackRate * 100).toFixed(2)}% - ${initialTitle}`;
-  return Promise.resolve().then(() =>
-    ({
-      [CountInStyle.metronome]: () => {
-        throw new Error("loop.CountInStyle.metronome");
-      },
-      [CountInStyle.track]: () => sleepPromise(countInMs - startTime * 1000),
-      [CountInStyle.silent]: () => sleepPromise(countInMs),
-    }[config[Field.count__in_style] as CountInStyle]())
-  ); // todo
+  return Promise.resolve()
+    .then(() =>
+      ({
+        [CountInStyle.silent]: () => sleepPromise(countInS * 1000),
+        [CountInStyle.track]: () =>
+          sleepPromise((countInS - rawStartTime) * 1000),
+        [CountInStyle.metronome]: () => {
+          throw new Error("loop.CountInStyle.metronome");
+        },
+      }[(config[Field.count__in_style] || 0) as CountInStyle]())
+    )
+    .then(() => _state.element.play())
+    .then(() => sleepPromise(((endTime - startTime) * 1000) / playbackRate))
+    .then(() => _state.element.pause())
+    .then(loop);
 }
