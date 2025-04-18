@@ -1,11 +1,5 @@
 import { MessageType } from "./contentScript";
 
-declare global {
-  interface Window {
-    chrome: any;
-  }
-}
-
 var _tab: { id?: string; mediaId?: string };
 export default function getTab(): Promise<typeof _tab> {
   if (window.chrome?.tabs === undefined) {
@@ -22,7 +16,7 @@ export default function getTab(): Promise<typeof _tab> {
                 const tabId = tabs[0].id;
                 window.chrome.tabs.sendMessage(
                   tabId,
-                  { mType: MessageType.init, tabId },
+                  { mType: MessageType.init, payload: { tabId } },
                   (response: any) => {
                     if (response === undefined) {
                       // eslint-disable-next-line @typescript-eslint/no-unused-expressions

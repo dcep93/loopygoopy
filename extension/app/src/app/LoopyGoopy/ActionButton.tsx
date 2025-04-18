@@ -20,7 +20,7 @@ function actionButton(action: Action) {
     case Action.stop:
       sendMessage({
         mType: action === Action.start ? MessageType.start : MessageType.stop,
-        state,
+        payload: { state },
       });
       break;
     case Action.previous:
