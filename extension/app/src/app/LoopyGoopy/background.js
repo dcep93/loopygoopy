@@ -1,3 +1,4 @@
+// todo remote work
 var tab;
 console.log("background");
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
