@@ -28,8 +28,14 @@ export default function getTab(): Promise<typeof _tab> {
                     } else if (response === null) {
                       reject("message.response.null");
                     } else if (response.success) {
-                      window.chrome.runtime.sendMessage(_tab);
-                      resolve({ id: tabId, ...response });
+                      Promise.resolve({ id: tabId, ...response }).then(
+                        (__tab) =>
+                          Promise.resolve()
+                            .then(() =>
+                              window.chrome.runtime.sendMessage(__tab)
+                            )
+                            .then(() => resolve(__tab))
+                      );
                     } else {
                       window.close();
                       reject(JSON.stringify(response));

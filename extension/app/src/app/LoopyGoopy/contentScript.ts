@@ -43,13 +43,17 @@ declare global {
 
 const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
   [MessageType.start]: (payload: { config: NumberConfigType }) =>
-    Promise.resolve(Math.random()).then((loopId) =>
-      Promise.resolve()
-        .then(() => Object.assign(_state, { ...payload, loopId }))
-        .then(() => _state.element.pause())
-        .then(() => sleepPromise(START_SLEEP_MS))
-        .then(() => loop(loopId))
-    ),
+    _state === undefined
+      ? Promise.resolve().then(() => {
+          alert("messageTasks.start._state.undefined"); // todo
+        })
+      : Promise.resolve(Math.random()).then((loopId) =>
+          Promise.resolve()
+            .then(() => Object.assign(_state, { ...payload, loopId, iter: 0 }))
+            .then(() => _state.element.pause())
+            .then(() => sleepPromise(START_SLEEP_MS))
+            .then(() => loop(loopId))
+        ),
   [MessageType.stop]: () =>
     Promise.resolve()
       .then(() => (_state.loopId = -1))
@@ -107,7 +111,7 @@ function init() {
                 document.getElementsByTagName("video")[0] ||
                 document.getElementsByTagName("audio")[0],
               config: undefined,
-              iter: 0,
+              iter: -1,
               loopId: -1,
             };
           })
@@ -134,9 +138,9 @@ function loop(loopId: number): Promise<void> {
   const tempoChange = config[Field.tempo_change] || 1;
   const trainTarget = config[Field.train_target] || tempoChange;
   const playbackRate =
-    _state.iter < config[Field.train_loops]!
+    _state.iter < (config[Field.train_loops] || 1)
       ? tempoChange +
-        (_state.iter++ / config[Field.train_loops]!) *
+        (_state.iter++ / (config[Field.train_loops] || 1)) *
           (trainTarget - tempoChange)
       : trainTarget;
   _state.element.playbackRate = playbackRate;
