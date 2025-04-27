@@ -36,13 +36,19 @@ export default function Input(props: { field: Field }) {
               ))}
           </select>
         ) : (
-          <input
-            ref={getRefs()[props.field]}
-            style={{ width: "100%" }}
-            onChange={(e) => updateInput(props.field, e.target.value, false)}
-            defaultValue={getConfig()[props.field]}
-            onSubmit={() => actionButtonF(Action.start)}
-          ></input>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              actionButtonF(Action.start);
+            }}
+          >
+            <input
+              ref={getRefs()[props.field]}
+              style={{ width: "100%" }}
+              onChange={(e) => updateInput(props.field, e.target.value, false)}
+              defaultValue={getConfig()[props.field]}
+            ></input>
+          </form>
         )}
       </div>
     </div>

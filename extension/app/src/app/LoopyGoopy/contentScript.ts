@@ -51,17 +51,22 @@ const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
           Promise.resolve()
             .then(() => Object.assign(_state, { ...payload, loopId, iter: 0 }))
             .then(() => _state.element.pause())
+            .then(
+              () =>
+                (_state.element.onpause = () => {
+                  _state.element.paused &&
+                    messageTasks[MessageType.stop]("messageTasks.start.pause");
+                })
+            )
             .then(() => sleepPromise(START_SLEEP_MS))
             .then(() => loop(loopId))
         ),
   [MessageType.stop]: () =>
     Promise.resolve()
       .then(() => (_state.loopId = -1))
-      .then(() =>
-        Promise.resolve()
-          .then(() => _state.element.pause())
-          .then(() => (_state.element.playbackRate = 1))
-      )
+      .then(() => (_state.element.onpause = () => null))
+      .then(() => _state.element.pause())
+      .then(() => (_state.element.playbackRate = 1))
       .then(() => (document.title = initialTitle)),
   [MessageType.init]: () => Promise.resolve().then(init),
 };
@@ -131,7 +136,6 @@ function init() {
 
 function loop(loopId: number): Promise<void> {
   if (_state.loopId !== loopId) return Promise.resolve();
-  _state.element.pause();
   const config = _state.config!;
   const rawOriginalBPM = config[Field.original_BPM];
   const bpm = rawOriginalBPM! > 0 ? rawOriginalBPM! : DEFAULT_BPM;
@@ -170,7 +174,15 @@ function loop(loopId: number): Promise<void> {
         },
       }[(config[Field.count__in_style] || 0) as CountInStyle]())
     )
-    .then(() => _state.element.play())
-    .then(() => sleepPromise(((endTime - startTime) * 1000) / playbackRate))
-    .then(() => loop(loopId));
+    .then(() =>
+      _state.loopId !== loopId
+        ? undefined
+        : _state.element
+            .play()
+            .then(() =>
+              sleepPromise(((endTime - startTime) * 1000) / playbackRate)
+            )
+            .then(() => _state.element.pause())
+            .then(() => loop(loopId))
+    );
 }
