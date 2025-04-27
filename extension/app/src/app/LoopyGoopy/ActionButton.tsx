@@ -12,14 +12,14 @@ export enum Action {
 export default function ActionButton(props: { action: Action }) {
   return (
     <div>
-      <button onClick={() => actionButton(props.action)}>
+      <button onClick={() => actionButtonF(props.action)}>
         {Action[props.action]}
       </button>
     </div>
   );
 }
 
-function actionButton(action: Action) {
+export function actionButtonF(action: Action) {
   const config = getNumberConfig();
   switch (action) {
     case Action.start:

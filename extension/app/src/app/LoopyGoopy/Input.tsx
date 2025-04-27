@@ -1,3 +1,4 @@
+import { Action, actionButtonF } from "./ActionButton";
 import { CountInStyle, Field } from "./contentScript";
 import { save } from "./storage";
 import { getConfig, getRefs } from "./utils";
@@ -40,6 +41,7 @@ export default function Input(props: { field: Field }) {
             style={{ width: "100%" }}
             onChange={(e) => updateInput(props.field, e.target.value, false)}
             defaultValue={getConfig()[props.field]}
+            onSubmit={() => actionButtonF(Action.start)}
           ></input>
         )}
       </div>
