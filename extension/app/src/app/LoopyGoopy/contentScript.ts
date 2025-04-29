@@ -33,12 +33,20 @@ var _state: {
   config: NumberConfigType | undefined;
   iter: number;
   loopId: number;
+  isPaused: boolean;
 };
 
 declare global {
   interface Window {
     chrome: any;
   }
+}
+
+function pause() {
+  return Promise.resolve()
+    .then(() => (_state.isPaused = true))
+    .then(() => _state.element.paused || _state.element.pause())
+    .then(() => (_state.isPaused = false));
 }
 
 const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
@@ -49,22 +57,31 @@ const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
         })
       : Promise.resolve(Math.random()).then((loopId) =>
           Promise.resolve()
-            .then(() => Object.assign(_state, { ...payload, loopId, iter: 0 }))
-            .then(() => _state.element.pause())
+            .then(() => console.log("messageTasks.start"))
             .then(
               () =>
                 (_state.element.onpause = () => {
                   _state.element.paused &&
+                    !_state.isPaused &&
                     messageTasks[MessageType.stop]("messageTasks.start.pause");
                 })
             )
+            .then(pause)
             .then(() => sleepPromise(START_SLEEP_MS))
+            .then(() =>
+              Object.assign(_state, {
+                ...payload,
+                loopId,
+                iter: 0,
+              })
+            )
             .then(() => loop(loopId))
         ),
   [MessageType.stop]: () =>
     Promise.resolve()
-      .then(() => (_state.loopId = -1))
+      .then(() => console.log("messageTasks.stop"))
       .then(() => (_state.element.onpause = () => null))
+      .then(() => (_state.loopId = -1))
       .then(() => _state.element.pause())
       .then(() => (_state.element.playbackRate = 1))
       .then(() => (document.title = initialTitle)),
@@ -118,6 +135,7 @@ function init() {
               config: undefined,
               iter: -1,
               loopId: -1,
+              isPaused: false,
             };
           })
     )
@@ -166,13 +184,15 @@ function loop(loopId: number): Promise<void> {
   return Promise.resolve()
     .then(() =>
       ({
-        [CountInStyle.silent]: () => sleepPromise(countInS * 1000),
-        [CountInStyle.track]: () =>
-          sleepPromise((countInS - rawStartTime) * 1000),
+        [CountInStyle.silent]: () => countInS * 1000,
+        [CountInStyle.track]: () => (countInS - rawStartTime) * 1000,
         [CountInStyle.metronome]: () => {
           throw new Error("loop.CountInStyle.metronome");
         },
       }[(config[Field.count__in_style] || 0) as CountInStyle]())
+    )
+    .then((sleepMs) =>
+      sleepMs > 0 ? pause().then(() => sleepPromise(sleepMs)) : null
     )
     .then(() =>
       _state.loopId !== loopId
@@ -182,7 +202,6 @@ function loop(loopId: number): Promise<void> {
             .then(() =>
               sleepPromise(((endTime - startTime) * 1000) / playbackRate)
             )
-            .then(() => _state.element.pause())
             .then(() => loop(loopId))
     );
 }
