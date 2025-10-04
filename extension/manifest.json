@@ -13,7 +13,11 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/*", "file:///*"],
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://www.instagram.com/*",
+        "file:///*"
+      ],
       "js": [
         "app/src/app/LoopyGoopy/activateContentScript.js",
         "app/src/app/LoopyGoopy/contentScript.js"
