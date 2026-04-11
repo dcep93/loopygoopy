@@ -1,10 +1,11 @@
-export var MessageType;
+"use strict";
+var MessageType;
 (function (MessageType) {
     MessageType[MessageType["start"] = 0] = "start";
     MessageType[MessageType["stop"] = 1] = "stop";
     MessageType[MessageType["init"] = 2] = "init";
 })(MessageType || (MessageType = {}));
-export var Field;
+var Field;
 (function (Field) {
     Field[Field["original_BPM"] = 0] = "original_BPM";
     Field[Field["beats_per_loop"] = 1] = "beats_per_loop";
@@ -17,7 +18,7 @@ export var Field;
     Field[Field["end_time"] = 8] = "end_time";
     Field[Field["notes"] = 9] = "notes";
 })(Field || (Field = {}));
-export var CountInStyle;
+var CountInStyle;
 (function (CountInStyle) {
     CountInStyle[CountInStyle["silent"] = 0] = "silent";
     CountInStyle[CountInStyle["track"] = 1] = "track";

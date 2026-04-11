@@ -1,5 +1,5 @@
 import React from "react";
-import { Field } from "./contentScript";
+import { Field } from "./shared";
 import { load } from "./storage";
 
 var _refs: { [field: string]: React.RefObject<HTMLInputElement> };

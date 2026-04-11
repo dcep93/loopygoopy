@@ -1,4 +1,4 @@
-import { Field } from "./contentScript";
+import { Field } from "./shared";
 import { updateInput } from "./Input";
 import { storageKey } from "./storage";
 import { getConfig, getRefs } from "./utils";

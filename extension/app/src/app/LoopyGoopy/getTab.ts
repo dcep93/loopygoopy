@@ -1,4 +1,4 @@
-import { MessageType } from "./contentScript";
+import { MessageType } from "./shared";
 
 var _tab: { id?: string; mediaId?: string };
 export default function getTab(): Promise<typeof _tab> {

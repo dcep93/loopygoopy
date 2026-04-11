@@ -1,5 +1,5 @@
 import { updateInput } from "./Input";
-import { Field } from "./contentScript";
+import { Field } from "./shared";
 import { getRefs } from "./utils";
 
 export default function Tap() {

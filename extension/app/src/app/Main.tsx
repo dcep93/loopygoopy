@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import ActionButton, { Action } from "./LoopyGoopy/ActionButton";
-import { Field } from "./LoopyGoopy/contentScript";
+import { Field } from "./LoopyGoopy/shared";
 import getTab from "./LoopyGoopy/getTab";
 import Input from "./LoopyGoopy/Input";
 import Notes from "./LoopyGoopy/Notes";

@@ -1,4 +1,4 @@
-import { Field, MessageType } from "./contentScript";
+import { Field, MessageType } from "./shared";
 import getTab from "./getTab";
 import { getNumberConfig, updateInput } from "./Input";
 

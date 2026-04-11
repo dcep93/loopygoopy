@@ -1,10 +1,10 @@
-export enum MessageType {
+enum MessageType {
   start,
   stop,
   init,
 }
 
-export enum Field {
+enum Field {
   original_BPM,
   beats_per_loop,
   count__in_beats,
@@ -17,13 +17,13 @@ export enum Field {
   notes,
 }
 
-export enum CountInStyle {
+enum CountInStyle {
   silent,
   track,
   metronome,
 }
 
-export type NumberConfigType = { [f in Field]?: number };
+type NumberConfigType = { [f in Field]?: number };
 
 const START_SLEEP_MS = 1000;
 const DEFAULT_BPM = 60;
@@ -36,11 +36,9 @@ var _state: {
   isPaused: boolean;
 };
 
-declare global {
-  interface Window {
-    chrome: any;
-    __loopyGoopyContentScriptActivated?: boolean;
-  }
+interface Window {
+  chrome: any;
+  __loopyGoopyContentScriptActivated?: boolean;
 }
 
 function pause() {

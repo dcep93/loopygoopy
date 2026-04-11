@@ -1,5 +1,5 @@
 import { Action, actionButtonF } from "./ActionButton";
-import { CountInStyle, Field } from "./contentScript";
+import { CountInStyle, Field } from "./shared";
 import { save } from "./storage";
 import { getConfig, getRefs } from "./utils";
 
