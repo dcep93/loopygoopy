@@ -179,7 +179,7 @@ function init() {
         ? undefined
         : {
             success: true,
-            mediaId: `${document.title}-${window.location.host ||
+            mediaId: `${initialTitle || document.title}-${window.location.host ||
                 Array.from(_state.element.children)[0].src}-${_state.element.duration}`,
         });
 }
