@@ -27,7 +27,6 @@ type NumberConfigType = { [f in Field]?: number };
 
 const START_SLEEP_MS = 1000;
 const DEFAULT_BPM = 60;
-const YOUTUBE_SANITY_PLAYBACK_RATE = 0.5;
 const PAGE_PLAYBACK_SCRIPT_PATH = "app/src/app/LoopyGoopy/pagePlaybackBridge.js";
 const PAGE_PLAYBACK_SCRIPT_ID = "loopy-goopy-page-playback-bridge";
 const PAGE_PLAYBACK_REQUEST_EVENT = "LoopyGoopy.pagePlayback.request";
@@ -253,10 +252,8 @@ function loop(loopId: number): Promise<void> {
   const bpm = rawOriginalBPM! > 0 ? rawOriginalBPM! : DEFAULT_BPM;
   const tempoChange = config[Field.tempo_change] || 1;
   const trainTarget = config[Field.train_target] || tempoChange;
-  const playbackRate = isYouTubePage()
-    // Temporary sanity check for YouTube start: force 0.5x via a page-level lock.
-    ? YOUTUBE_SANITY_PLAYBACK_RATE
-    : _state.iter < (config[Field.train_loops] || 1)
+  const playbackRate =
+    _state.iter < (config[Field.train_loops] || 1)
       ? tempoChange +
       (_state.iter++ / (config[Field.train_loops] || 1)) *
       (trainTarget - tempoChange)
