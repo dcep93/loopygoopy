@@ -54,30 +54,30 @@ const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
   [MessageType.start]: (payload: { config: NumberConfigType }) =>
     _state === undefined
       ? Promise.resolve().then(() => {
-          alert("messageTasks.start._state.undefined"); // todo
-        })
+        alert("messageTasks.start._state.undefined"); // todo
+      })
       : Promise.resolve(Math.random()).then((loopId) =>
-          Promise.resolve()
-            .then(() => console.log("messageTasks.start"))
-            .then(
-              () =>
-                (_state.element.onpause = () => {
-                  _state.element.paused &&
-                    !_state.isPaused &&
-                    messageTasks[MessageType.stop]("messageTasks.start.pause");
-                })
-            )
-            .then(pause)
-            .then(() => sleepPromise(START_SLEEP_MS))
-            .then(() =>
-              Object.assign(_state, {
-                ...payload,
-                loopId,
-                iter: 0,
-              })
-            )
-            .then(() => loop(loopId))
-        ),
+        Promise.resolve()
+          .then(() => console.log("messageTasks.start"))
+          .then(
+            () =>
+            (_state.element.onpause = () => {
+              _state.element.paused &&
+                !_state.isPaused &&
+                messageTasks[MessageType.stop]("messageTasks.start.pause");
+            })
+          )
+          .then(pause)
+          .then(() => sleepPromise(START_SLEEP_MS))
+          .then(() =>
+            Object.assign(_state, {
+              ...payload,
+              loopId,
+              iter: 0,
+            })
+          )
+          .then(() => loop(loopId))
+      ),
   [MessageType.stop]: () =>
     Promise.resolve()
       .then(() => console.log("messageTasks.stop"))
@@ -102,6 +102,7 @@ function listenForMessage(
 var initialTitle: string;
 
 function activate() {
+  console.log("LoopyGoopy.activate")
   initialTitle = document.title;
   listenForMessage((data: { mType: MessageType; payload: any }, sendResponse) =>
     Promise.resolve(data.payload)
@@ -129,27 +130,26 @@ function init() {
       _state?.config !== undefined
         ? null
         : Promise.resolve().then(() => {
-            _state = {
-              element:
-                document.getElementsByTagName("video")[0] ||
-                document.getElementsByTagName("audio")[0],
-              config: undefined,
-              iter: -1,
-              loopId: -1,
-              isPaused: false,
-            };
-          })
+          _state = {
+            element:
+              document.getElementsByTagName("video")[0] ||
+              document.getElementsByTagName("audio")[0],
+            config: undefined,
+            iter: -1,
+            loopId: -1,
+            isPaused: false,
+          };
+        })
     )
     .then(() =>
       !_state.element
         ? undefined
         : {
-            success: true,
-            mediaId: `${document.title}-${
-              window.location.host ||
-              (Array.from(_state.element.children)[0] as HTMLSourceElement).src
+          success: true,
+          mediaId: `${document.title}-${window.location.host ||
+            (Array.from(_state.element.children)[0] as HTMLSourceElement).src
             }-${_state.element.duration}`,
-          }
+        }
     );
 }
 
@@ -163,8 +163,8 @@ function loop(loopId: number): Promise<void> {
   const playbackRate =
     _state.iter < (config[Field.train_loops] || 1)
       ? tempoChange +
-        (_state.iter++ / (config[Field.train_loops] || 1)) *
-          (trainTarget - tempoChange)
+      (_state.iter++ / (config[Field.train_loops] || 1)) *
+      (trainTarget - tempoChange)
       : trainTarget;
   _state.element.playbackRate = playbackRate;
   const countInS =
@@ -184,13 +184,13 @@ function loop(loopId: number): Promise<void> {
   document.title = `${(playbackRate * 100).toFixed(2)}% - ${initialTitle}`;
   return Promise.resolve()
     .then(() =>
-      ({
-        [CountInStyle.silent]: () => countInS * 1000,
-        [CountInStyle.track]: () => (countInS - rawStartTime) * 1000,
-        [CountInStyle.metronome]: () => {
-          throw new Error("loop.CountInStyle.metronome");
-        },
-      }[(config[Field.count__in_style] || 0) as CountInStyle]())
+    ({
+      [CountInStyle.silent]: () => countInS * 1000,
+      [CountInStyle.track]: () => (countInS - rawStartTime) * 1000,
+      [CountInStyle.metronome]: () => {
+        throw new Error("loop.CountInStyle.metronome");
+      },
+    }[(config[Field.count__in_style] || 0) as CountInStyle]())
     )
     .then((sleepMs) =>
       sleepMs > 0 ? pause().then(() => sleepPromise(sleepMs)) : null
@@ -199,10 +199,10 @@ function loop(loopId: number): Promise<void> {
       _state.loopId !== loopId
         ? undefined
         : _state.element
-            .play()
-            .then(() =>
-              sleepPromise(((endTime - startTime) * 1000) / playbackRate)
-            )
-            .then(() => loop(loopId))
+          .play()
+          .then(() =>
+            sleepPromise(((endTime - startTime) * 1000) / playbackRate)
+          )
+          .then(() => loop(loopId))
     );
 }

@@ -68,6 +68,7 @@ function listenForMessage(f) {
 }
 var initialTitle;
 function activate() {
+    console.log("LoopyGoopy.activate");
     initialTitle = document.title;
     listenForMessage((data, sendResponse) => Promise.resolve(data.payload)
         .then(messageTasks[data.mType])
