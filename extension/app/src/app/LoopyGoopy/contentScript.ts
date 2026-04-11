@@ -39,6 +39,7 @@ var _state: {
 declare global {
   interface Window {
     chrome: any;
+    __loopyGoopyContentScriptActivated?: boolean;
   }
 }
 
@@ -118,7 +119,7 @@ function sleepPromise(sleepMs: number) {
   return new Promise((resolve) => setTimeout(resolve, sleepMs));
 }
 
-if (window.exports) activate();
+if (window.__loopyGoopyContentScriptActivated) activate();
 
 //
 

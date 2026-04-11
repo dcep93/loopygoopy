@@ -82,7 +82,7 @@ function sleepPromise(sleepMs) {
         return Promise.resolve();
     return new Promise((resolve) => setTimeout(resolve, sleepMs));
 }
-if (window.exports)
+if (window.__loopyGoopyContentScriptActivated)
     activate();
 //
 function init() {

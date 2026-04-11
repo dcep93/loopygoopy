@@ -1,1 +1,1 @@
-window.exports = { activated: true };
+window.__loopyGoopyContentScriptActivated = true;
