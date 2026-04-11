@@ -65,6 +65,7 @@ const messageTasks = {
 function listenForMessage(f) {
     window.chrome.runtime.onMessage.addListener((data, _sender, sendResponse) => {
         f(data, sendResponse);
+        return true;
     });
 }
 var initialTitle;
@@ -84,8 +85,7 @@ function sleepPromise(sleepMs) {
         return Promise.resolve();
     return new Promise((resolve) => setTimeout(resolve, sleepMs));
 }
-if (window.__loopyGoopyContentScriptActivated)
-    activate();
+activate();
 //
 function init() {
     return Promise.resolve()

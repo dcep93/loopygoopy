@@ -43,14 +43,19 @@ export function actionButtonF(action: Action) {
 }
 
 function sendMessage(data: any) {
-  getTab().then((tab) => {
-    if (tab.id !== null) {
-      window.chrome.tabs.sendMessage(tab.id, data);
-    } else {
-      window.chrome.runtime.sendMessage(
-        data,
-        (response: any) => response.alert && alert(response.alert)
-      );
-    }
-  });
+  getTab()
+    .then((tab) => {
+      if (tab?.id !== undefined) {
+        window.chrome.tabs.sendMessage(tab.id, data);
+      } else {
+        window.chrome.runtime.sendMessage(
+          data,
+          (response: any) => response.alert && alert(response.alert)
+        );
+      }
+    })
+    .catch((e) => {
+      alert(e);
+      throw e;
+    });
 }

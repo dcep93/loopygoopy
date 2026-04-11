@@ -38,7 +38,6 @@ var _state: {
 
 interface Window {
   chrome: any;
-  __loopyGoopyContentScriptActivated?: boolean;
 }
 
 function pause() {
@@ -93,6 +92,7 @@ function listenForMessage(
   window.chrome.runtime.onMessage.addListener(
     (data: any, _sender: any, sendResponse: (sendData: any) => void) => {
       f(data, sendResponse);
+      return true;
     }
   );
 }
@@ -118,7 +118,7 @@ function sleepPromise(sleepMs: number) {
   return new Promise((resolve) => setTimeout(resolve, sleepMs));
 }
 
-if (window.__loopyGoopyContentScriptActivated) activate();
+activate();
 
 //
 

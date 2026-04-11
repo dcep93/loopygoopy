@@ -1,6 +1,8 @@
 import { MessageType } from "./shared";
 
-var _tab: { id?: string; mediaId?: string };
+type TabState = { id?: number; mediaId?: string };
+
+var _tab: TabState;
 export default function getTab(): Promise<typeof _tab> {
   if (window.chrome?.tabs === undefined) {
     _tab = { mediaId: "localhost" };
@@ -9,11 +11,15 @@ export default function getTab(): Promise<typeof _tab> {
     .then(() =>
       _tab !== undefined
         ? null
-        : new Promise<{}>((resolve, reject) => {
+        : new Promise<TabState>((resolve, reject) => {
             window.chrome.tabs.query(
               { currentWindow: true, active: true },
-              (tabs: { id: string }[]) => {
-                const tabId = tabs[0].id;
+              (tabs: { id?: number }[]) => {
+                const tabId = tabs[0]?.id;
+                if (tabId === undefined) {
+                  reject("getTab.activeTab.missing");
+                  return;
+                }
                 window.chrome.tabs.sendMessage(
                   tabId,
                   { mType: MessageType.init, payload: { tabId } },
@@ -23,7 +29,10 @@ export default function getTab(): Promise<typeof _tab> {
                       window.chrome.runtime.lastError;
                       window.chrome.runtime.sendMessage(
                         null,
-                        (bkResponse: typeof _tab) => resolve(bkResponse)
+                        (bkResponse: typeof _tab) =>
+                          bkResponse === null || bkResponse === undefined
+                            ? reject("getTab.backgroundTab.missing")
+                            : resolve(bkResponse)
                       );
                     } else if (response === null) {
                       reject("message.response.null");

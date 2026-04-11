@@ -19,7 +19,6 @@
         "file:///*"
       ],
       "js": [
-        "app/src/app/LoopyGoopy/activateContentScript.js",
         "app/src/app/LoopyGoopy/contentScript.js"
       ]
     }
