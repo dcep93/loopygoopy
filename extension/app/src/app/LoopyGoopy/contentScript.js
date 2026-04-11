@@ -26,7 +26,77 @@ var CountInStyle;
 })(CountInStyle || (CountInStyle = {}));
 const START_SLEEP_MS = 1000;
 const DEFAULT_BPM = 60;
+const YOUTUBE_SANITY_PLAYBACK_RATE = 0.5;
+const PAGE_PLAYBACK_SCRIPT_PATH = "app/src/app/LoopyGoopy/pagePlaybackBridge.js";
+const PAGE_PLAYBACK_SCRIPT_ID = "loopy-goopy-page-playback-bridge";
+const PAGE_PLAYBACK_REQUEST_EVENT = "LoopyGoopy.pagePlayback.request";
+const PAGE_PLAYBACK_RESPONSE_EVENT = "LoopyGoopy.pagePlayback.response";
 var _state;
+function isYouTubePage() {
+    return window.location.host === "www.youtube.com";
+}
+function ensureYouTubePlaybackBridge() {
+    if (!isYouTubePage())
+        return Promise.resolve(false);
+    if (window.__loopyGoopyPagePlaybackBridgePromise) {
+        return window.__loopyGoopyPagePlaybackBridgePromise;
+    }
+    window.__loopyGoopyPagePlaybackBridgePromise = new Promise((resolve) => {
+        if (document.getElementById(PAGE_PLAYBACK_SCRIPT_ID)) {
+            resolve(true);
+            return;
+        }
+        const scriptUrl = window.chrome.runtime.getURL(PAGE_PLAYBACK_SCRIPT_PATH);
+        const script = document.createElement("script");
+        script.id = PAGE_PLAYBACK_SCRIPT_ID;
+        script.src = scriptUrl;
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        (document.head || document.documentElement).appendChild(script);
+    });
+    return window.__loopyGoopyPagePlaybackBridgePromise;
+}
+function runYouTubePlaybackAction(action, playbackRate) {
+    return ensureYouTubePlaybackBridge().then((isBridgeLoaded) => {
+        if (!isBridgeLoaded)
+            return false;
+        return new Promise((resolve) => {
+            const requestId = `LoopyGoopy.playbackRate.${Math.random()}`;
+            let isSettled = false;
+            const settle = (success) => {
+                if (isSettled)
+                    return;
+                isSettled = true;
+                document.removeEventListener(PAGE_PLAYBACK_RESPONSE_EVENT, onResponse);
+                resolve(success);
+            };
+            const onResponse = (event) => {
+                const { detail } = event;
+                if (detail?.requestId !== requestId)
+                    return;
+                settle(detail?.success === true);
+            };
+            document.addEventListener(PAGE_PLAYBACK_RESPONSE_EVENT, onResponse);
+            document.dispatchEvent(new CustomEvent(PAGE_PLAYBACK_REQUEST_EVENT, {
+                detail: { action, playbackRate, requestId },
+            }));
+            window.setTimeout(() => settle(false), 250);
+        });
+    });
+}
+function lockYouTubePlaybackRate(playbackRate) {
+    return runYouTubePlaybackAction("lock", playbackRate);
+}
+function unlockYouTubePlaybackRate(playbackRate) {
+    return runYouTubePlaybackAction("unlock", playbackRate);
+}
+function setPlaybackRate(playbackRate) {
+    return lockYouTubePlaybackRate(playbackRate).then((didUseYouTubeLock) => {
+        if (!didUseYouTubeLock) {
+            _state.element.playbackRate = playbackRate;
+        }
+    });
+}
 function pause() {
     return Promise.resolve()
         .then(() => (_state.isPaused = true))
@@ -58,7 +128,12 @@ const messageTasks = {
         .then(() => (_state.element.onpause = () => null))
         .then(() => (_state.loopId = -1))
         .then(() => _state.element.pause())
-        .then(() => (_state.element.playbackRate = 1))
+        .then(() => unlockYouTubePlaybackRate(1))
+        .then((didUnlockYouTubePlaybackRate) => {
+        if (!didUnlockYouTubePlaybackRate) {
+            _state.element.playbackRate = 1;
+        }
+    })
         .then(() => (document.title = initialTitle)),
     [MessageType.init]: () => Promise.resolve().then(init),
 };
@@ -117,12 +192,14 @@ function loop(loopId) {
     const bpm = rawOriginalBPM > 0 ? rawOriginalBPM : DEFAULT_BPM;
     const tempoChange = config[Field.tempo_change] || 1;
     const trainTarget = config[Field.train_target] || tempoChange;
-    const playbackRate = _state.iter < (config[Field.train_loops] || 1)
-        ? tempoChange +
-            (_state.iter++ / (config[Field.train_loops] || 1)) *
-                (trainTarget - tempoChange)
-        : trainTarget;
-    _state.element.playbackRate = playbackRate;
+    const playbackRate = isYouTubePage()
+        // Temporary sanity check for YouTube start: force 0.5x via a page-level lock.
+        ? YOUTUBE_SANITY_PLAYBACK_RATE
+        : _state.iter < (config[Field.train_loops] || 1)
+            ? tempoChange +
+                (_state.iter++ / (config[Field.train_loops] || 1)) *
+                    (trainTarget - tempoChange)
+            : trainTarget;
     const countInS = ((config[Field.count__in_beats] || 0) * 60) / bpm / playbackRate;
     const rawStartTime = Math.max(0, config[Field.start_time] || Number.NEGATIVE_INFINITY);
     const startTime = config[Field.count__in_style] === CountInStyle.track
@@ -133,6 +210,7 @@ function loop(loopId) {
     const endTime = rawEndTime > rawStartTime ? rawEndTime : _state.element.duration;
     document.title = `${(playbackRate * 100).toFixed(2)}% - ${initialTitle}`;
     return Promise.resolve()
+        .then(() => setPlaybackRate(playbackRate))
         .then(() => ({
         [CountInStyle.silent]: () => countInS * 1000,
         [CountInStyle.track]: () => (countInS - rawStartTime) * 1000,

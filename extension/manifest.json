@@ -23,6 +23,18 @@
       ]
     }
   ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "app/src/app/LoopyGoopy/pagePlaybackBridge.js"
+      ],
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://www.instagram.com/*",
+        "file:///*"
+      ]
+    }
+  ],
   "action": {
     "default_popup": "app/build/index.html",
     "default_icon": "loopy_goopy_full.png"
