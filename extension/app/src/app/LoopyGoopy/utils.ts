@@ -27,11 +27,15 @@ export function loadConfig() {
 
 var _config: Config;
 export function getConfig(): Config {
-  return _config || { bookmarks: [] };
+  return _config || { bookmarks: [], selected_bookmark: "" };
 }
 
 export function getConfigSansBookmarks(): ConfigSansBookmarks {
-  const { bookmarks: _bookmarks, ...configSansBookmarks } = getConfig();
+  const {
+    bookmarks: _bookmarks,
+    selected_bookmark: _selectedBookmark,
+    ...configSansBookmarks
+  } = getConfig();
   return configSansBookmarks;
 }
 
@@ -43,6 +47,7 @@ export function setConfigSansBookmarks(config: ConfigSansBookmarks) {
   _config = {
     ...config,
     bookmarks: getConfig().bookmarks,
+    selected_bookmark: getConfig().selected_bookmark,
   };
 }
 

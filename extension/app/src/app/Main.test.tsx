@@ -25,7 +25,7 @@ describe("Main bookmark controls", () => {
       mediaId: "media-123",
     });
     setStorageKey(undefined as unknown as string);
-    setConfig({ bookmarks: [] });
+    setConfig({ bookmarks: [], selected_bookmark: "" });
     storedEntries = {};
     setMock = jest.fn((value: Record<string, StoredEntry>) => {
       storedEntries = { ...storedEntries, ...value };
@@ -55,21 +55,24 @@ describe("Main bookmark controls", () => {
 
   function makeConfig(
     configSansBookmarks: Record<string, string> = {},
-    bookmarks: Array<{ bookmark_name: string; config: Record<string, string> }> = []
+    bookmarks: Array<{ bookmark_name: string; config: Record<string, string> }> = [],
+    selectedBookmark = ""
   ) {
     return {
       ...configSansBookmarks,
       bookmarks,
+      selected_bookmark: selectedBookmark,
     };
   }
 
   function primeStoredConfig(
     configSansBookmarks: Record<string, string> = {},
-    bookmarks: Array<{ bookmark_name: string; config: Record<string, string> }> = []
+    bookmarks: Array<{ bookmark_name: string; config: Record<string, string> }> = [],
+    selectedBookmark = ""
   ) {
     storedEntries["media-123"] = {
       version: "v0.0.1",
-      config: makeConfig(configSansBookmarks, bookmarks),
+      config: makeConfig(configSansBookmarks, bookmarks, selectedBookmark),
     };
   }
 
@@ -96,6 +99,33 @@ describe("Main bookmark controls", () => {
     expect(screen.getByRole("combobox", { name: "bookmark" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "save bookmark" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "delete bookmark" })).toBeDisabled();
+  });
+
+  it("restores the selected bookmark when reopening the popup", async () => {
+    primeStoredConfig(
+      {
+        [Field.original_BPM]: "111",
+      },
+      [
+        {
+          bookmark_name: "verse",
+          config: {
+            [Field.original_BPM]: "120",
+          },
+        },
+      ],
+      "0"
+    );
+
+    const firstRender = await renderMain();
+    expect(screen.getByRole("combobox", { name: "bookmark" })).toHaveValue("0");
+
+    firstRender.unmount();
+    setStorageKey(undefined as unknown as string);
+    setConfig({ bookmarks: [], selected_bookmark: "" });
+
+    await renderMain();
+    expect(screen.getByRole("combobox", { name: "bookmark" })).toHaveValue("0");
   });
 
   it("loads a selected bookmark into the inputs and clears omitted fields", async () => {

@@ -31,4 +31,5 @@ export type Bookmark = {
 };
 export type Config = ConfigSansBookmarks & {
   bookmarks: Bookmark[];
+  selected_bookmark: string;
 };

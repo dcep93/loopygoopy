@@ -29,25 +29,32 @@ export default function Main() {
           .then(() => setStorageKey(storageKey))
           .then(loadConfig)
           .then(() => {
-            setSelectedBookmarkIndex("");
+            setSelectedBookmarkIndex(getConfig().selected_bookmark);
             updateStorageKey(storageKey);
           })
       );
   }, []);
 
   const bookmarks = getConfig().bookmarks;
-  function updateBookmarks(nextBookmarks: typeof bookmarks) {
+  function persistConfig(selectedBookmark: string, nextBookmarks = getConfig().bookmarks) {
     const nextConfig = {
       ...getConfigSansBookmarks(),
       bookmarks: nextBookmarks,
+      selected_bookmark: selectedBookmark,
     };
     setConfig(nextConfig);
     save(nextConfig);
+    setSelectedBookmarkIndex(selectedBookmark);
+  }
+
+  function updateBookmarks(nextBookmarks: typeof bookmarks, selectedBookmark: string) {
+    persistConfig(selectedBookmark, nextBookmarks);
     setBookmarksVersion((version) => version + 1);
   }
 
   function handleBookmarkSelection(bookmarkIndexStr: string) {
     setSelectedBookmarkIndex(bookmarkIndexStr);
+    persistConfig(bookmarkIndexStr);
     if (bookmarkIndexStr === "") return;
     const bookmark = getConfig().bookmarks[parseInt(bookmarkIndexStr)];
     if (!bookmark) return;
@@ -62,7 +69,7 @@ export default function Main() {
       const nextBookmarks = getConfig().bookmarks.map((bookmark, index) =>
         index === bookmarkIndex ? { ...bookmark, config: { ...currentConfig } } : bookmark
       );
-      updateBookmarks(nextBookmarks);
+      updateBookmarks(nextBookmarks, selectedBookmarkIndex);
       return;
     }
     const bookmarkName = window.prompt("bookmark name");
@@ -75,17 +82,16 @@ export default function Main() {
       bookmark_name: bookmarkName,
       config: { ...currentConfig },
     });
-    updateBookmarks(nextBookmarks);
-    setSelectedBookmarkIndex((nextBookmarks.length - 1).toString());
+    updateBookmarks(nextBookmarks, (nextBookmarks.length - 1).toString());
   }
 
   function handleBookmarkDelete() {
     if (selectedBookmarkIndex === "") return;
     const bookmarkIndex = parseInt(selectedBookmarkIndex);
     updateBookmarks(
-      getConfig().bookmarks.filter((_, index) => index !== bookmarkIndex)
+      getConfig().bookmarks.filter((_, index) => index !== bookmarkIndex),
+      ""
     );
-    setSelectedBookmarkIndex("");
   }
 
   return (

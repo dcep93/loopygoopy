@@ -38,26 +38,35 @@ function normalizeConfigSansBookmarks(config: Record<string, unknown>): ConfigSa
 export function normalizeConfig(config: unknown): Config {
   const loadedConfig =
     config && typeof config === "object" ? (config as Record<string, unknown>) : {};
-  const { bookmarks, ...configSansBookmarks } = loadedConfig;
+  const { bookmarks, selected_bookmark, ...configSansBookmarks } = loadedConfig;
+  const normalizedBookmarks = Array.isArray(bookmarks)
+    ? bookmarks
+        .filter(
+          (bookmark): bookmark is { bookmark_name: unknown; config: unknown } =>
+            Boolean(bookmark) && typeof bookmark === "object"
+        )
+        .map((bookmark) => ({
+          bookmark_name:
+            typeof bookmark.bookmark_name === "string" ? bookmark.bookmark_name : "",
+          config:
+            bookmark.config && typeof bookmark.config === "object"
+              ? normalizeConfigSansBookmarks(
+                  bookmark.config as Record<string, unknown>
+                )
+              : {},
+        }))
+    : [];
+  const normalizedSelectedBookmark =
+    typeof selected_bookmark === "string" &&
+    selected_bookmark !== "" &&
+    Number.isInteger(parseInt(selected_bookmark, 10)) &&
+    normalizedBookmarks[parseInt(selected_bookmark, 10)] !== undefined
+      ? selected_bookmark
+      : "";
   return {
     ...normalizeConfigSansBookmarks(configSansBookmarks),
-    bookmarks: Array.isArray(bookmarks)
-      ? bookmarks
-          .filter(
-            (bookmark): bookmark is { bookmark_name: unknown; config: unknown } =>
-              Boolean(bookmark) && typeof bookmark === "object"
-          )
-          .map((bookmark) => ({
-            bookmark_name:
-              typeof bookmark.bookmark_name === "string" ? bookmark.bookmark_name : "",
-            config:
-              bookmark.config && typeof bookmark.config === "object"
-                ? normalizeConfigSansBookmarks(
-                    bookmark.config as Record<string, unknown>
-                  )
-                : {},
-          }))
-      : [],
+    bookmarks: normalizedBookmarks,
+    selected_bookmark: normalizedSelectedBookmark,
   };
 }
 
