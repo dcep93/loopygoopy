@@ -295,6 +295,11 @@ function loop(loopId: number): Promise<void> {
           .then(() =>
             sleepPromise(((endTime - startTime) * 1000) / playbackRate)
           )
-          .then(() => loop(loopId))
+          .then(() => {
+            if (_state.loopId !== loopId) return undefined;
+            return _state.element.paused
+              ? messageTasks[MessageType.stop]("loop.iterComplete.paused")
+              : loop(loopId);
+          })
     );
 }
