@@ -24,3 +24,11 @@ export enum CountInStyle {
 }
 
 export type NumberConfigType = { [f in Field]?: number };
+export type ConfigSansBookmarks = { [f in Field]?: string };
+export type Bookmark = {
+  bookmark_name: string;
+  config: ConfigSansBookmarks;
+};
+export type Config = ConfigSansBookmarks & {
+  bookmarks: Bookmark[];
+};

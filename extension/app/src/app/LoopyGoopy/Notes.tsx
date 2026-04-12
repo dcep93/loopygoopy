@@ -1,3 +1,4 @@
+import type { RefObject } from "react";
 import { Field } from "./shared";
 import { updateInput } from "./Input";
 import { storageKey } from "./storage";
@@ -8,7 +9,7 @@ import { debounce } from "lodash";
 export default function Notes() {
   const ref = getRefs()[
     Field.notes
-  ] as unknown as React.RefObject<HTMLTextAreaElement>;
+  ] as RefObject<HTMLTextAreaElement>;
   const debouncer = debounce(
     () => updateInput(Field.notes, ref.current.value, false),
     100,

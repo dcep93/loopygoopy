@@ -1,9 +1,11 @@
+import type { RefObject } from "react";
 import { Action, actionButtonF } from "./ActionButton";
 import { CountInStyle, Field } from "./shared";
 import { save } from "./storage";
-import { getConfig, getRefs } from "./utils";
+import { getConfig, getConfigSansBookmarks, getRefs } from "./utils";
 
 export default function Input(props: { field: Field }) {
+  const ref = getRefs()[props.field];
   return (
     <div
       style={{
@@ -17,22 +19,19 @@ export default function Input(props: { field: Field }) {
       <div style={{ width: "6em", paddingLeft: "0.5em" }}>
         {props.field === Field.count__in_style ? (
           <select
+            ref={ref as RefObject<HTMLSelectElement>}
             style={{ width: "100%" }}
-            defaultValue={getConfig()[props.field]}
-            onChange={(e) =>
-              updateInput(
-                props.field,
-                CountInStyle[e.target.value as unknown as number].toString(),
-                false
-              )
-            }
+            defaultValue={getConfig()[props.field] ?? CountInStyle.silent.toString()}
+            onChange={(e) => updateInput(props.field, e.target.value, false)}
           >
             {Object.keys(CountInStyle)
               .map((k) => parseInt(k))
               .filter((k) => !Number.isNaN(k))
               .filter((k) => k !== CountInStyle.metronome) // todo
               .map((k) => (
-                <option key={k}>{CountInStyle[k]}</option>
+                <option key={k} value={k.toString()}>
+                  {CountInStyle[k]}
+                </option>
               ))}
           </select>
         ) : (
@@ -43,7 +42,7 @@ export default function Input(props: { field: Field }) {
             }}
           >
             <input
-              ref={getRefs()[props.field]}
+              ref={ref as RefObject<HTMLInputElement>}
               style={{ width: "100%" }}
               onChange={(e) => updateInput(props.field, e.target.value, false)}
               defaultValue={getConfig()[props.field]}
@@ -117,7 +116,7 @@ export function updateInput(
 
 export function getNumberConfig() {
   return Object.fromEntries(
-    Object.entries(getConfig())
+    Object.entries(getConfigSansBookmarks())
       .map(([k, v]) => ({ k, v: parseFloat(v) }))
       .filter(({ v }) => !Number.isNaN(v))
       .map(({ k, v }) => [k, v])
