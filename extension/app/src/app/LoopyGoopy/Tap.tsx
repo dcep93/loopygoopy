@@ -52,8 +52,8 @@ export default function Tap() {
       <div
         style={{
           display: "flex",
-          gap: "0.25em",
           alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
         <div style={{ position: "relative" }}>
@@ -69,8 +69,10 @@ export default function Tap() {
             ({formatPitchSemitones(pitchSemitones)})
           </span>
         </div>
-        <button onClick={() => changePitch(-1)}>-</button>
-        <button onClick={() => changePitch(1)}>+</button>
+        <div>
+          <button style={{ paddingLeft: 0, paddingRight: 0 }} onClick={() => changePitch(-1)}>-</button>
+          <button style={{ paddingLeft: 0, paddingRight: 0 }} onClick={() => changePitch(1)}>+</button>
+        </div>
       </div>
     </div>
   );
