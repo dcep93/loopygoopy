@@ -19,6 +19,7 @@ const padding = <div style={{ width: "1em" }}></div>;
 export default function Main() {
   const [_storageKey, updateStorageKey] = useState(storageKey);
   const [selectedBookmarkIndex, setSelectedBookmarkIndex] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [, setBookmarksVersion] = useState(0);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   useEffect(() => {
@@ -32,8 +33,27 @@ export default function Main() {
             setSelectedBookmarkIndex(getConfig().selected_bookmark);
             updateStorageKey(storageKey);
           })
-      );
+      )
+      .catch((error) => {
+        const message = String(error);
+        setLoadError(message);
+        updateStorageKey(message);
+      });
   }, []);
+
+  if (loadError) {
+    return (
+      <div
+        style={{
+          width: "420px",
+          padding: "0.75em",
+          backgroundColor: "#aaaaaa",
+        }}
+      >
+        {loadError}
+      </div>
+    );
+  }
 
   const bookmarks = getConfig().bookmarks;
   function persistConfig(selectedBookmark: string, nextBookmarks = getConfig().bookmarks) {

@@ -15,6 +15,7 @@ enum Field {
   start_time,
   end_time,
   notes,
+  pitch_shift,
 }
 
 enum CountInStyle {
@@ -31,9 +32,30 @@ const PAGE_PLAYBACK_SCRIPT_PATH = "app/src/app/LoopyGoopy/pagePlaybackBridge.js"
 const PAGE_PLAYBACK_SCRIPT_ID = "loopy-goopy-page-playback-bridge";
 const PAGE_PLAYBACK_REQUEST_EVENT = "LoopyGoopy.pagePlayback.request";
 const PAGE_PLAYBACK_RESPONSE_EVENT = "LoopyGoopy.pagePlayback.response";
+const FRAME_MESSAGE_SOURCE = "LoopyGoopy.frameMessage";
+const PARENT_MESSAGE_SOURCE = "LoopyGoopy.parentMessage";
+const DRIVE_FOLDER_PATH_RE = /^\/drive\/folders\/([^/?#]+)/;
+const DRIVE_ID_RE = /^[A-Za-z0-9_-]{20,}$/;
+const DRIVE_ID_IN_TEXT_RE = /[A-Za-z0-9_-]{20,}/g;
+const YOUTUBE_IFRAME_SELECTOR =
+  'iframe[src*="youtube.googleapis.com/embed"], iframe[src*="youtube.com/embed"], iframe[src*="youtube-nocookie.com/embed"]';
+
+type MediaElement = HTMLVideoElement | HTMLAudioElement;
+type MediaTarget = {
+  root: Element;
+  getDuration: () => number;
+  isPaused: () => boolean;
+  setCurrentTime: (time: number) => void;
+  play: () => Promise<unknown>;
+  pause: () => Promise<unknown> | void;
+  setPlaybackRate: (playbackRate: number) => void;
+  setOnPause: (handler: (() => void) | null) => void;
+  getMediaFingerprint: () => string;
+};
 
 var _state: {
-  element: HTMLVideoElement | HTMLAudioElement;
+  media?: MediaTarget;
+  iframe?: HTMLIFrameElement;
   config: NumberConfigType | undefined;
   iter: number;
   loopId: number;
@@ -46,7 +68,11 @@ interface Window {
 }
 
 function isYouTubePage() {
-  return window.location.host === "www.youtube.com";
+  return (
+    window.location.host === "www.youtube.com" ||
+    window.location.host === "youtube.googleapis.com" ||
+    window.location.host === "www.youtube-nocookie.com"
+  );
 }
 
 function ensureYouTubePlaybackBridge() {
@@ -123,36 +149,50 @@ function unlockYouTubePlaybackRate(playbackRate: number) {
 
 function setPlaybackRate(playbackRate: number) {
   return lockYouTubePlaybackRate(playbackRate).then((didUseYouTubeLock) => {
-    if (!didUseYouTubeLock) {
-      _state.element.playbackRate = playbackRate;
+    if (!didUseYouTubeLock && _state.media) {
+      _state.media.setPlaybackRate(playbackRate);
     }
   });
 }
 
 function pause() {
+  const media = _state.media;
+  if (!media) return Promise.resolve();
   return Promise.resolve()
     .then(() => (_state.isPaused = true))
-    .then(() => _state.element.paused || _state.element.pause())
-    .then(() => (_state.isPaused = false));
+    .then(() => {
+      if (!media.isPaused()) {
+        return media.pause();
+      }
+    })
+    .then(() => {
+      _state.isPaused = false;
+    });
 }
 
 const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
-  [MessageType.start]: (payload: { config: NumberConfigType }) =>
-    _state === undefined
+  [MessageType.start]: (payload: { config: NumberConfigType }) => {
+    ensureState();
+    if (_state.iframe && !_state.media) {
+      return Promise.resolve().then(() =>
+        sendFrameMessage(_state.iframe!, MessageType.start, payload)
+      );
+    }
+    return _state.media === undefined
       ? Promise.resolve().then(() => {
-        alert("messageTasks.start._state.undefined"); // todo
-      })
-      : Promise.resolve(Math.random()).then((loopId) =>
-        Promise.resolve()
+          alert("Loopy Goopy could not find playable audio/video on this page.");
+        })
+      : Promise.resolve(Math.random()).then((loopId) => {
+        const media = _state.media!;
+        return Promise.resolve()
           .then(() => console.log("messageTasks.start"))
-          .then(
-            () =>
-            (_state.element.onpause = () => {
-              _state.element.paused &&
-                !_state.isPaused &&
+          .then(() => {
+            media.setOnPause(() => {
+              if (media.isPaused() && !_state.isPaused) {
                 messageTasks[MessageType.stop]("messageTasks.start.pause");
-            })
-          )
+              }
+            });
+          })
           .then(pause)
           .then(() => sleepPromise(START_SLEEP_MS))
           .then(() =>
@@ -163,20 +203,36 @@ const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
             })
           )
           .then(() => loop(loopId))
-      ),
-  [MessageType.stop]: () =>
-    Promise.resolve()
+      });
+  },
+  [MessageType.stop]: () => {
+    ensureState();
+    if (_state.iframe && !_state.media) {
+      return Promise.resolve()
+        .then(() => sendFrameMessage(_state.iframe!, MessageType.stop, {}))
+        .then(() => {
+          document.title = initialTitle;
+        });
+    }
+    const media = _state.media;
+    return Promise.resolve()
       .then(() => console.log("messageTasks.stop"))
-      .then(() => (_state.element.onpause = () => null))
+      .then(() => {
+        media?.setOnPause(null);
+      })
       .then(() => (_state.loopId = -1))
-      .then(() => _state.element.pause())
+      .then(() => media?.pause())
       .then(() => unlockYouTubePlaybackRate(1))
       .then((didUnlockYouTubePlaybackRate) => {
-        if (!didUnlockYouTubePlaybackRate) {
-          _state.element.playbackRate = 1;
+        if (!didUnlockYouTubePlaybackRate && media) {
+          media.setPlaybackRate(1);
         }
       })
-      .then(() => (document.title = initialTitle)),
+      .then(() => {
+        document.title = initialTitle;
+        sendParentTitle(initialTitle);
+      });
+  },
   [MessageType.init]: () => Promise.resolve().then(init),
 };
 
@@ -191,11 +247,71 @@ function listenForMessage(
   );
 }
 
+function sendFrameMessage(
+  iframe: HTMLIFrameElement,
+  mType: MessageType,
+  payload: any
+) {
+  iframe.contentWindow?.postMessage(
+    {
+      source: FRAME_MESSAGE_SOURCE,
+      mType,
+      payload,
+    },
+    "*"
+  );
+}
+
+function sendParentTitle(title: string) {
+  if (!isEmbeddedFrame()) return;
+  window.parent.postMessage(
+    {
+      source: PARENT_MESSAGE_SOURCE,
+      title,
+    },
+    "*"
+  );
+}
+
+function listenForParentMessage() {
+  window.addEventListener("message", (event) => {
+    if (event.source !== _state?.iframe?.contentWindow) return;
+    const data = event.data;
+    if (!data || data.source !== PARENT_MESSAGE_SOURCE) return;
+    if (typeof data.title === "string") {
+      document.title = data.title;
+    }
+  });
+}
+
+function listenForFrameMessage() {
+  window.addEventListener("message", (event) => {
+    if (event.source !== window.parent) return;
+    const data = event.data;
+    if (!data || data.source !== FRAME_MESSAGE_SOURCE) return;
+    Promise.resolve(data.payload)
+      .then(messageTasks[data.mType as MessageType])
+      .catch((e) => {
+        console.error(e);
+      });
+  });
+}
+
+function isEmbeddedFrame() {
+  return window.self !== window.top;
+}
+
 var initialTitle: string;
 
 function activate() {
   console.log("LoopyGoopy.activate")
   initialTitle = document.title;
+  if (isEmbeddedFrame()) {
+    listenForFrameMessage();
+    return;
+  }
+  ensureState();
+  listenForParentMessage();
   listenForMessage((data: { mType: MessageType; payload: any }, sendResponse) =>
     Promise.resolve(data.payload)
       .then(messageTasks[data.mType])
@@ -217,36 +333,192 @@ activate();
 //
 
 function init() {
-  return Promise.resolve()
-    .then(() =>
-      _state?.config !== undefined
-        ? null
-        : Promise.resolve().then(() => {
-          _state = {
-            element:
-              document.getElementsByTagName("video")[0] ||
-              document.getElementsByTagName("audio")[0],
-            config: undefined,
-            iter: -1,
-            loopId: -1,
-            isPaused: false,
-          };
-        })
+  return Promise.resolve().then(() => {
+    ensureState();
+    if (_state.media) {
+      return {
+        success: true,
+        mediaId: getMediaId(_state.media),
+      };
+    }
+    if (_state.iframe) {
+      return {
+        success: true,
+        mediaId: getIframeMediaId(_state.iframe),
+      };
+    }
+    return {
+      success: false,
+      alert: "Loopy Goopy could not find playable audio/video on this page yet.",
+    };
+  });
+}
+
+function ensureState() {
+  if (!_state) {
+    _state = {
+      config: undefined,
+      iter: -1,
+      loopId: -1,
+      isPaused: false,
+    };
+  }
+  if (!_state.media) {
+    _state.media = findMediaTarget();
+  }
+  if (!_state.iframe) {
+    _state.iframe = findYouTubeIframe();
+  }
+}
+
+function findMediaTarget(): MediaTarget | undefined {
+  const mediaElement =
+    document.getElementsByTagName("video")[0] ||
+    document.getElementsByTagName("audio")[0];
+  return mediaElement ? createNativeMediaTarget(mediaElement) : undefined;
+}
+
+function createNativeMediaTarget(element: MediaElement): MediaTarget {
+  return {
+    root: element,
+    getDuration: () => element.duration,
+    isPaused: () => element.paused,
+    setCurrentTime: (time) => {
+      element.currentTime = time;
+    },
+    play: () => element.play(),
+    pause: () => element.pause(),
+    setPlaybackRate: (playbackRate) => {
+      element.playbackRate = playbackRate;
+    },
+    setOnPause: (handler) => {
+      element.onpause = handler;
+    },
+    getMediaFingerprint: () =>
+      `${initialTitle || document.title}-${window.location.host ||
+      (Array.from(element.children)[0] as HTMLSourceElement | undefined)?.src ||
+      element.currentSrc ||
+      element.src
+      }-${element.duration}`,
+  };
+}
+
+function findYouTubeIframe() {
+  if (window.self !== window.top) return undefined;
+  return (
+    document.querySelector<HTMLIFrameElement>(YOUTUBE_IFRAME_SELECTOR) ||
+    undefined
+  );
+}
+
+function getMediaId(media: MediaTarget) {
+  const driveFolderId = getDriveFolderId();
+  if (driveFolderId) {
+    const driveFileId = findDriveFileId(driveFolderId, media.root);
+    if (driveFileId) {
+      return `drive-folder:${driveFolderId}:file:${driveFileId}`;
+    }
+    return `drive-folder:${driveFolderId}:media:${media.getMediaFingerprint()}`;
+  }
+  return media.getMediaFingerprint();
+}
+
+function getIframeMediaId(iframe: HTMLIFrameElement) {
+  const driveFolderId = getDriveFolderId();
+  if (driveFolderId) {
+    const driveFileId = findDriveFileId(driveFolderId, iframe);
+    if (driveFileId) {
+      return `drive-folder:${driveFolderId}:file:${driveFileId}`;
+    }
+    return `drive-folder:${driveFolderId}:iframe:${iframe.id || iframe.src}`;
+  }
+  return `${initialTitle || document.title}-${iframe.src || iframe.title}`;
+}
+
+function getDriveFolderId() {
+  if (window.location.host !== "drive.google.com") return undefined;
+  const match = window.location.pathname.match(DRIVE_FOLDER_PATH_RE);
+  return match?.[1];
+}
+
+function findDriveFileId(folderId: string, rootElement: Element) {
+  const roots: Array<Element | Document> = [rootElement];
+  let ancestor: Element | null = rootElement.parentElement;
+  for (let depth = 0; ancestor && depth < 8; depth += 1) {
+    roots.push(ancestor);
+    ancestor = ancestor.parentElement;
+  }
+  const activeElement = document.activeElement;
+  if (activeElement) roots.push(activeElement);
+  document
+    .querySelectorAll(
+      [
+        '[aria-selected="true"]',
+        '[aria-checked="true"]',
+        '[data-selected="true"]',
+        '[role="dialog"]',
+        '[aria-modal="true"]',
+        'iframe[src*="/file/d/"]',
+        'iframe[src*="id="]',
+        'a[href*="/file/d/"]',
+        'a[href*="id="]',
+      ].join(",")
     )
-    .then(() =>
-      !_state.element
-        ? undefined
-        : {
-          success: true,
-          mediaId: `${initialTitle || document.title}-${window.location.host ||
-            (Array.from(_state.element.children)[0] as HTMLSourceElement).src
-            }-${_state.element.duration}`,
-        }
+    .forEach((root) => roots.push(root));
+
+  for (const root of roots) {
+    const id = findDriveFileIdInRoot(root, folderId);
+    if (id) return id;
+  }
+
+  const documentIds = collectDriveFileIds(document, folderId);
+  return documentIds.length === 1 ? documentIds[0] : undefined;
+}
+
+function findDriveFileIdInRoot(root: Element | Document, folderId: string) {
+  const ids = collectDriveFileIds(root, folderId);
+  return ids[0];
+}
+
+function collectDriveFileIds(root: Element | Document, folderId: string) {
+  const ids: string[] = [];
+  const pushId = (id: string | undefined) => {
+    if (!id || id === folderId || ids.includes(id)) return;
+    ids.push(id);
+  };
+  const inspectValue = (value: string | undefined | null) => {
+    if (!value) return;
+    const decodedValues = [value];
+    try {
+      const decodedValue = decodeURIComponent(value);
+      if (decodedValue !== value) decodedValues.push(decodedValue);
+    } catch {
+      // Some Google-generated attribute values are not valid URI components.
+    }
+    decodedValues.forEach((candidateValue) => {
+      pushId(candidateValue.match(/\/file\/d\/([^/?#]+)/)?.[1]);
+      pushId(candidateValue.match(/[?&]id=([^&#]+)/)?.[1]);
+      const trimmedCandidateValue = candidateValue.trim();
+      if (DRIVE_ID_RE.test(trimmedCandidateValue)) {
+        pushId(trimmedCandidateValue);
+      }
+      candidateValue.match(DRIVE_ID_IN_TEXT_RE)?.forEach(pushId);
+    });
+  };
+  const inspectElement = (element: Element) => {
+    Array.from(element.attributes).forEach((attribute) =>
+      inspectValue(attribute.value)
     );
+  };
+  if (root instanceof Element) inspectElement(root);
+  root.querySelectorAll("*").forEach(inspectElement);
+  return ids;
 }
 
 function loop(loopId: number): Promise<void> {
   if (_state.loopId !== loopId) return Promise.resolve();
+  if (!_state.media) return Promise.resolve();
+  const media = _state.media;
   const config = _state.config!;
   const rawOriginalBPM = config[Field.original_BPM];
   const bpm = rawOriginalBPM! > 0 ? rawOriginalBPM! : DEFAULT_BPM;
@@ -268,11 +540,18 @@ function loop(loopId: number): Promise<void> {
     config[Field.count__in_style] === CountInStyle.track
       ? Math.max(0, rawStartTime - countInS)
       : rawStartTime;
-  _state.element.currentTime = startTime;
-  const rawEndTime = config[Field.end_time] || _state.element.duration;
+  media.setCurrentTime(startTime);
+  const mediaDuration = media.getDuration();
+  const rawEndTime = config[Field.end_time] || mediaDuration;
   const endTime =
-    rawEndTime > rawStartTime ? rawEndTime : _state.element.duration;
-  document.title = `${(playbackRate * 100).toFixed(2)}% - ${initialTitle}`;
+    rawEndTime > rawStartTime ? rawEndTime : mediaDuration;
+  if (!Number.isFinite(endTime)) {
+    alert("Loopy Goopy needs an end time for this embedded player.");
+    return messageTasks[MessageType.stop]("loop.endTime.missing");
+  }
+  const title = `${(playbackRate * 100).toFixed(2)}% - ${initialTitle}`;
+  document.title = title;
+  sendParentTitle(title);
   return Promise.resolve()
     .then(() => setPlaybackRate(playbackRate))
     .then(() =>
@@ -290,14 +569,14 @@ function loop(loopId: number): Promise<void> {
     .then(() =>
       _state.loopId !== loopId
         ? undefined
-        : _state.element
+        : media
           .play()
           .then(() =>
             sleepPromise(((endTime - startTime) * 1000) / playbackRate)
           )
           .then(() => {
             if (_state.loopId !== loopId) return undefined;
-            return _state.element.paused
+            return media.isPaused()
               ? messageTasks[MessageType.stop]("loop.iterComplete.paused")
               : loop(loopId);
           })

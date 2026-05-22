@@ -1,6 +1,7 @@
 import { MessageType } from "./shared";
 
 type TabState = { id?: number; mediaId?: string };
+type InitResponse = { success?: boolean; mediaId?: string; alert?: string };
 
 var _tab: TabState;
 export default function getTab(): Promise<typeof _tab> {
@@ -23,7 +24,7 @@ export default function getTab(): Promise<typeof _tab> {
                 window.chrome.tabs.sendMessage(
                   tabId,
                   { mType: MessageType.init, payload: { tabId } },
-                  (response: any) => {
+                  (response: InitResponse | null | undefined) => {
                     if (response === undefined) {
                       // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                       window.chrome.runtime.lastError;
@@ -31,11 +32,11 @@ export default function getTab(): Promise<typeof _tab> {
                         null,
                         (bkResponse: typeof _tab) =>
                           bkResponse === null || bkResponse === undefined
-                            ? reject("getTab.backgroundTab.missing")
+                            ? reject("Loopy Goopy could not find an active media tab.")
                             : resolve(bkResponse)
                       );
                     } else if (response === null) {
-                      reject("message.response.null");
+                      reject("Loopy Goopy could not read media from this tab yet.");
                     } else if (response.success) {
                       Promise.resolve({ id: tabId, ...response }).then(
                         (__tab) =>
@@ -46,8 +47,10 @@ export default function getTab(): Promise<typeof _tab> {
                             .then(() => resolve(__tab))
                       );
                     } else {
-                      window.close();
-                      reject(JSON.stringify(response));
+                      reject(
+                        response.alert ||
+                          "Loopy Goopy could not find playable audio/video on this page yet."
+                      );
                     }
                   }
                 );

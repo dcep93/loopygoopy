@@ -1,29 +1,65 @@
+import { useState } from "react";
 import { updateInput } from "./Input";
 import { Field } from "./shared";
-import { getRefs } from "./utils";
+import { getConfig, getRefs } from "./utils";
+
+function getPitchSemitones() {
+  const pitchShift = parseInt(getConfig()[Field.pitch_shift] || "0", 10);
+  return Number.isNaN(pitchShift) ? 0 : pitchShift;
+}
+
+function formatPitchSemitones(semitones: number) {
+  return semitones > 0 ? `+${semitones}` : semitones.toString();
+}
 
 export default function Tap() {
+  const [pitchSemitones, setPitchSemitones] = useState(getPitchSemitones);
+
+  function changePitch(diff: -1 | 1) {
+    const nextPitchSemitones = pitchSemitones + diff;
+    setPitchSemitones(nextPitchSemitones);
+    updateInput(Field.pitch_shift, nextPitchSemitones.toString(), false);
+  }
+
   return (
     <div>
-      <div>determine BPM:</div>
-      <button
-        onClick={() =>
-          Promise.resolve(tapAndGetBpm()).then((bpm) =>
-            !bpm
-              ? null
-              : Promise.resolve(bpm.toFixed(2)).then((bpmStr) =>
-                  Promise.resolve()
-                    .then(() => updateInput(Field.original_BPM, bpmStr, false))
-                    .then(
-                      () =>
-                        (getRefs()[Field.original_BPM].current.value = bpmStr)
-                    )
-                )
-          )
-        }
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+        }}
       >
-        tap
-      </button>
+        <div>determine BPM:</div>
+        <button
+          onClick={() =>
+            Promise.resolve(tapAndGetBpm()).then((bpm) =>
+              !bpm
+                ? null
+                : Promise.resolve(bpm.toFixed(2)).then((bpmStr) =>
+                    Promise.resolve()
+                      .then(() => updateInput(Field.original_BPM, bpmStr, false))
+                      .then(
+                        () =>
+                          (getRefs()[Field.original_BPM].current.value = bpmStr)
+                      )
+                  )
+            )
+          }
+        >
+          tap
+        </button>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          gap: "0.25em",
+          alignItems: "center",
+        }}
+      >
+        <div>change pitch ({formatPitchSemitones(pitchSemitones)})</div>
+        <button onClick={() => changePitch(-1)}>-</button>
+        <button onClick={() => changePitch(1)}>+</button>
+      </div>
     </div>
   );
 }

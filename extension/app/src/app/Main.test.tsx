@@ -101,6 +101,18 @@ describe("Main bookmark controls", () => {
     expect(screen.getByRole("button", { name: "delete bookmark" })).toBeDisabled();
   });
 
+  it("renders a load error instead of leaving a rejected init promise uncaught", async () => {
+    (getTab as jest.MockedFunction<typeof getTab>).mockRejectedValueOnce(
+      "Loopy Goopy could not read media from this tab yet."
+    );
+
+    render(<Main />);
+
+    expect(
+      await screen.findByText("Loopy Goopy could not read media from this tab yet.")
+    ).toBeInTheDocument();
+  });
+
   it("restores the selected bookmark when reopening the popup", async () => {
     primeStoredConfig(
       {

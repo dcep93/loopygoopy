@@ -20,6 +20,13 @@
     return document.getElementById("movie_player");
   }
 
+  function preservePitch(v) {
+    if (!v) return;
+    if ("preservesPitch" in v) v.preservesPitch = true;
+    if ("mozPreservesPitch" in v) v.mozPreservesPitch = true;
+    if ("webkitPreservesPitch" in v) v.webkitPreservesPitch = true;
+  }
+
   function applyNativePlaybackRate(v, playbackRate) {
     if (!v || !nativePlaybackRateDescriptor?.set) return false;
     nativePlaybackRateDescriptor.set.call(v, playbackRate);
@@ -70,6 +77,7 @@
     const v = getVideo();
     if (!v) return false;
     lockedPlaybackRate = playbackRate;
+    preservePitch(v);
     definePlaybackRateOverride(v, playbackRate);
     applyNativePlaybackRate(v, playbackRate);
     applyYouTubePlayerPlaybackRate(playbackRate);
@@ -84,6 +92,7 @@
     const v = getVideo();
     if (!v) return false;
     delete v.playbackRate;
+    preservePitch(v);
     applyNativePlaybackRate(v, playbackRate);
     applyYouTubePlayerPlaybackRate(playbackRate);
     return true;

@@ -15,6 +15,7 @@ export enum Field {
   start_time,
   end_time,
   notes,
+  pitch_shift,
 }
 
 export enum CountInStyle {
