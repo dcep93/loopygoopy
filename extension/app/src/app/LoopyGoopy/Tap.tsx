@@ -70,8 +70,8 @@ export default function Tap() {
           </span>
         </div>
         <div>
-          <button style={{ paddingLeft: 0, paddingRight: 0 }} onClick={() => changePitch(-1)}>-</button>
-          <button style={{ paddingLeft: 0, paddingRight: 0 }} onClick={() => changePitch(1)}>+</button>
+          <button style={{ paddingLeft: "0.25em", paddingRight: "0.25em" }} onClick={() => changePitch(-1)}>-</button>
+          <button style={{ paddingLeft: "0.25em", paddingRight: "0.25em" }} onClick={() => changePitch(1)}>+</button>
         </div>
       </div>
     </div>
