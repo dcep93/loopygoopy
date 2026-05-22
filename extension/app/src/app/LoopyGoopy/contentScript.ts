@@ -49,6 +49,7 @@ type MediaTarget = {
   play: () => Promise<unknown>;
   pause: () => Promise<unknown> | void;
   setPlaybackRate: (playbackRate: number) => void;
+  setPitchShift: (semitones: number) => void;
   setOnPause: (handler: (() => void) | null) => void;
   getMediaFingerprint: () => string;
 };
@@ -71,7 +72,9 @@ function isYouTubePage() {
   return (
     window.location.host === "www.youtube.com" ||
     window.location.host === "youtube.googleapis.com" ||
-    window.location.host === "www.youtube-nocookie.com"
+    window.location.host === "www.youtube-nocookie.com" ||
+    window.location.host === "www.instagram.com" ||
+    window.location.protocol === "file:"
   );
 }
 
@@ -100,8 +103,8 @@ function ensureYouTubePlaybackBridge() {
 }
 
 function runYouTubePlaybackAction(
-  action: "lock" | "unlock",
-  playbackRate: number
+  action: "lock" | "unlock" | "pitch",
+  payload: { playbackRate?: number; semitones?: number }
 ) {
   return ensureYouTubePlaybackBridge().then((isBridgeLoaded) => {
     if (!isBridgeLoaded) return false;
@@ -131,7 +134,7 @@ function runYouTubePlaybackAction(
       );
       document.dispatchEvent(
         new CustomEvent(PAGE_PLAYBACK_REQUEST_EVENT, {
-          detail: { action, playbackRate, requestId },
+          detail: { action, ...payload, requestId },
         })
       );
       window.setTimeout(() => settle(false), 250);
@@ -140,11 +143,11 @@ function runYouTubePlaybackAction(
 }
 
 function lockYouTubePlaybackRate(playbackRate: number) {
-  return runYouTubePlaybackAction("lock", playbackRate);
+  return runYouTubePlaybackAction("lock", { playbackRate });
 }
 
 function unlockYouTubePlaybackRate(playbackRate: number) {
-  return runYouTubePlaybackAction("unlock", playbackRate);
+  return runYouTubePlaybackAction("unlock", { playbackRate });
 }
 
 function setPlaybackRate(playbackRate: number) {
@@ -153,6 +156,16 @@ function setPlaybackRate(playbackRate: number) {
       _state.media.setPlaybackRate(playbackRate);
     }
   });
+}
+
+function setPitchShift(semitones: number) {
+  return runYouTubePlaybackAction("pitch", { semitones }).then(
+    (didUseYouTubePitchShift) => {
+      if (!didUseYouTubePitchShift && _state.media) {
+        _state.media.setPitchShift(semitones);
+      }
+    }
+  );
 }
 
 function pause() {
@@ -222,9 +235,11 @@ const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
       })
       .then(() => (_state.loopId = -1))
       .then(() => media?.pause())
-      .then(() => unlockYouTubePlaybackRate(1))
+      .then(() =>
+        Promise.all([unlockYouTubePlaybackRate(1), setPitchShift(0)])
+      )
       .then((didUnlockYouTubePlaybackRate) => {
-        if (!didUnlockYouTubePlaybackRate && media) {
+        if (!didUnlockYouTubePlaybackRate[0] && media) {
           media.setPlaybackRate(1);
         }
       })
@@ -391,6 +406,7 @@ function createNativeMediaTarget(element: MediaElement): MediaTarget {
     setPlaybackRate: (playbackRate) => {
       element.playbackRate = playbackRate;
     },
+    setPitchShift: () => null,
     setOnPause: (handler) => {
       element.onpause = handler;
     },
@@ -554,6 +570,7 @@ function loop(loopId: number): Promise<void> {
   sendParentTitle(title);
   return Promise.resolve()
     .then(() => setPlaybackRate(playbackRate))
+    .then(() => setPitchShift(config[Field.pitch_shift] || 0))
     .then(() =>
     ({
       [CountInStyle.silent]: () => countInS * 1000,

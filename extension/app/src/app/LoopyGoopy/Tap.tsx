@@ -56,7 +56,19 @@ export default function Tap() {
           alignItems: "center",
         }}
       >
-        <div>change pitch ({formatPitchSemitones(pitchSemitones)})</div>
+        <div style={{ position: "relative" }}>
+          change pitch
+          <span
+            style={{
+              position: "absolute",
+              left: "100%",
+              paddingLeft: "0.25em",
+              whiteSpace: "nowrap",
+            }}
+          >
+            ({formatPitchSemitones(pitchSemitones)})
+          </span>
+        </div>
         <button onClick={() => changePitch(-1)}>-</button>
         <button onClick={() => changePitch(1)}>+</button>
       </div>

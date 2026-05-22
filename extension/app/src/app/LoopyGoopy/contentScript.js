@@ -53,7 +53,9 @@ var _state;
 function isYouTubePage() {
     return (window.location.host === "www.youtube.com" ||
         window.location.host === "youtube.googleapis.com" ||
-        window.location.host === "www.youtube-nocookie.com");
+        window.location.host === "www.youtube-nocookie.com" ||
+        window.location.host === "www.instagram.com" ||
+        window.location.protocol === "file:");
 }
 function ensureYouTubePlaybackBridge() {
     if (!isYouTubePage())
@@ -76,7 +78,7 @@ function ensureYouTubePlaybackBridge() {
     });
     return window.__loopyGoopyPagePlaybackBridgePromise;
 }
-function runYouTubePlaybackAction(action, playbackRate) {
+function runYouTubePlaybackAction(action, payload) {
     return ensureYouTubePlaybackBridge().then(function (isBridgeLoaded) {
         if (!isBridgeLoaded)
             return false;
@@ -98,22 +100,29 @@ function runYouTubePlaybackAction(action, playbackRate) {
             };
             document.addEventListener(PAGE_PLAYBACK_RESPONSE_EVENT, onResponse);
             document.dispatchEvent(new CustomEvent(PAGE_PLAYBACK_REQUEST_EVENT, {
-                detail: { action: action, playbackRate: playbackRate, requestId: requestId }
+                detail: __assign(__assign({ action: action }, payload), { requestId: requestId })
             }));
             window.setTimeout(function () { return settle(false); }, 250);
         });
     });
 }
 function lockYouTubePlaybackRate(playbackRate) {
-    return runYouTubePlaybackAction("lock", playbackRate);
+    return runYouTubePlaybackAction("lock", { playbackRate: playbackRate });
 }
 function unlockYouTubePlaybackRate(playbackRate) {
-    return runYouTubePlaybackAction("unlock", playbackRate);
+    return runYouTubePlaybackAction("unlock", { playbackRate: playbackRate });
 }
 function setPlaybackRate(playbackRate) {
     return lockYouTubePlaybackRate(playbackRate).then(function (didUseYouTubeLock) {
         if (!didUseYouTubeLock && _state.media) {
             _state.media.setPlaybackRate(playbackRate);
+        }
+    });
+}
+function setPitchShift(semitones) {
+    return runYouTubePlaybackAction("pitch", { semitones: semitones }).then(function (didUseYouTubePitchShift) {
+        if (!didUseYouTubePitchShift && _state.media) {
+            _state.media.setPitchShift(semitones);
         }
     });
 }
@@ -180,9 +189,11 @@ var messageTasks = (_a = {},
         })
             .then(function () { return (_state.loopId = -1); })
             .then(function () { return media === null || media === void 0 ? void 0 : media.pause(); })
-            .then(function () { return unlockYouTubePlaybackRate(1); })
+            .then(function () {
+            return Promise.all([unlockYouTubePlaybackRate(1), setPitchShift(0)]);
+        })
             .then(function (didUnlockYouTubePlaybackRate) {
-            if (!didUnlockYouTubePlaybackRate && media) {
+            if (!didUnlockYouTubePlaybackRate[0] && media) {
                 media.setPlaybackRate(1);
             }
         })
@@ -325,6 +336,7 @@ function createNativeMediaTarget(element) {
         setPlaybackRate: function (playbackRate) {
             element.playbackRate = playbackRate;
         },
+        setPitchShift: function () { return null; },
         setOnPause: function (handler) {
             element.onpause = handler;
         },
@@ -481,6 +493,7 @@ function loop(loopId) {
     sendParentTitle(title);
     return Promise.resolve()
         .then(function () { return setPlaybackRate(playbackRate); })
+        .then(function () { return setPitchShift(config[Field.pitch_shift] || 0); })
         .then(function () {
         var _a;
         return ((_a = {},
