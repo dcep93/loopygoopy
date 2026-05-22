@@ -488,7 +488,7 @@ function loop(loopId) {
         alert("Loopy Goopy needs an end time for this embedded player.");
         return messageTasks[MessageType.stop]("loop.endTime.missing");
     }
-    var title = "".concat((playbackRate * 100).toFixed(2), "% - ").concat(initialTitle);
+    var title = "".concat((bpm * playbackRate).toFixed(2), " BPM - ").concat((playbackRate * 100).toFixed(2), "% - ").concat(initialTitle);
     document.title = title;
     sendParentTitle(title);
     return Promise.resolve()

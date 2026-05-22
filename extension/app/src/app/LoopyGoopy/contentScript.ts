@@ -565,7 +565,7 @@ function loop(loopId: number): Promise<void> {
     alert("Loopy Goopy needs an end time for this embedded player.");
     return messageTasks[MessageType.stop]("loop.endTime.missing");
   }
-  const title = `${(playbackRate * 100).toFixed(2)}% - ${initialTitle}`;
+  const title = `${(bpm * playbackRate).toFixed(2)} BPM - ${(playbackRate * 100).toFixed(2)}% - ${initialTitle}`;
   document.title = title;
   sendParentTitle(title);
   return Promise.resolve()
