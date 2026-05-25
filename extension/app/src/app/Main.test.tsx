@@ -116,7 +116,7 @@ describe("Main bookmark controls", () => {
   it("defaults a falsey start time to the video's current time when opening", async () => {
     (getTab as jest.MockedFunction<typeof getTab>).mockResolvedValueOnce({
       mediaId: "media-123",
-      currentTime: 42.345,
+      currentTime: 42.346,
     });
     primeStoredConfig({
       [Field.start_time]: "0",
