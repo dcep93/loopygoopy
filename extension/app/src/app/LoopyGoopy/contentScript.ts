@@ -51,6 +51,7 @@ type MediaTarget = {
   setPlaybackRate: (playbackRate: number) => void;
   setPitchShift: (semitones: number) => void;
   setOnPause: (handler: (() => void) | null) => void;
+  getCurrentTime: () => number;
   getMediaFingerprint: () => string;
 };
 
@@ -354,6 +355,7 @@ function init() {
       return {
         success: true,
         mediaId: getMediaId(_state.media),
+        currentTime: _state.media.getCurrentTime(),
       };
     }
     if (_state.iframe) {
@@ -410,6 +412,7 @@ function createNativeMediaTarget(element: MediaElement): MediaTarget {
     setOnPause: (handler) => {
       element.onpause = handler;
     },
+    getCurrentTime: () => element.currentTime,
     getMediaFingerprint: () =>
       `${initialTitle || document.title}-${window.location.host ||
       (Array.from(element.children)[0] as HTMLSourceElement | undefined)?.src ||

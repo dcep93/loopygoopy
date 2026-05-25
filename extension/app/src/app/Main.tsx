@@ -16,6 +16,10 @@ import {
 
 const padding = <div style={{ width: "1em" }}></div>;
 
+function isFalseyStartTime(startTime: string | undefined) {
+  return !(parseFloat(startTime ?? "") > 0);
+}
+
 export default function Main() {
   const [_storageKey, updateStorageKey] = useState(storageKey);
   const [selectedBookmarkIndex, setSelectedBookmarkIndex] = useState("");
@@ -24,16 +28,29 @@ export default function Main() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   useEffect(() => {
     getTab()
-      .then((tab) => tab?.mediaId || "Main.tab.mediaId.empty")
-      .then((storageKey) =>
-        Promise.resolve()
-          .then(() => setStorageKey(storageKey))
+      .then((tab) => {
+        const tabStorageKey = tab?.mediaId || "Main.tab.mediaId.empty";
+        return Promise.resolve()
+          .then(() => setStorageKey(tabStorageKey))
           .then(loadConfig)
           .then(() => {
+            const currentTime = tab?.currentTime;
+            if (
+              currentTime !== undefined &&
+              Number.isFinite(currentTime) &&
+              isFalseyStartTime(getConfig()[Field.start_time])
+            ) {
+              const nextConfig = {
+                ...getConfig(),
+                [Field.start_time]: currentTime.toFixed(2),
+              };
+              setConfig(nextConfig);
+              save(nextConfig);
+            }
             setSelectedBookmarkIndex(getConfig().selected_bookmark);
-            updateStorageKey(storageKey);
-          })
-      )
+            updateStorageKey(tabStorageKey);
+          });
+      })
       .catch((error) => {
         const message = String(error);
         setLoadError(message);

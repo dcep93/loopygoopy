@@ -113,6 +113,23 @@ describe("Main bookmark controls", () => {
     ).toBeInTheDocument();
   });
 
+  it("defaults a falsey start time to the video's current time when opening", async () => {
+    (getTab as jest.MockedFunction<typeof getTab>).mockResolvedValueOnce({
+      mediaId: "media-123",
+      currentTime: 42.345,
+    });
+    primeStoredConfig({
+      [Field.start_time]: "0",
+      [Field.original_BPM]: "111",
+    });
+
+    await renderMain();
+
+    expect(getFieldElement(Field.start_time)).toHaveValue("42.35");
+    expect(getStoredConfig()[Field.start_time]).toBe("42.35");
+    expect(getStoredConfig()[Field.original_BPM]).toBe("111");
+  });
+
   it("restores the selected bookmark when reopening the popup", async () => {
     primeStoredConfig(
       {

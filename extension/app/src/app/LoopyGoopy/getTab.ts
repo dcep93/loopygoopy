@@ -1,7 +1,12 @@
 import { MessageType } from "./shared";
 
-type TabState = { id?: number; mediaId?: string };
-type InitResponse = { success?: boolean; mediaId?: string; alert?: string };
+type TabState = { id?: number; mediaId?: string; currentTime?: number };
+type InitResponse = {
+  success?: boolean;
+  mediaId?: string;
+  currentTime?: number;
+  alert?: string;
+};
 
 var _tab: TabState;
 export default function getTab(): Promise<typeof _tab> {

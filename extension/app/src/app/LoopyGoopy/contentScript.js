@@ -287,7 +287,8 @@ function init() {
         if (_state.media) {
             return {
                 success: true,
-                mediaId: getMediaId(_state.media)
+                mediaId: getMediaId(_state.media),
+                currentTime: _state.media.getCurrentTime()
             };
         }
         if (_state.iframe) {
@@ -340,6 +341,7 @@ function createNativeMediaTarget(element) {
         setOnPause: function (handler) {
             element.onpause = handler;
         },
+        getCurrentTime: function () { return element.currentTime; },
         getMediaFingerprint: function () {
             var _a;
             return "".concat(initialTitle || document.title, "-").concat(window.location.host ||
