@@ -1,5 +1,6 @@
 const MessageType = {
   start: 0,
+  stop: 1,
   init: 2,
   debug: 3,
   seek: 4,
@@ -55,9 +56,19 @@ describe("contentScript media rediscovery", () => {
       configurable: true,
       value: duration,
     });
+    let isPaused = true;
+    Object.defineProperty(video, "paused", {
+      configurable: true,
+      get: () => isPaused,
+    });
     video.currentTime = currentTime;
-    video.play = jest.fn().mockResolvedValue(undefined);
-    video.pause = jest.fn();
+    video.play = jest.fn().mockImplementation(() => {
+      isPaused = false;
+      return Promise.resolve(undefined);
+    });
+    video.pause = jest.fn().mockImplementation(() => {
+      isPaused = true;
+    });
     video.getBoundingClientRect = jest.fn(
       () =>
         ({
@@ -90,6 +101,55 @@ describe("contentScript media rediscovery", () => {
     for (let i = 0; i < times; i += 1) {
       await Promise.resolve();
     }
+  }
+
+  function capturePlaybackRates(video: HTMLVideoElement) {
+    const playbackRates: number[] = [];
+    let playbackRate = 1;
+    Object.defineProperty(video, "playbackRate", {
+      configurable: true,
+      get: () => playbackRate,
+      set: (value: number) => {
+        playbackRate = value;
+        playbackRates.push(value);
+      },
+    });
+    return playbackRates;
+  }
+
+  async function collectTrainingPlaybackRates(
+    config: Record<number, number>,
+    loopCount: number
+  ) {
+    jest.useFakeTimers();
+    const video = makeVideo(30, 0, 640);
+    const playbackRates = capturePlaybackRates(video);
+    await loadContentScript();
+
+    runtimeListener(
+      {
+        mType: MessageType.start,
+        payload: { config },
+      },
+      {},
+      jest.fn()
+    );
+
+    await flushPromises(30);
+    for (let i = 0; i < loopCount * 3 && playbackRates.length < loopCount; i += 1) {
+      jest.runOnlyPendingTimers();
+      await flushPromises(30);
+    }
+    expect(playbackRates.length).toBeGreaterThanOrEqual(loopCount);
+    await sendRuntimeMessage({
+      mType: MessageType.stop,
+      payload: {},
+    });
+    return playbackRates.slice(0, loopCount);
+  }
+
+  function formatRates(playbackRates: number[]) {
+    return playbackRates.map((rate) => rate.toFixed(2));
   }
 
   it("returns the newly loaded video after the old video is removed", async () => {
@@ -278,6 +338,106 @@ describe("contentScript media rediscovery", () => {
     expect(video.currentTime).toBe(8);
     expect(video.playbackRate).toBe(0.5);
     expect(video.play).toHaveBeenCalled();
+  });
+
+  it("preserves positive train loop linear acceleration", async () => {
+    const playbackRates = await collectTrainingPlaybackRates(
+      {
+        4: 0.6,
+        5: 1.0,
+        6: 10,
+        7: 0,
+        8: 0.01,
+      },
+      12
+    );
+
+    expect(formatRates(playbackRates)).toEqual([
+      "0.60",
+      "0.64",
+      "0.68",
+      "0.72",
+      "0.76",
+      "0.80",
+      "0.84",
+      "0.88",
+      "0.92",
+      "0.96",
+      "1.00",
+      "1.00",
+    ]);
+  });
+
+  it("uses loopback acceleration for negative train loops", async () => {
+    const playbackRates = await collectTrainingPlaybackRates(
+      {
+        4: 0.6,
+        5: 1.0,
+        6: -10,
+        7: 0,
+        8: 0.01,
+      },
+      43
+    );
+
+    expect(formatRates(playbackRates.slice(0, 8))).toEqual([
+      "0.60",
+      "0.64",
+      "0.62",
+      "0.66",
+      "0.64",
+      "0.68",
+      "0.66",
+      "0.70",
+    ]);
+    expect(formatRates(playbackRates.slice(33, 43))).toEqual([
+      "0.96",
+      "0.94",
+      "0.98",
+      "0.96",
+      "1.00",
+      "0.98",
+      "1.02",
+      "1.00",
+      "1.00",
+      "1.00",
+    ]);
+  });
+
+  it("uses loopback acceleration symmetrically when slowing down", async () => {
+    const playbackRates = await collectTrainingPlaybackRates(
+      {
+        4: 1.0,
+        5: 0.6,
+        6: -10,
+        7: 0,
+        8: 0.01,
+      },
+      43
+    );
+
+    expect(formatRates(playbackRates.slice(0, 8))).toEqual([
+      "1.00",
+      "0.96",
+      "0.98",
+      "0.94",
+      "0.96",
+      "0.92",
+      "0.94",
+      "0.90",
+    ]);
+    expect(formatRates(playbackRates.slice(33, 43))).toEqual([
+      "0.64",
+      "0.66",
+      "0.62",
+      "0.64",
+      "0.60",
+      "0.62",
+      "0.58",
+      "0.60",
+      "0.60",
+      "0.60",
+    ]);
   });
 
   it("plays after a metronome count-in without rewinding the track", async () => {

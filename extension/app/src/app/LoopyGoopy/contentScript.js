@@ -706,13 +706,14 @@ function loop(loopId) {
     const tempoChange = config[Field.tempo_change] || 1;
     const trainTarget = config[Field.train_target] || tempoChange;
     const trainLoops = config[Field.train_loops] || 1;
-    const loopIter = _state.iter;
+    const loopIter = _state.iter++;
     const countInBeats = loopIter === 0 ? config[Field.count__in_beats] || 0 : 0;
-    const playbackRate = _state.iter < trainLoops
-        ? tempoChange +
-            (_state.iter++ / trainLoops) *
-                (trainTarget - tempoChange)
-        : trainTarget;
+    const playbackRate = getTrainingPlaybackRate({
+        loopIter,
+        tempoChange,
+        trainTarget,
+        trainLoops,
+    });
     const countInS = (countInBeats * 60) / bpm;
     const countInStyle = (config[Field.count__in_style] ?? DEFAULT_COUNT_IN_STYLE);
     const rawStartTime = Math.max(0, config[Field.start_time] || Number.NEGATIVE_INFINITY);
@@ -751,6 +752,33 @@ function loop(loopId) {
                 ? messageTasks[MessageType.stop]("loop.iterComplete.paused")
                 : loop(loopId);
         }));
+}
+function getTrainingPlaybackRate(options) {
+    const { loopIter, tempoChange, trainTarget, trainLoops } = options;
+    if (trainLoops >= 0) {
+        return loopIter < trainLoops
+            ? tempoChange + (loopIter / trainLoops) * (trainTarget - tempoChange)
+            : trainTarget;
+    }
+    const trainLoopMagnitude = Math.abs(trainLoops);
+    if (!(trainLoopMagnitude > 0))
+        return trainTarget;
+    const step = (trainTarget - tempoChange) / trainLoopMagnitude;
+    const halfStep = step / 2;
+    const targetDirection = Math.sign(trainTarget - tempoChange);
+    if (targetDirection === 0)
+        return trainTarget;
+    const lockLoopIter = Math.ceil((4 * trainLoopMagnitude) / 2) * 2;
+    if (loopIter >= lockLoopIter)
+        return trainTarget;
+    const isBackwardStep = loopIter > 0 && loopIter % 2 === 0;
+    const halfStepCount = loopIter % 2 === 0 ? loopIter / 2 : (loopIter + 3) / 2;
+    const playbackRate = tempoChange + halfStepCount * halfStep;
+    if (isBackwardStep &&
+        Math.sign(playbackRate - trainTarget) !== -targetDirection) {
+        return trainTarget;
+    }
+    return playbackRate;
 }
 function runCountIn(countInStyle, options) {
     const sleepMsByStyle = {
