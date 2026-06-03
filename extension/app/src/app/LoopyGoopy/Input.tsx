@@ -1,8 +1,17 @@
 import type { RefObject } from "react";
 import { Action, actionButtonF } from "./ActionButton";
-import { CountInStyle, Field } from "./shared";
+import getTab from "./getTab";
+import { CountInStyle, Field, MessageType } from "./shared";
 import { save } from "./storage";
 import { getConfig, getConfigSansBookmarks, getRefs } from "./utils";
+import { debugLog } from "./debug";
+
+const countInStyleOptions = [
+  CountInStyle.track,
+  CountInStyle.silent,
+  CountInStyle.metronome,
+];
+const LOG_SOURCE = "input";
 
 export default function Input(props: { field: Field }) {
   const ref = getRefs()[props.field];
@@ -21,13 +30,10 @@ export default function Input(props: { field: Field }) {
           <select
             ref={ref as RefObject<HTMLSelectElement>}
             style={{ width: "100%" }}
-            defaultValue={getConfig()[props.field] ?? CountInStyle.silent.toString()}
-            onChange={(e) => updateInput(props.field, e.target.value, false)}
+            defaultValue={getConfig()[props.field] ?? CountInStyle.track.toString()}
+            onChange={(e) => handleInputChange(props.field, e.target.value)}
           >
-            {Object.keys(CountInStyle)
-              .map((k) => parseInt(k))
-              .filter((k) => !Number.isNaN(k))
-              .filter((k) => k !== CountInStyle.metronome) // todo
+            {countInStyleOptions
               .map((k) => (
                 <option key={k} value={k.toString()}>
                   {CountInStyle[k]}
@@ -44,7 +50,7 @@ export default function Input(props: { field: Field }) {
             <input
               ref={ref as RefObject<HTMLInputElement>}
               style={{ width: "100%" }}
-              onChange={(e) => updateInput(props.field, e.target.value, false)}
+              onChange={(e) => handleInputChange(props.field, e.target.value)}
               defaultValue={getConfig()[props.field]}
             ></input>
           </form>
@@ -54,22 +60,43 @@ export default function Input(props: { field: Field }) {
   );
 }
 
+function handleInputChange(field: Field, valueStr: string) {
+  logInput("onChange", { field: Field[field], value: valueStr });
+  updateInput(field, valueStr, false);
+}
+
 export function updateInput(
   field: Field,
   valueStr: string,
   isRecursive: boolean
 ) {
   const config = getConfig();
-  if (config[field] === valueStr) return;
+  if (config[field] === valueStr) {
+    logInput("unchanged", { field: Field[field], value: valueStr, isRecursive });
+    return;
+  }
+  logInput("update", {
+    field: Field[field],
+    previousValue: config[field],
+    nextValue: valueStr,
+    isRecursive,
+  });
   if (!(parseFloat(valueStr) < Number.POSITIVE_INFINITY)) {
     if (valueStr === "") {
       delete config[field];
+      logInput("delete empty field", { field: Field[field] });
       save(config);
     }
-    if (![Field.count__in_style, Field.notes].includes(field)) return;
+    if (![Field.count__in_style, Field.notes].includes(field)) {
+      logInput("ignored nonnumeric field", { field: Field[field], value: valueStr });
+      return;
+    }
   }
   config[field] = valueStr;
   save(config);
+  if (field === Field.start_time) {
+    seekToStartTime(valueStr);
+  }
   if (isRecursive) {
     getRefs()[field].current.value = valueStr;
     return;
@@ -112,6 +139,42 @@ export function updateInput(
       );
       break;
   }
+}
+
+function logInput(message: string, details?: Record<string, unknown>) {
+  debugLog(LOG_SOURCE, message, details);
+}
+
+function seekToStartTime(valueStr: string) {
+  const time = parseFloat(valueStr);
+  if (!Number.isFinite(time)) {
+    logInput("seek skipped invalid start time", { value: valueStr });
+    return;
+  }
+  const data = {
+    mType: MessageType.seek,
+    payload: { time },
+  };
+  getTab({ suppressAlert: true })
+    .then((tab) => {
+      logInput("seek start time", { time, tabId: tab?.id });
+      if (tab?.id !== undefined && window.chrome?.tabs?.sendMessage) {
+        window.chrome.tabs.sendMessage(tab.id, data, () => {
+          void window.chrome?.runtime?.lastError;
+        });
+        return;
+      }
+      if (window.chrome?.runtime?.sendMessage) {
+        window.chrome.runtime.sendMessage(data, () => {
+          void window.chrome?.runtime?.lastError;
+        });
+      }
+    })
+    .catch((error) => {
+      logInput("seek skipped", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
 }
 
 export function getNumberConfig() {

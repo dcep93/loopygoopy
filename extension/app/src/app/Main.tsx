@@ -5,6 +5,7 @@ import getTab from "./LoopyGoopy/getTab";
 import Input from "./LoopyGoopy/Input";
 import Notes from "./LoopyGoopy/Notes";
 import { save, setStorageKey, storageKey } from "./LoopyGoopy/storage";
+import { debugLog, setDebugTabId } from "./LoopyGoopy/debug";
 import Tap from "./LoopyGoopy/Tap";
 import {
   applyConfigSansBookmarks,
@@ -15,9 +16,10 @@ import {
 } from "./LoopyGoopy/utils";
 
 const padding = <div style={{ width: "1em" }}></div>;
+const LOG_SOURCE = "popup";
 
 function isFalseyStartTime(startTime: string | undefined) {
-  return !(parseFloat(startTime ?? "") > 0);
+  return startTime === undefined || startTime.trim() === "";
 }
 
 export default function Main() {
@@ -27,13 +29,21 @@ export default function Main() {
   const [, setBookmarksVersion] = useState(0);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   useEffect(() => {
+    logPopup("init start");
     getTab()
       .then((tab) => {
+        setDebugTabId(tab?.id);
         const tabStorageKey = tab?.mediaId || "Main.tab.mediaId.empty";
+        logPopup("tab resolved", {
+          mediaId: tab?.mediaId,
+          tabStorageKey,
+          currentTime: tab?.currentTime,
+        });
         return Promise.resolve()
           .then(() => setStorageKey(tabStorageKey))
           .then(loadConfig)
           .then(() => {
+            logPopup("config loaded", describeConfigForLog(getConfig()));
             const currentTime = tab?.currentTime;
             if (
               currentTime !== undefined &&
@@ -45,6 +55,10 @@ export default function Main() {
                 [Field.start_time]: currentTime.toFixed(2),
               };
               setConfig(nextConfig);
+              logPopup("defaulting start time to current media time", {
+                currentTime,
+                startTime: nextConfig[Field.start_time],
+              });
               save(nextConfig);
             }
             setSelectedBookmarkIndex(getConfig().selected_bookmark);
@@ -53,6 +67,7 @@ export default function Main() {
       })
       .catch((error) => {
         const message = String(error);
+        logPopup("init failed", { message });
         setLoadError(message);
         updateStorageKey(message);
       });
@@ -74,6 +89,10 @@ export default function Main() {
 
   const bookmarks = getConfig().bookmarks;
   function persistConfig(selectedBookmark: string, nextBookmarks = getConfig().bookmarks) {
+    logPopup("persistConfig", {
+      selectedBookmark,
+      bookmarkCount: nextBookmarks.length,
+    });
     const nextConfig = {
       ...getConfigSansBookmarks(),
       bookmarks: nextBookmarks,
@@ -85,24 +104,45 @@ export default function Main() {
   }
 
   function updateBookmarks(nextBookmarks: typeof bookmarks, selectedBookmark: string) {
+    logPopup("updateBookmarks", {
+      selectedBookmark,
+      bookmarkCount: nextBookmarks.length,
+    });
     persistConfig(selectedBookmark, nextBookmarks);
     setBookmarksVersion((version) => version + 1);
   }
 
   function handleBookmarkSelection(bookmarkIndexStr: string) {
+    logPopup("bookmark selection", { bookmarkIndexStr });
     setSelectedBookmarkIndex(bookmarkIndexStr);
     persistConfig(bookmarkIndexStr);
-    if (bookmarkIndexStr === "") return;
+    if (bookmarkIndexStr === "") {
+      logPopup("bookmark selection empty");
+      return;
+    }
     const bookmark = getConfig().bookmarks[parseInt(bookmarkIndexStr)];
-    if (!bookmark) return;
+    if (!bookmark) {
+      logPopup("bookmark selection missing bookmark", { bookmarkIndexStr });
+      return;
+    }
+    logPopup("applying bookmark", {
+      bookmarkIndexStr,
+      bookmarkName: bookmark.bookmark_name,
+      config: describeConfigForLog(bookmark.config),
+    });
     applyConfigSansBookmarks(bookmark.config);
     save(getConfig());
   }
 
   function handleBookmarkSave() {
+    logPopup("bookmark save clicked", { selectedBookmarkIndex });
     const currentConfig = getConfigSansBookmarks();
     if (selectedBookmarkIndex !== "") {
       const bookmarkIndex = parseInt(selectedBookmarkIndex);
+      logPopup("overwriting selected bookmark", {
+        bookmarkIndex,
+        config: describeConfigForLog(currentConfig),
+      });
       const nextBookmarks = getConfig().bookmarks.map((bookmark, index) =>
         index === bookmarkIndex ? { ...bookmark, config: { ...currentConfig } } : bookmark
       );
@@ -110,11 +150,19 @@ export default function Main() {
       return;
     }
     const bookmarkName = window.prompt("bookmark name");
-    if (bookmarkName === null) return;
+    if (bookmarkName === null) {
+      logPopup("bookmark save canceled");
+      return;
+    }
     if (bookmarkName.trim() === "") {
+      logPopup("bookmark save rejected blank name");
       window.alert("bookmark name cannot be empty");
       return;
     }
+    logPopup("creating bookmark", {
+      bookmarkName,
+      config: describeConfigForLog(currentConfig),
+    });
     const nextBookmarks = getConfig().bookmarks.concat({
       bookmark_name: bookmarkName,
       config: { ...currentConfig },
@@ -123,7 +171,11 @@ export default function Main() {
   }
 
   function handleBookmarkDelete() {
-    if (selectedBookmarkIndex === "") return;
+    logPopup("bookmark delete clicked", { selectedBookmarkIndex });
+    if (selectedBookmarkIndex === "") {
+      logPopup("bookmark delete skipped empty selection");
+      return;
+    }
     const bookmarkIndex = parseInt(selectedBookmarkIndex);
     updateBookmarks(
       getConfig().bookmarks.filter((_, index) => index !== bookmarkIndex),
@@ -218,4 +270,18 @@ export default function Main() {
       </div>
     </div>
   );
+}
+
+function logPopup(message: string, details?: Record<string, unknown>) {
+  debugLog(LOG_SOURCE, message, details);
+}
+
+function describeConfigForLog(config: Record<string, unknown>) {
+  const { bookmarks, selected_bookmark: selectedBookmark, ...fields } = config;
+  return {
+    fieldCount: Object.keys(fields).length,
+    fields: Object.keys(fields).map((key) => Field[parseInt(key, 10)] ?? key),
+    bookmarkCount: Array.isArray(bookmarks) ? bookmarks.length : undefined,
+    selectedBookmark,
+  };
 }

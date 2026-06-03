@@ -9,7 +9,7 @@ type InitResponse = {
 };
 
 var _tab: TabState;
-export default function getTab(): Promise<typeof _tab> {
+export default function getTab(options: { suppressAlert?: boolean } = {}): Promise<typeof _tab> {
   if (window.chrome?.tabs === undefined) {
     _tab = { mediaId: "localhost" };
   }
@@ -64,7 +64,7 @@ export default function getTab(): Promise<typeof _tab> {
           })
             .then((__tab) => (_tab = __tab))
             .catch((e) => {
-              alert(e);
+              if (!options.suppressAlert) alert(e);
               throw e;
             })
     )

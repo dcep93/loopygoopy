@@ -8,41 +8,31 @@ import { getRefs, setConfig } from "./LoopyGoopy/utils";
 
 jest.mock("./LoopyGoopy/getTab");
 
-type StoredEntry = {
-  version: string;
-  config: Record<string, unknown>;
-};
-
 describe("Main bookmark controls", () => {
-  let storedEntries: Record<string, StoredEntry>;
-  let setMock: jest.Mock;
-  let getMock: jest.Mock;
   let promptMock: jest.SpyInstance;
   let alertMock: jest.SpyInstance;
+  let consoleLogMock: jest.SpyInstance;
+  let consoleInfoMock: jest.SpyInstance;
+  let consoleWarnMock: jest.SpyInstance;
+  const localStorageKey = "loopy-goopy:last-config";
+  const legacyMediaStorageKey = "loopy-goopy:media-123";
 
   beforeEach(() => {
+    consoleLogMock = jest.spyOn(console, "log").mockImplementation(() => undefined);
+    consoleInfoMock = jest.spyOn(console, "info").mockImplementation(() => undefined);
+    consoleWarnMock = jest.spyOn(console, "warn").mockImplementation(() => undefined);
     (getTab as jest.MockedFunction<typeof getTab>).mockResolvedValue({
       mediaId: "media-123",
     });
     setStorageKey(undefined as unknown as string);
     setConfig({ bookmarks: [], selected_bookmark: "" });
-    storedEntries = {};
-    setMock = jest.fn((value: Record<string, StoredEntry>) => {
-      storedEntries = { ...storedEntries, ...value };
-    });
-    getMock = jest.fn((key: string, callback: (value: Record<string, StoredEntry>) => void) =>
-      callback({ [key]: storedEntries[key] })
-    );
     (window as any).chrome = {
-      storage: {
-        sync: {
-          get: getMock,
-          set: setMock,
-        },
-      },
       runtime: {},
-      tabs: {},
+      tabs: {
+        sendMessage: jest.fn(),
+      },
     };
+    window.localStorage.clear();
     promptMock = jest.spyOn(window, "prompt").mockImplementation(() => null);
     alertMock = jest.spyOn(window, "alert").mockImplementation(() => undefined);
   });
@@ -50,7 +40,11 @@ describe("Main bookmark controls", () => {
   afterEach(() => {
     promptMock.mockRestore();
     alertMock.mockRestore();
+    consoleLogMock.mockRestore();
+    consoleInfoMock.mockRestore();
+    consoleWarnMock.mockRestore();
     delete (window as any).chrome;
+    window.localStorage.clear();
   });
 
   function makeConfig(
@@ -70,10 +64,27 @@ describe("Main bookmark controls", () => {
     bookmarks: Array<{ bookmark_name: string; config: Record<string, string> }> = [],
     selectedBookmark = ""
   ) {
-    storedEntries["media-123"] = {
-      version: "v0.0.1",
-      config: makeConfig(configSansBookmarks, bookmarks, selectedBookmark),
-    };
+    window.localStorage.setItem(
+      localStorageKey,
+      JSON.stringify({
+        version: "v0.0.1",
+        config: makeConfig(configSansBookmarks, bookmarks, selectedBookmark),
+      })
+    );
+  }
+
+  function primeLegacyMediaConfig(
+    configSansBookmarks: Record<string, string> = {},
+    bookmarks: Array<{ bookmark_name: string; config: Record<string, string> }> = [],
+    selectedBookmark = ""
+  ) {
+    window.localStorage.setItem(
+      legacyMediaStorageKey,
+      JSON.stringify({
+        version: "v0.0.1",
+        config: makeConfig(configSansBookmarks, bookmarks, selectedBookmark),
+      })
+    );
   }
 
   async function renderMain() {
@@ -89,7 +100,8 @@ describe("Main bookmark controls", () => {
   }
 
   function getStoredConfig() {
-    return storedEntries["media-123"]?.config as Record<string, any>;
+    return JSON.parse(window.localStorage.getItem(localStorageKey) || "{}")
+      .config as Record<string, any>;
   }
 
   it("renders bookmark controls under train loops", async () => {
@@ -99,6 +111,29 @@ describe("Main bookmark controls", () => {
     expect(screen.getByRole("combobox", { name: "bookmark" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "save bookmark" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "delete bookmark" })).toBeDisabled();
+  });
+
+  it("does not warn when no saved config exists yet", async () => {
+    await renderMain();
+
+    expect(consoleWarnMock).not.toHaveBeenCalled();
+  });
+
+  it("defaults count-in style to track", async () => {
+    await renderMain();
+
+    expect(getFieldElement(Field.count__in_style)).toHaveValue(CountInStyle.track.toString());
+  });
+
+  it("orders count-in style options with track first and includes metronome", async () => {
+    await renderMain();
+
+    const countInStyle = getFieldElement(Field.count__in_style) as HTMLSelectElement;
+    expect(Array.from(countInStyle.options).map((option) => option.textContent)).toEqual([
+      "track",
+      "silent",
+      "metronome",
+    ]);
   });
 
   it("renders a load error instead of leaving a rejected init promise uncaught", async () => {
@@ -119,7 +154,7 @@ describe("Main bookmark controls", () => {
       currentTime: 42.346,
     });
     primeStoredConfig({
-      [Field.start_time]: "0",
+      [Field.start_time]: "",
       [Field.original_BPM]: "111",
     });
 
@@ -128,6 +163,66 @@ describe("Main bookmark controls", () => {
     expect(getFieldElement(Field.start_time)).toHaveValue("42.35");
     expect(getStoredConfig()[Field.start_time]).toBe("42.35");
     expect(getStoredConfig()[Field.original_BPM]).toBe("111");
+  });
+
+  it("keeps a saved start time of zero when opening", async () => {
+    (getTab as jest.MockedFunction<typeof getTab>).mockResolvedValueOnce({
+      mediaId: "media-123",
+      currentTime: 42.346,
+    });
+    primeStoredConfig({
+      [Field.start_time]: "0",
+      [Field.original_BPM]: "111",
+    });
+
+    await renderMain();
+
+    expect(getFieldElement(Field.start_time)).toHaveValue("0");
+    expect(getStoredConfig()[Field.start_time]).toBe("0");
+  });
+
+  it("saves edited fields to one localStorage key without pressing save bookmark", async () => {
+    primeStoredConfig({
+      [Field.original_BPM]: "120",
+      [Field.beats_per_loop]: "4",
+      [Field.start_time]: "0",
+    });
+
+    await renderMain();
+
+    fireEvent.change(getFieldElement(Field.start_time), { target: { value: "12.5" } });
+
+    expect(getStoredConfig()[Field.start_time]).toBe("12.5");
+    expect(getStoredConfig()[Field.end_time]).toBe("14.50");
+    expect(window.localStorage.getItem(legacyMediaStorageKey)).toBeNull();
+    expect(window.localStorage.length).toBe(1);
+    expect(window.localStorage.key(0)).toBe(localStorageKey);
+    expect(promptMock).not.toHaveBeenCalled();
+  });
+
+  it("loads the canonical saved config for any media", async () => {
+    primeStoredConfig({
+      [Field.original_BPM]: "98",
+      [Field.start_time]: "5.5",
+    });
+
+    await renderMain();
+
+    expect(getFieldElement(Field.original_BPM)).toHaveValue("98");
+    expect(getFieldElement(Field.start_time)).toHaveValue("5.5");
+  });
+
+  it("can read an old media-specific entry without writing back to it", async () => {
+    primeLegacyMediaConfig({
+      [Field.original_BPM]: "97",
+      [Field.start_time]: "4.5",
+    });
+
+    await renderMain();
+
+    expect(getFieldElement(Field.original_BPM)).toHaveValue("97");
+    expect(getFieldElement(Field.start_time)).toHaveValue("4.5");
+    expect(window.localStorage.getItem(localStorageKey)).toBeNull();
   });
 
   it("restores the selected bookmark when reopening the popup", async () => {
@@ -187,6 +282,7 @@ describe("Main bookmark controls", () => {
     expect(getFieldElement(Field.start_time)).toHaveValue("1.25");
     expect(getFieldElement(Field.original_BPM)).toHaveValue("");
     expect(getFieldElement(Field.beats_per_loop)).toHaveValue("");
+    expect(getFieldElement(Field.count__in_style)).toHaveValue(CountInStyle.track.toString());
     expect(container.querySelector("textarea")).toHaveValue("");
     expect(getStoredConfig()[Field.start_time]).toBe("1.25");
     expect(getStoredConfig().bookmarks).toHaveLength(1);
@@ -304,10 +400,11 @@ describe("Main bookmark controls", () => {
     promptMock.mockImplementation(() => "   ");
 
     await renderMain();
+    const storedBeforeSave = window.localStorage.getItem(localStorageKey);
     await userEvent.click(screen.getByRole("button", { name: "save bookmark" }));
 
     expect(alertMock).toHaveBeenCalledWith("bookmark name cannot be empty");
-    expect(setMock).not.toHaveBeenCalled();
+    expect(window.localStorage.getItem(localStorageKey)).toBe(storedBeforeSave);
     expect(screen.getByRole("combobox", { name: "bookmark" })).toHaveValue("");
   });
 

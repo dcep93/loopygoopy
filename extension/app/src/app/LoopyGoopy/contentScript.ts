@@ -2,6 +2,8 @@ enum MessageType {
   start,
   stop,
   init,
+  debug,
+  seek,
 }
 
 enum Field {
@@ -33,7 +35,10 @@ const PAGE_PLAYBACK_SCRIPT_ID = "loopy-goopy-page-playback-bridge";
 const PAGE_PLAYBACK_REQUEST_EVENT = "LoopyGoopy.pagePlayback.request";
 const PAGE_PLAYBACK_RESPONSE_EVENT = "LoopyGoopy.pagePlayback.response";
 const FRAME_MESSAGE_SOURCE = "LoopyGoopy.frameMessage";
+const FRAME_RESPONSE_SOURCE = "LoopyGoopy.frameResponse";
 const PARENT_MESSAGE_SOURCE = "LoopyGoopy.parentMessage";
+const LOG_PREFIX = "[LoopyGoopy]";
+const DEFAULT_COUNT_IN_STYLE = CountInStyle.track;
 const DRIVE_FOLDER_PATH_RE = /^\/drive\/folders\/([^/?#]+)/;
 const DRIVE_ID_RE = /^[A-Za-z0-9_-]{20,}$/;
 const DRIVE_ID_IN_TEXT_RE = /[A-Za-z0-9_-]{20,}/g;
@@ -186,7 +191,7 @@ function pause() {
 
 const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
   [MessageType.start]: (payload: { config: NumberConfigType }) => {
-    ensureState();
+    ensureState({ refreshTargets: true, reason: "start" });
     if (_state.iframe && !_state.media) {
       return Promise.resolve().then(() =>
         sendFrameMessage(_state.iframe!, MessageType.start, payload)
@@ -250,6 +255,38 @@ const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
       });
   },
   [MessageType.init]: () => Promise.resolve().then(init),
+  [MessageType.debug]: (payload: {
+    level?: "log" | "warn";
+    source?: string;
+    message?: string;
+    details?: string;
+  }) => {
+    const prefix = `[LoopyGoopy ${payload?.source || "popup"}]`;
+    const message = payload?.message || "debug";
+    const details = payload?.details || "";
+    if (payload?.level === "warn") {
+      console.warn(prefix, message, details);
+    } else {
+      console.log(prefix, message, details);
+    }
+    return Promise.resolve({ success: true });
+  },
+  [MessageType.seek]: (payload: { time: number }) => {
+    ensureState({ refreshTargets: true, reason: "seek" });
+    if (_state.iframe && !_state.media) {
+      return Promise.resolve().then(() =>
+        sendFrameMessage(_state.iframe!, MessageType.seek, payload)
+      );
+    }
+    const time = Number(payload?.time);
+    if (!Number.isFinite(time)) return Promise.resolve({ success: false });
+    if (!_state.media) {
+      console.info(LOG_PREFIX, "seek skipped: no media target", { time });
+      return Promise.resolve({ success: false });
+    }
+    _state.media.setCurrentTime(Math.max(0, time));
+    return Promise.resolve({ success: true });
+  },
 };
 
 function listenForMessage(
@@ -276,6 +313,46 @@ function sendFrameMessage(
     },
     "*"
   );
+}
+
+function sendFrameRequest(
+  iframe: HTMLIFrameElement,
+  mType: MessageType,
+  payload: any
+) {
+  const requestId = `LoopyGoopy.frameRequest.${Math.random()}`;
+  return new Promise<any>((resolve) => {
+    let isSettled = false;
+    const settle = (response: any) => {
+      if (isSettled) return;
+      isSettled = true;
+      window.removeEventListener("message", onResponse);
+      resolve(response);
+    };
+    const onResponse = (event: MessageEvent) => {
+      if (event.source !== iframe.contentWindow) return;
+      const data = event.data;
+      if (
+        !data ||
+        data.source !== FRAME_RESPONSE_SOURCE ||
+        data.requestId !== requestId
+      ) {
+        return;
+      }
+      settle(data.payload);
+    };
+    window.addEventListener("message", onResponse);
+    iframe.contentWindow?.postMessage(
+      {
+        source: FRAME_MESSAGE_SOURCE,
+        mType,
+        payload,
+        requestId,
+      },
+      "*"
+    );
+    window.setTimeout(() => settle(undefined), 500);
+  });
 }
 
 function sendParentTitle(title: string) {
@@ -307,10 +384,72 @@ function listenForFrameMessage() {
     if (!data || data.source !== FRAME_MESSAGE_SOURCE) return;
     Promise.resolve(data.payload)
       .then(messageTasks[data.mType as MessageType])
+      .then((payload) => {
+        sendFrameResponse(data.requestId, payload);
+      })
       .catch((e) => {
-        console.error(e);
+        if (isPlayRequestInterruptedByPause(e)) {
+          console.info(LOG_PREFIX, "suppressed play/pause interruption", {
+            error: errorToMessage(e),
+          });
+          sendFrameResponse(data.requestId, {
+            success: false,
+            suppressed: true,
+          });
+          return;
+        }
+        sendFrameResponse(data.requestId, {
+          success: false,
+          alert: errorToMessage(e),
+        });
       });
   });
+}
+
+function sendFrameResponse(requestId: string | undefined, payload: any) {
+  if (!requestId) return;
+  try {
+    window.parent.postMessage(
+      {
+        source: FRAME_RESPONSE_SOURCE,
+        requestId,
+        payload: makePostMessageSafe(payload),
+      },
+      "*"
+    );
+  } catch (e) {
+    console.info(LOG_PREFIX, "could not send frame response", {
+      requestId,
+      error: errorToMessage(e),
+    });
+  }
+}
+
+function makePostMessageSafe(payload: any) {
+  if (payload === undefined) return undefined;
+  try {
+    return JSON.parse(JSON.stringify(payload));
+  } catch {
+    return {
+      success: false,
+      alert: "Loopy Goopy could not serialize the embedded media response.",
+    };
+  }
+}
+
+function errorToMessage(error: unknown) {
+  if (error instanceof Error) {
+    return `${error.name}: ${error.message}`;
+  }
+  return String(error);
+}
+
+function isPlayRequestInterruptedByPause(error: unknown) {
+  const message = errorToMessage(error);
+  return (
+    message.includes("play() request was interrupted by a call to pause()") ||
+    message.includes("play request was interrupted by a call to pause")
+  );
 }
 
 function isEmbeddedFrame() {
@@ -333,6 +472,13 @@ function activate() {
       .then(messageTasks[data.mType])
       .then(sendResponse)
       .catch((e) => {
+        if (isPlayRequestInterruptedByPause(e)) {
+          console.info(LOG_PREFIX, "suppressed play/pause interruption", {
+            error: errorToMessage(e),
+          });
+          sendResponse({ success: false, suppressed: true });
+          return;
+        }
         alert(e);
         throw e;
       })
@@ -348,9 +494,9 @@ activate();
 
 //
 
-function init() {
-  return Promise.resolve().then(() => {
-    ensureState();
+function init(): Promise<any> {
+  return Promise.resolve().then((): any => {
+    ensureState({ refreshTargets: true, reason: "init" });
     if (_state.media) {
       return {
         success: true,
@@ -359,10 +505,14 @@ function init() {
       };
     }
     if (_state.iframe) {
-      return {
-        success: true,
-        mediaId: getIframeMediaId(_state.iframe),
-      };
+      const mediaId = getIframeMediaId(_state.iframe);
+      return sendFrameRequest(_state.iframe, MessageType.init, {}).then(
+        (frameResponse) => ({
+          success: true,
+          mediaId,
+          currentTime: frameResponse?.currentTime,
+        })
+      );
     }
     return {
       success: false,
@@ -371,7 +521,9 @@ function init() {
   });
 }
 
-function ensureState() {
+function ensureState(
+  options: { refreshTargets?: boolean; reason?: string } = {}
+) {
   if (!_state) {
     _state = {
       config: undefined,
@@ -379,6 +531,9 @@ function ensureState() {
       loopId: -1,
       isPaused: false,
     };
+  }
+  if (options.refreshTargets) {
+    refreshCachedTargets(options.reason || "refresh");
   }
   if (!_state.media) {
     _state.media = findMediaTarget();
@@ -388,11 +543,60 @@ function ensureState() {
   }
 }
 
+function refreshCachedTargets(reason: string) {
+  let didReplaceTarget = false;
+  const previousMedia = _state.media;
+  const nextMedia = findMediaTarget();
+  if (previousMedia?.root !== nextMedia?.root) {
+    previousMedia?.setOnPause(null);
+    _state.media = nextMedia;
+    didReplaceTarget = true;
+  }
+  const previousIframe = _state.iframe;
+  const nextIframe = findYouTubeIframe();
+  if (previousIframe !== nextIframe) {
+    _state.iframe = nextIframe;
+    didReplaceTarget = true;
+  }
+  if (didReplaceTarget) {
+    _state.loopId = -1;
+  }
+  logTargetRefresh(reason, previousMedia, nextMedia, previousIframe, nextIframe);
+}
+
 function findMediaTarget(): MediaTarget | undefined {
-  const mediaElement =
-    document.getElementsByTagName("video")[0] ||
-    document.getElementsByTagName("audio")[0];
+  const mediaElement = chooseBestMediaElement();
   return mediaElement ? createNativeMediaTarget(mediaElement) : undefined;
+}
+
+function chooseBestMediaElement(): MediaElement | undefined {
+  const mediaElements = Array.from(
+    document.querySelectorAll<MediaElement>("video, audio")
+  ).filter((element) => element.isConnected);
+  if (!mediaElements.length) return undefined;
+  return mediaElements
+    .map((element, index) => ({
+      element,
+      score: mediaElementScore(element, index),
+    }))
+    .sort((a, b) => b.score - a.score)[0]?.element;
+}
+
+function mediaElementScore(element: MediaElement, index: number) {
+  const rect = element.getBoundingClientRect();
+  const area = rect.width * rect.height;
+  const hasSource = Boolean(
+    (Array.from(element.children)[0] as HTMLSourceElement | undefined)?.src ||
+      element.currentSrc ||
+      element.src
+  );
+  const hasDuration = Number.isFinite(element.duration) && element.duration > 0;
+  return (
+    area * 1000 +
+    (hasSource ? 100 : 0) +
+    (hasDuration ? 10 : 0) +
+    index
+  );
 }
 
 function createNativeMediaTarget(element: MediaElement): MediaTarget {
@@ -414,20 +618,64 @@ function createNativeMediaTarget(element: MediaElement): MediaTarget {
     },
     getCurrentTime: () => element.currentTime,
     getMediaFingerprint: () =>
-      `${initialTitle || document.title}-${window.location.host ||
-      (Array.from(element.children)[0] as HTMLSourceElement | undefined)?.src ||
-      element.currentSrc ||
-      element.src
-      }-${element.duration}`,
+      `${getMediaElementSource(element)}-${getStableDuration(element.duration)}`,
   };
+}
+
+function getMediaElementSource(element: MediaElement) {
+  const mediaSource =
+    (Array.from(element.children)[0] as HTMLSourceElement | undefined)?.src ||
+    element.currentSrc ||
+    element.src;
+  if (mediaSource && !mediaSource.startsWith("blob:")) {
+    return mediaSource;
+  }
+  return getStablePageMediaSource();
+}
+
+function getStablePageMediaSource() {
+  try {
+    const url = new URL(window.location.href);
+    if (url.hostname.endsWith("youtube.com")) {
+      const videoId = url.searchParams.get("v");
+      if (videoId) return `${url.origin}/watch?v=${videoId}`;
+      const shortsId = url.pathname.match(/^\/shorts\/([^/?#]+)/)?.[1];
+      if (shortsId) return `${url.origin}/shorts/${shortsId}`;
+      const embedId = url.pathname.match(/^\/embed\/([^/?#]+)/)?.[1];
+      if (embedId) return `${url.origin}/embed/${embedId}`;
+    }
+    if (url.hostname === "youtu.be") {
+      const videoId = url.pathname.match(/^\/([^/?#]+)/)?.[1];
+      if (videoId) return `${url.origin}/${videoId}`;
+    }
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return window.location.href || window.location.host;
+  }
+}
+
+function getStableDuration(duration: number) {
+  return Number.isFinite(duration) ? duration.toFixed(3) : "unknown-duration";
 }
 
 function findYouTubeIframe() {
   if (window.self !== window.top) return undefined;
-  return (
-    document.querySelector<HTMLIFrameElement>(YOUTUBE_IFRAME_SELECTOR) ||
-    undefined
-  );
+  const iframes = Array.from(
+    document.querySelectorAll<HTMLIFrameElement>(YOUTUBE_IFRAME_SELECTOR)
+  ).filter((iframe) => iframe.isConnected);
+  if (!iframes.length) return undefined;
+  return iframes
+    .map((iframe, index) => ({
+      iframe,
+      score: iframeElementScore(iframe, index),
+    }))
+    .sort((a, b) => b.score - a.score)[0]?.iframe;
+}
+
+function iframeElementScore(iframe: HTMLIFrameElement, index: number) {
+  const rect = iframe.getBoundingClientRect();
+  return rect.width * rect.height * 1000 + index;
 }
 
 function getMediaId(media: MediaTarget) {
@@ -451,7 +699,49 @@ function getIframeMediaId(iframe: HTMLIFrameElement) {
     }
     return `drive-folder:${driveFolderId}:iframe:${iframe.id || iframe.src}`;
   }
-  return `${initialTitle || document.title}-${iframe.src || iframe.title}`;
+  return iframe.src || iframe.title || `${initialTitle || document.title}:iframe`;
+}
+
+function logTargetRefresh(
+  reason: string,
+  previousMedia: MediaTarget | undefined,
+  nextMedia: MediaTarget | undefined,
+  previousIframe: HTMLIFrameElement | undefined,
+  nextIframe: HTMLIFrameElement | undefined
+) {
+  console.info(LOG_PREFIX, "target refresh", {
+    reason,
+    previousMedia: describeMediaTarget(previousMedia),
+    nextMedia: describeMediaTarget(nextMedia),
+    previousIframe: describeIframe(previousIframe),
+    nextIframe: describeIframe(nextIframe),
+  });
+}
+
+function describeMediaTarget(media: MediaTarget | undefined) {
+  if (!media) return undefined;
+  const rect = media.root.getBoundingClientRect();
+  return {
+    tag: media.root.tagName.toLowerCase(),
+    connected: media.root.isConnected,
+    source: getMediaElementSource(media.root as MediaElement),
+    duration: media.getDuration(),
+    currentTime: media.getCurrentTime(),
+    area: Math.round(rect.width * rect.height),
+    id: getMediaId(media),
+  };
+}
+
+function describeIframe(iframe: HTMLIFrameElement | undefined) {
+  if (!iframe) return undefined;
+  const rect = iframe.getBoundingClientRect();
+  return {
+    connected: iframe.isConnected,
+    src: iframe.src,
+    title: iframe.title,
+    area: Math.round(rect.width * rect.height),
+    id: getIframeMediaId(iframe),
+  };
 }
 
 function getDriveFolderId() {
@@ -543,20 +833,24 @@ function loop(loopId: number): Promise<void> {
   const bpm = rawOriginalBPM! > 0 ? rawOriginalBPM! : DEFAULT_BPM;
   const tempoChange = config[Field.tempo_change] || 1;
   const trainTarget = config[Field.train_target] || tempoChange;
+  const trainLoops = config[Field.train_loops] || 1;
+  const loopIter = _state.iter;
+  const countInBeats = loopIter === 0 ? config[Field.count__in_beats] || 0 : 0;
   const playbackRate =
-    _state.iter < (config[Field.train_loops] || 1)
+    _state.iter < trainLoops
       ? tempoChange +
-      (_state.iter++ / (config[Field.train_loops] || 1)) *
+      (_state.iter++ / trainLoops) *
       (trainTarget - tempoChange)
       : trainTarget;
-  const countInS =
-    ((config[Field.count__in_beats] || 0) * 60) / bpm / playbackRate;
+  const countInS = (countInBeats * 60) / bpm;
+  const countInStyle =
+    (config[Field.count__in_style] ?? DEFAULT_COUNT_IN_STYLE) as CountInStyle;
   const rawStartTime = Math.max(
     0,
     config[Field.start_time] || Number.NEGATIVE_INFINITY
   );
   const startTime =
-    config[Field.count__in_style] === CountInStyle.track
+    countInStyle === CountInStyle.track
       ? Math.max(0, rawStartTime - countInS)
       : rawStartTime;
   media.setCurrentTime(startTime);
@@ -575,16 +869,12 @@ function loop(loopId: number): Promise<void> {
     .then(() => setPlaybackRate(playbackRate))
     .then(() => setPitchShift(config[Field.pitch_shift] || 0))
     .then(() =>
-    ({
-      [CountInStyle.silent]: () => countInS * 1000,
-      [CountInStyle.track]: () => (countInS - rawStartTime) * 1000,
-      [CountInStyle.metronome]: () => {
-        throw new Error("loop.CountInStyle.metronome");
-      },
-    }[(config[Field.count__in_style] || 0) as CountInStyle]())
-    )
-    .then((sleepMs) =>
-      sleepMs > 0 ? pause().then(() => sleepPromise(sleepMs)) : null
+      runCountIn(countInStyle, {
+        bpm,
+        countInBeats,
+        countInS,
+        rawStartTime,
+      })
     )
     .then(() =>
       _state.loopId !== loopId
@@ -600,5 +890,68 @@ function loop(loopId: number): Promise<void> {
               ? messageTasks[MessageType.stop]("loop.iterComplete.paused")
               : loop(loopId);
           })
+	    );
+}
+
+function runCountIn(
+  countInStyle: CountInStyle,
+  options: {
+    bpm: number;
+    countInBeats: number;
+    countInS: number;
+    rawStartTime: number;
+  }
+) {
+  const sleepMsByStyle = {
+    [CountInStyle.silent]: () => options.countInS * 1000,
+    [CountInStyle.track]: () => (options.countInS - options.rawStartTime) * 1000,
+    [CountInStyle.metronome]: () => 0,
+  };
+  const sleepMs = sleepMsByStyle[countInStyle]();
+  if (countInStyle === CountInStyle.metronome) {
+    return pause().then(() =>
+      playMetronomeCountIn(options.countInBeats, options.bpm)
     );
+  }
+  return sleepMs > 0 ? pause().then(() => sleepPromise(sleepMs)) : undefined;
+}
+
+function playMetronomeCountIn(countInBeats: number, bpm: number) {
+  if (!(countInBeats > 0) || !(bpm > 0)) return Promise.resolve();
+  const beatMs = (60 / bpm) * 1000;
+  return new Promise<void>((resolve) => {
+    let beat = 0;
+    const tick = () => {
+      playMetronomeClick(beat === 0);
+      beat += 1;
+      if (beat >= countInBeats) {
+        window.setTimeout(resolve, beatMs);
+        return;
+      }
+      window.setTimeout(tick, beatMs);
+    };
+    tick();
+  });
+}
+
+function playMetronomeClick(isAccent: boolean) {
+  const AudioContextCtor =
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AudioContextCtor) return;
+  const audioContext = new AudioContextCtor();
+  if (audioContext.state === "suspended") {
+    audioContext.resume();
+  }
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  const now = audioContext.currentTime;
+  oscillator.frequency.value = isAccent ? 1200 : 900;
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.2, now + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.055);
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+  oscillator.start(now);
+  oscillator.stop(now + 0.06);
 }

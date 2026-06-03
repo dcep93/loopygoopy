@@ -2,6 +2,8 @@ export enum MessageType {
   start,
   stop,
   init,
+  debug,
+  seek,
 }
 
 export enum Field {

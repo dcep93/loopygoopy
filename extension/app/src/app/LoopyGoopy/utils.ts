@@ -57,7 +57,7 @@ export function applyConfigSansBookmarks(config: ConfigSansBookmarks) {
     const ref = getRefs()[field];
     if (!ref?.current) return;
     if (field === Field.count__in_style) {
-      ref.current.value = config[field] ?? CountInStyle.silent.toString();
+      ref.current.value = config[field] ?? CountInStyle.track.toString();
       return;
     }
     ref.current.value = config[field] ?? "";
