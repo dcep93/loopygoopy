@@ -201,7 +201,7 @@ describe("contentScript media rediscovery", () => {
     );
   });
 
-  it("seeks the current video to a requested start time", async () => {
+  it("seeks the current paused video to a requested start time", async () => {
     const video = makeVideo(10, 1.25);
     await loadContentScript();
 
@@ -212,6 +212,20 @@ describe("contentScript media rediscovery", () => {
 
     expect(response).toMatchObject({ success: true });
     expect(video.currentTime).toBe(7.5);
+  });
+
+  it("does not seek the current playing video to a requested start time", async () => {
+    const video = makeVideo(10, 1.25);
+    await video.play();
+    await loadContentScript();
+
+    const response = await sendRuntimeMessage({
+      mType: MessageType.seek,
+      payload: { time: 7.5 },
+    });
+
+    expect(response).toMatchObject({ success: true, skipped: true });
+    expect(video.currentTime).toBe(1.25);
   });
 
   it("uses the stable page URL instead of changing blob video URLs for media id", async () => {

@@ -200,6 +200,35 @@ describe("Main bookmark controls", () => {
     expect(promptMock).not.toHaveBeenCalled();
   });
 
+  it("keeps focus in the active input when clicking next and previous", async () => {
+    primeStoredConfig({
+      [Field.original_BPM]: "120",
+      [Field.beats_per_loop]: "4",
+      [Field.start_time]: "8",
+      [Field.end_time]: "10",
+    });
+
+    await renderMain();
+    const originalBpm = getFieldElement(Field.original_BPM);
+    const nextButton = screen.getByRole("button", { name: "next" });
+    const previousButton = screen.getByRole("button", { name: "prev" });
+
+    originalBpm.focus();
+    await userEvent.click(nextButton);
+
+    expect(nextButton).toHaveAttribute("tabIndex", "-1");
+    expect(document.activeElement).toBe(originalBpm);
+    expect(getFieldElement(Field.start_time)).toHaveValue("10.00");
+    expect(getFieldElement(Field.end_time)).toHaveValue("12.00");
+
+    await userEvent.click(previousButton);
+
+    expect(previousButton).toHaveAttribute("tabIndex", "-1");
+    expect(document.activeElement).toBe(originalBpm);
+    expect(getFieldElement(Field.start_time)).toHaveValue("8.00");
+    expect(getFieldElement(Field.end_time)).toHaveValue("10.00");
+  });
+
   it("loads the canonical saved config for any media", async () => {
     primeStoredConfig({
       [Field.original_BPM]: "98",

@@ -10,10 +10,19 @@ export enum Action {
 }
 
 export default function ActionButton(props: { action: Action }) {
+  const shouldPreserveFocus =
+    props.action === Action.next || props.action === Action.previous;
+  const label = props.action === Action.previous ? "prev" : Action[props.action];
+
   return (
     <div>
-      <button onClick={() => actionButtonF(props.action)}>
-        {Action[props.action]}
+      <button
+        onMouseDown={shouldPreserveFocus ? (e) => e.preventDefault() : undefined}
+        onPointerDown={shouldPreserveFocus ? (e) => e.preventDefault() : undefined}
+        tabIndex={shouldPreserveFocus ? -1 : undefined}
+        onClick={() => actionButtonF(props.action)}
+      >
+        {label}
       </button>
     </div>
   );

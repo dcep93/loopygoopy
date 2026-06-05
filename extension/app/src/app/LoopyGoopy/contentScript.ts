@@ -284,6 +284,10 @@ const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
       console.info(LOG_PREFIX, "seek skipped: no media target", { time });
       return Promise.resolve({ success: false });
     }
+    if (!_state.media.isPaused()) {
+      console.info(LOG_PREFIX, "seek skipped: media is playing", { time });
+      return Promise.resolve({ success: true, skipped: true });
+    }
     _state.media.setCurrentTime(Math.max(0, time));
     return Promise.resolve({ success: true });
   },
