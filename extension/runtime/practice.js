@@ -229,8 +229,7 @@
       style?.remove();
       frame = void 0;
       style = void 0;
-      document.documentElement.classList.remove("loopy-practice");
-      focusActive = false;
+      document.documentElement?.classList.remove("loopy-practice");
     }, teardown2 = function() {
       engine?.dispose();
       engine = void 0;
@@ -239,11 +238,13 @@
       restore2();
       token = "";
     }, exit2 = function(manual = false) {
+      practiceRequested = false;
       engine?.dispose();
       engine = void 0;
       restore2();
       const url = new URL(location.href);
       url.searchParams.delete("loopygoopy");
+      if (url.hash === "#loopygoopy") url.hash = "";
       history.replaceState(history.state, "", url.href);
       href = location.href;
       if (manual) {
@@ -271,9 +272,9 @@
         }
       });
     }, mount2 = function() {
-      if (!token || frame || !new URL(location.href).searchParams.has("loopygoopy")) return;
+      if (!token || frame || !practiceRequested) return;
       const parent = document.querySelector("#primary-inner");
-      if (!parent || !document.querySelector("#movie_player video")) return;
+      if (!parent || !document.head || !document.querySelector("#movie_player video")) return;
       observedVideo?.pause();
       document.querySelector("#movie_player video")?.pause();
       style = document.createElement("style");
@@ -285,7 +286,6 @@
       frame.title = "Loopy Goopy practice controls";
       frame.src = chrome.runtime.getURL(`app/build/index.html?practice=1&session=${token}`);
       parent.appendChild(frame);
-      focusActive = true;
     }, connect2 = function() {
       if (disposed || !videoId) return;
       try {
@@ -336,17 +336,23 @@
       if (href !== location.href) {
         href = location.href;
         const url = new URL(href), id = url.pathname === "/watch" ? url.searchParams.get("v") : null;
-        if (`youtube:${id}` !== videoId) {
+        const nextVideoId = id && /^[\w-]{11}$/.test(id) ? `youtube:${id}` : "";
+        const requested = url.searchParams.has("loopygoopy") || url.hash === "#loopygoopy";
+        const changedVideo = nextVideoId !== videoId;
+        practiceRequested = !!nextVideoId && (requested || !changedVideo && practiceRequested);
+        if (practiceRequested && !url.searchParams.has("loopygoopy")) {
+          url.searchParams.set("loopygoopy", "");
+          history.replaceState(history.state, "", url.href);
+          href = location.href;
+        }
+        if (changedVideo) {
           videoId = "";
           const oldPort = port;
           port = void 0;
           oldPort?.disconnect();
           teardown2();
-          videoId = id && /^[\w-]{11}$/.test(id) ? `youtube:${id}` : "";
+          videoId = nextVideoId;
           connect2();
-        } else if (!url.searchParams.has("loopygoopy") && focusActive) {
-          engine?.pause();
-          restore2();
         }
       }
       configure2();
@@ -355,7 +361,7 @@
     restore = restore2, teardown = teardown2, exit = exit2, configure = configure2, mount = mount2, connect = connect2, inspect = inspect2;
     let port, engine, token = "", href = "", videoId = "";
     let frame, style, observedVideo;
-    let configuration, disposed = false, lastReport = 0, focusActive = false;
+    let configuration, disposed = false, lastReport = 0, practiceRequested = false;
     const post = (message) => {
       try {
         port?.postMessage(message);
@@ -368,11 +374,17 @@
     window.addEventListener("loopy-manual-control", manualControl);
     const timer = setInterval(inspect2, 500);
     inspect2();
+    document.addEventListener("yt-navigate-start", inspect2);
     document.addEventListener("yt-navigate-finish", inspect2);
     window.addEventListener("popstate", inspect2);
+    window.addEventListener("hashchange", inspect2);
     window.addEventListener("pagehide", () => {
       disposed = true;
       window.removeEventListener("loopy-manual-control", manualControl);
+      document.removeEventListener("yt-navigate-start", inspect2);
+      document.removeEventListener("yt-navigate-finish", inspect2);
+      window.removeEventListener("popstate", inspect2);
+      window.removeEventListener("hashchange", inspect2);
       clearInterval(timer);
       teardown2();
       port?.disconnect();

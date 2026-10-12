@@ -5,13 +5,16 @@ declare const chrome: any;
 if (window === window.top && location.hostname === 'www.youtube.com') {
   let port: any, engine: PracticeEngine | undefined, token = '', href = '', videoId = '';
   let frame: HTMLIFrameElement | undefined, style: HTMLStyleElement | undefined, observedVideo: HTMLVideoElement | undefined;
-  let configuration: any, disposed = false, lastReport = 0, focusActive = false;
+  let configuration: any, disposed = false, lastReport = 0, practiceRequested = false;
   const post = (message: any) => { try { port?.postMessage(message); } catch {} };
-  function restore() { frame?.remove(); style?.remove(); frame = undefined; style = undefined; document.documentElement.classList.remove('loopy-practice'); focusActive = false; }
+  function restore() { frame?.remove(); style?.remove(); frame = undefined; style = undefined; document.documentElement?.classList.remove('loopy-practice'); }
   function teardown() { engine?.dispose(); engine = undefined; observedVideo = undefined; configuration = undefined; restore(); token = ''; }
   function exit(manual = false) {
+    practiceRequested = false;
     engine?.dispose(); engine = undefined; restore();
-    const url = new URL(location.href); url.searchParams.delete('loopygoopy'); history.replaceState(history.state, '', url.href); href = location.href;
+    const url = new URL(location.href); url.searchParams.delete('loopygoopy');
+    if (url.hash === '#loopygoopy') url.hash = '';
+    history.replaceState(history.state, '', url.href); href = location.href;
     if (manual) { frame = document.createElement('iframe'); frame.title = 'Loopy Goopy manual controls'; frame.src = chrome.runtime.getURL(`app/build/index.html?practice=1&session=${token}&manual=1`); frame.style.cssText = 'width:100%;height:680px;border:0'; document.querySelector('#primary-inner')?.appendChild(frame); }
   }
   function configure() {
@@ -27,16 +30,16 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
     });
   }
   function mount() {
-    if (!token || frame || !new URL(location.href).searchParams.has('loopygoopy')) return;
+    if (!token || frame || !practiceRequested) return;
     const parent = document.querySelector('#primary-inner');
-    if (!parent || !document.querySelector('#movie_player video')) return;
+    if (!parent || !document.head || !document.querySelector('#movie_player video')) return;
     observedVideo?.pause(); document.querySelector<HTMLVideoElement>('#movie_player video')?.pause();
     style = document.createElement('style');
     style.textContent = `html.loopy-practice{background:#101619!important}html.loopy-practice ytd-masthead,html.loopy-practice #secondary,html.loopy-practice #below,html.loopy-practice #comments,html.loopy-practice ytd-miniplayer,html.loopy-practice ytd-guide-renderer{display:none!important}html.loopy-practice ytd-page-manager{margin:0!important}html.loopy-practice ytd-watch-flexy{--ytd-watch-flexy-masthead-height:0px;--ytd-watch-flexy-max-player-width:1040px}html.loopy-practice #columns{padding:20px!important;max-width:1120px!important;margin:auto!important}html.loopy-practice #primary{padding:0!important;margin:0!important;max-width:100%!important;width:100%!important}html.loopy-practice #primary-inner{width:100%!important}html.loopy-practice #player-container-outer{max-height:58vh!important}html.loopy-practice #player-container-inner{padding-top:56.25%!important}#loopy-practice-panel{display:block;width:100%;height:460px;border:0;border-radius:0 0 20px 20px;color-scheme:dark}`;
     document.head.appendChild(style); document.documentElement.classList.add('loopy-practice');
     frame = document.createElement('iframe'); frame.id = 'loopy-practice-panel'; frame.title = 'Loopy Goopy practice controls';
     frame.src = chrome.runtime.getURL(`app/build/index.html?practice=1&session=${token}`);
-    parent.appendChild(frame); focusActive = true;
+    parent.appendChild(frame);
   }
   function connect() {
     if (disposed || !videoId) return;
@@ -69,10 +72,20 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
     if (href !== location.href) {
       href = location.href;
       const url = new URL(href), id = url.pathname === '/watch' ? url.searchParams.get('v') : null;
-      if (`youtube:${id}` !== videoId) {
+      const nextVideoId = id && /^[\w-]{11}$/.test(id) ? `youtube:${id}` : '';
+      const requested = url.searchParams.has('loopygoopy') || url.hash === '#loopygoopy';
+      const changedVideo = nextVideoId !== videoId;
+      // Capture opt-in at document_start, before YouTube normalizes its URL.
+      // Keep it only for this video; navigation to another video starts fresh.
+      practiceRequested = !!nextVideoId && (requested || (!changedVideo && practiceRequested));
+      if (practiceRequested && !url.searchParams.has('loopygoopy')) {
+        url.searchParams.set('loopygoopy', '');
+        history.replaceState(history.state, '', url.href); href = location.href;
+      }
+      if (changedVideo) {
         videoId = ''; const oldPort = port; port = undefined; oldPort?.disconnect(); teardown();
-        videoId = id && /^[\w-]{11}$/.test(id) ? `youtube:${id}` : ''; connect();
-      } else if (!url.searchParams.has('loopygoopy') && focusActive) { engine?.pause(); restore(); }
+        videoId = nextVideoId; connect();
+      }
     }
     configure(); mount();
   }
@@ -80,7 +93,14 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
   const manualControl = () => { if (engine?.state.running) engine.pause(); };
   window.addEventListener('loopy-manual-control', manualControl);
   const timer = setInterval(inspect, 500); inspect();
+  document.addEventListener('yt-navigate-start', inspect);
   document.addEventListener('yt-navigate-finish', inspect);
   window.addEventListener('popstate', inspect);
-  window.addEventListener('pagehide', () => { disposed = true; window.removeEventListener('loopy-manual-control', manualControl); clearInterval(timer); teardown(); port?.disconnect(); }, { once: true });
+  window.addEventListener('hashchange', inspect);
+  window.addEventListener('pagehide', () => {
+    disposed = true; window.removeEventListener('loopy-manual-control', manualControl);
+    document.removeEventListener('yt-navigate-start', inspect); document.removeEventListener('yt-navigate-finish', inspect);
+    window.removeEventListener('popstate', inspect); window.removeEventListener('hashchange', inspect);
+    clearInterval(timer); teardown(); port?.disconnect();
+  }, { once: true });
 }

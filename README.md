@@ -16,6 +16,8 @@ The [Chrome Web Store listing](https://chrome.google.com/webstore/detail/loopy-g
 
 Open [the prepared example](https://www.youtube.com/watch?v=xzeGxm72GOo&loopygoopy). The `loopygoopy` query flag places the controls below the existing YouTube video and hides surrounding page content. Exit practice mode restores the page.
 
+The extension captures the flag before YouTube loads and retains it if YouTube cleans up the URL for that same video. `#loopygoopy` also opts in. Exiting clears both markers; navigating to another video requires a fresh opt-in.
+
 - Click one four-beat block, or drag across blocks to select a contiguous range. Dragging from `17–20` through `21–24` selects beats 17–24. Each gesture starts a fresh selection.
 - Keyboard: focus a block and press Enter/Space to select it; Shift+Arrow extends a range. Arrow keys move focus.
 - Choose speed, then Play. Repetitions continue until Pause.
