@@ -14,21 +14,21 @@ The [Chrome Web Store listing](https://chrome.google.com/webstore/detail/loopy-g
 
 ## Practice
 
-Open [the prepared example](https://www.youtube.com/watch?v=xzeGxm72GOo&loopygoopy). The `loopygoopy` query flag places compact controls above the existing YouTube video and hides surrounding page content. Exit practice mode restores the page.
+Visit [the prepared example](https://www.youtube.com/watch?v=xzeGxm72GOo) and click **loopy goopy** beside YouTube's search bar, or open it with the [`loopygoopy` query flag](https://www.youtube.com/watch?v=xzeGxm72GOo&loopygoopy). Practice mode places compact controls above the existing video and hides surrounding page content. Exit practice mode restores the page.
 
-The embedded controls use the multisport theme and newapp title font. The full video fits the space remaining below the controls without cropping. Resizing the window or opening Advanced adjusts that space; exceptionally short windows can scroll to keep everything accessible.
+The embedded controls use the multisport theme and newapp title font. The full video fits the space remaining below the controls without cropping. Resizing the window adjusts that space; exceptionally short windows can scroll to keep everything accessible.
 
 The extension captures the flag before YouTube loads and retains it if YouTube cleans up the URL for that same video. `#loopygoopy` also opts in. Exiting clears both markers; navigating to another video requires a fresh opt-in.
 
-- Click one four-beat block, or drag across blocks to select a contiguous range. Dragging from `17–20` through `21–24` selects beats 17–24. Each gesture starts a fresh selection.
+- Click an adjacent four-beat block to extend the selection. Click a selected edge to remove it, unless it is the only selected block. Click a selected interior block or a distant unselected block to select only that block. Drag across blocks to choose a contiguous range; dragging from `17–20` through `21–24` selects beats 17–24.
 - Keyboard: focus a block and press Enter/Space to select it; Shift+Arrow extends a range. Arrow keys move focus.
-- Choose speed, then Play. Repetitions continue until Pause.
-- Lead-in and lead-out each have their own beat duration and Track/Silent/Metronome choice. Track plays adjacent footage; Silent and Metronome freeze the picture at the selected boundaries. Their duration follows playback speed.
-- Clicking the extension icon always opens the original manual controls, on every video. The new beat-practice controls appear only in the page when its URL contains `&loopygoopy`. Practice preferences save automatically.
+- Adjust Speed with minus/plus, then Play. Repetitions continue until Pause.
+- Lead-in and lead-out each have their own beat duration and Track/Silent/Metronome choice. Track plays adjacent footage; Silent and Metronome freeze the picture at the selected boundaries. Their duration follows playback speed. During either lead phase, the video has 50% opacity while the controls stay fully visible.
+- Clicking the extension icon always opens the original manual controls, on every video. The beat-practice controls appear in the page after opting in with the page link or URL flag. Practice preferences save automatically.
 
-Prepared videos supply their timing. Other videos still use the manual controls. Advanced opens manual controls for a prepared video.
+Prepared videos supply their timing. Other videos still use the manual controls.
 
-Existing video settings, bookmark names, and bookmark configurations are copied to shared extension storage on first use, verified, and left intact in the original storage. Practice preferences are separate from those records. Private settings and bookmarks are never published with the catalog.
+Supported `v0.0.2` video settings, bookmark names, and bookmark configurations are copied to shared extension storage on first use, verified, and left intact in the original storage. Older `v0.0.1` records are not converted or loaded. Practice preferences are separate from those records. Private settings and bookmarks are never published with the catalog. See the [privacy policy](PRIVACY.md).
 
 ## Publishing prepared videos
 
@@ -49,4 +49,4 @@ The build validates the public catalog and copies it into the extension as an of
 
 For catalog-only edits after an initial build, run `node scripts/validate-catalog.mjs` from the repository root, then commit and push `catalog.json`. No extension release is needed to publish additional timing records.
 
-The updated extension still needs installed-Chrome verification before a Chrome Web Store release. Catalog publication and extension publication are separate.
+The updated extension still needs installed-Chrome verification before a Chrome Web Store release. Catalog publication and extension publication are separate. The [store release guide](docs/chrome-web-store-release.md) includes packaging instructions, listing copy, permission explanations, and the upgrade limitation.
