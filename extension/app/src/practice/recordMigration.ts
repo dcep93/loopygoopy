@@ -6,6 +6,13 @@ export function ensureRecordTransfer(): Promise<void> {
   pending = transfer().catch(error => { pending = undefined; throw error; });
   return pending;
 }
+// Storage may reorder object keys. Values and array order must still match exactly.
+function sameRecord(a: any, b: any): boolean {
+  if (a === b) return true;
+  if (!a || !b || typeof a !== 'object' || typeof b !== 'object' || Array.isArray(a) !== Array.isArray(b)) return false;
+  const keys = Object.keys(a);
+  return keys.length === Object.keys(b).length && keys.every(key => Object.prototype.hasOwnProperty.call(b, key) && sameRecord(a[key], b[key]));
+}
 async function transfer() {
   const store = chrome.storage.local;
   const existing = await store.get(null);
@@ -23,7 +30,7 @@ async function transfer() {
     await store.set(additions);
     const check = await store.get(Object.keys(additions));
     for (const key of Object.keys(additions)) {
-      if (JSON.stringify(check[key]) !== JSON.stringify(additions[key])) throw Error('Could not verify saved settings. Original records are intact.');
+      if (!sameRecord(check[key], additions[key])) throw Error('Could not verify saved settings. Original records are intact.');
     }
     await store.set({ [migrationMarker]: { completed: true, records: Object.keys(additions).length } });
   } finally { await chrome.offscreen.closeDocument(); }

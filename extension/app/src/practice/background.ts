@@ -68,7 +68,7 @@ chrome.runtime.onConnect.addListener((port: any) => {
 chrome.runtime.onMessage.addListener((message: any, sender: any, reply: any) => {
   if (message?.target === 'record-migration') return;
   if (message?.type === 'ensure-record-transfer' && sender.url?.startsWith(chrome.runtime.getURL('app/build/index.html'))) {
-    ensureRecordTransfer().then(() => reply({ ok: true }), error => reply({ error: String(error) })); return true;
+    ensureRecordTransfer().then(() => reply({ ok: true }), error => reply({ error: error instanceof Error ? error.message : String(error) })); return true;
   }
   if (message?.type === 'practice-context' && sender.url?.startsWith(chrome.runtime.getURL('app/build/index.html'))) {
     const host = Array.from(hosts.values()).find(h => h.token === message.token && (!sender.tab || sender.tab.id === h.tabId));

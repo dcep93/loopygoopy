@@ -52,11 +52,14 @@ export default function PracticeApp() {
   const [snapshot, setSnapshot] = useState<Snapshot>({ loading: true });
   const [manual, setManual] = useState(params.has('manual'));
   const [saveError, setSaveError] = useState('');
+  const [connectionAttempt, setConnectionAttempt] = useState(0);
+  const [connectionError, setConnectionError] = useState(false);
   const connection = useRef<any>(undefined);
   const send = (type: string, extra: any = {}) => { try { connection.current?.postMessage({ type, mediaId: snapshot.mediaId, ...extra }); } catch { setSaveError('The page connection closed. Reload the video.'); } };
   useEffect(() => {
     let closed = false, port: any, reconnect: ReturnType<typeof setTimeout>;
     const connect = async () => {
+      setConnectionError(false);
       try {
         await transferRecords(); if (closed) return;
         if (!window.chrome?.runtime?.connect) { setManual(true); return; }
@@ -71,11 +74,11 @@ export default function PracticeApp() {
         port.onDisconnect.addListener(() => { if (!closed) { setSnapshot({ loading: true }); reconnect = setTimeout(connect, 800); } });
         if (token) port.postMessage({ type: 'attach', token });
         else window.chrome.tabs.query({ active: true, currentWindow: true }, (tabs: any[]) => { if (!closed) port.postMessage({ type: 'attach', tabId: tabs[0]?.id }); });
-      } catch (e) { setSnapshot({ loading: false, error: String(e) }); }
+      } catch (e) { if (!closed) { setConnectionError(true); setSnapshot({ loading: false, error: e instanceof Error ? e.message : String(e) }); } }
     };
     void connect();
     return () => { closed = true; clearTimeout(reconnect); port?.disconnect(); };
-  }, [embedded, token]);
+  }, [embedded, token, connectionAttempt]);
   useEffect(() => {
     if (!embedded) return;
     const observer = new ResizeObserver(() => send('height', { height: document.getElementById('root')?.scrollHeight || 460 }));
@@ -91,7 +94,7 @@ export default function PracticeApp() {
     <header><a className="brand" href="https://github.com/dcep93/loopygoopy#practice" target="_blank" rel="noreferrer">loopy goopy<span> ↗</span></a>
       {embedded && <button className="text-button" onClick={() => send('exit')}>Exit practice mode</button>}</header>
     {snapshot.loading ? <div className="empty"><h1>Preparing your practice…</h1></div> : snapshot.error ?
-      <div className="empty" role="alert"><h1>Let’s reconnect</h1><p>{snapshot.error}</p><button onClick={() => send('retry')}>Retry</button></div> : !d || !p ?
+      <div className="empty" role="alert"><h1>Let’s reconnect</h1><p>{snapshot.error}</p><button onClick={() => { if (connectionError) { setSnapshot({ loading: true }); setConnectionAttempt(n => n + 1); } else send('retry'); }}>Retry</button></div> : !d || !p ?
       <div className="empty"><h1>This video isn’t prepared yet</h1><p>{snapshot.notice || 'You can still use the manual loop controls.'}</p><button onClick={() => send('retry')}>Retry</button><button onClick={() => { send('manual'); setManual(true); }}>Manual controls</button></div> : <>
       <div className="practice-heading"><div><p className="eyebrow">{d.title}</p><h1>One part at a time.</h1></div><p className="selection" aria-live="polite">Beats <strong>{p.first}–{p.last}</strong><span> of {d.totalBeats}</span></p></div>
       <RangeButtons first={p.first} last={p.last} onChange={change} />

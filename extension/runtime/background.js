@@ -11,6 +11,12 @@
     });
     return pending;
   }
+  function sameRecord(a, b) {
+    if (a === b) return true;
+    if (!a || !b || typeof a !== "object" || typeof b !== "object" || Array.isArray(a) !== Array.isArray(b)) return false;
+    const keys = Object.keys(a);
+    return keys.length === Object.keys(b).length && keys.every((key) => Object.prototype.hasOwnProperty.call(b, key) && sameRecord(a[key], b[key]));
+  }
   async function transfer() {
     const store = chrome.storage.local;
     const existing = await store.get(null);
@@ -28,7 +34,7 @@
       await store.set(additions);
       const check = await store.get(Object.keys(additions));
       for (const key of Object.keys(additions)) {
-        if (JSON.stringify(check[key]) !== JSON.stringify(additions[key])) throw Error("Could not verify saved settings. Original records are intact.");
+        if (!sameRecord(check[key], additions[key])) throw Error("Could not verify saved settings. Original records are intact.");
       }
       await store.set({ [migrationMarker]: { completed: true, records: Object.keys(additions).length } });
     } finally {
@@ -220,7 +226,7 @@
   chrome.runtime.onMessage.addListener((message, sender, reply) => {
     if (message?.target === "record-migration") return;
     if (message?.type === "ensure-record-transfer" && sender.url?.startsWith(chrome.runtime.getURL("app/build/index.html"))) {
-      ensureRecordTransfer().then(() => reply({ ok: true }), (error) => reply({ error: String(error) }));
+      ensureRecordTransfer().then(() => reply({ ok: true }), (error) => reply({ error: error instanceof Error ? error.message : String(error) }));
       return true;
     }
     if (message?.type === "practice-context" && sender.url?.startsWith(chrome.runtime.getURL("app/build/index.html"))) {
