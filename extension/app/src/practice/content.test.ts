@@ -108,6 +108,29 @@ describe('practice URL opt-in', () => {
     expect(document.documentElement.style.getPropertyValue('--loopy-controls-height')).toBe('');
     expect(parent.querySelector('video')).toBe(media);
   });
+  test('exit notifies YouTube to recalculate video geometry after restoring the page', () => {
+    start(`${plainUrl}&loopygoopy`);
+    receive({ type: 'height', height: 180 });
+    const media = document.querySelector('video')!;
+    media.currentTime = 42;
+    const onResize = jest.fn(() => {
+      expect(panel()).toBeNull();
+      expect(document.documentElement).not.toHaveClass('loopy-practice');
+      expect(document.documentElement.style.getPropertyValue('--loopy-controls-height')).toBe('');
+      expect(Array.from(document.querySelectorAll('style')).some(s => s.textContent?.includes('--loopy-video-height'))).toBe(false);
+    });
+    window.addEventListener('resize', onResize);
+    try {
+      receive({ type: 'exit' });
+      expect(onResize).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(20);
+      expect(onResize).toHaveBeenCalledTimes(1);
+      expect(document.querySelector('video')).toBe(media);
+      expect(media.currentTime).toBe(42);
+      jest.advanceTimersByTime(1000);
+      expect(onResize).toHaveBeenCalledTimes(1);
+    } finally { window.removeEventListener('resize', onResize); }
+  });
   test('a normal visit stays normal even when the video is prepared', () => {
     start(plainUrl);
     jest.advanceTimersByTime(1000);

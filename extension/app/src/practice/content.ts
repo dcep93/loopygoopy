@@ -8,7 +8,19 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
   let frame: HTMLIFrameElement | undefined, style: HTMLStyleElement | undefined, observedVideo: HTMLVideoElement | undefined;
   let configuration: any, disposed = false, lastReport = 0, practiceRequested = false;
   const post = (message: any) => { try { port?.postMessage(message); } catch {} };
-  function restore() { frame?.remove(); style?.remove(); frame = undefined; style = undefined; document.documentElement?.classList.remove('loopy-practice'); document.documentElement?.style.removeProperty('--loopy-controls-height'); }
+  function restore() {
+    const wasPractice = document.documentElement.classList.contains('loopy-practice');
+    frame?.remove(); style?.remove(); frame = undefined; style = undefined;
+    document.documentElement.classList.remove('loopy-practice');
+    document.documentElement.style.removeProperty('--loopy-controls-height');
+    if (wasPractice && !disposed) requestAnimationFrame(() => {
+      // YouTube caches inline video dimensions/offsets. Removing our CSS alone
+      // leaves those sized for practice until its next window resize.
+      if (!disposed && !document.documentElement.classList.contains('loopy-practice')) {
+        window.dispatchEvent(new Event('resize'));
+      }
+    });
+  }
   function teardown() { engine?.dispose(); engine = undefined; observedVideo = undefined; configuration = undefined; restore(); token = ''; }
   function exit(manual = false) {
     practiceRequested = false;

@@ -257,12 +257,18 @@ html.loopy-practice #movie_player video { object-fit: contain !important; width:
   // src/practice/content.ts
   if (window === window.top && location.hostname === "www.youtube.com") {
     let restore2 = function() {
+      const wasPractice = document.documentElement.classList.contains("loopy-practice");
       frame?.remove();
       style?.remove();
       frame = void 0;
       style = void 0;
-      document.documentElement?.classList.remove("loopy-practice");
-      document.documentElement?.style.removeProperty("--loopy-controls-height");
+      document.documentElement.classList.remove("loopy-practice");
+      document.documentElement.style.removeProperty("--loopy-controls-height");
+      if (wasPractice && !disposed) requestAnimationFrame(() => {
+        if (!disposed && !document.documentElement.classList.contains("loopy-practice")) {
+          window.dispatchEvent(new Event("resize"));
+        }
+      });
     }, teardown2 = function() {
       engine?.dispose();
       engine = void 0;
