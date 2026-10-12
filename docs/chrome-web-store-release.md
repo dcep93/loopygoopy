@@ -1,8 +1,8 @@
-# Chrome Web Store release: 5.0.1
+# Chrome Web Store release: 5.0.2
 
 Update the existing **Loopy Goopy** item: `addfplpnjjbiockjmfegacimgkcmfefn`.
 [Public listing](https://chromewebstore.google.com/detail/loopy-goopy/addfplpnjjbiockjmfegacimgkcmfefn).
-The public version checked October 12, 2026 was 3.1.0. The new package is 5.0.1; if an unpublished dashboard package already uses that version or a higher one, increase the manifest version and rebuild before uploading.
+The public version checked October 12, 2026 was 3.1.0. The new package is 5.0.2; if an unpublished dashboard package already uses that version or a higher one, increase the manifest version and rebuild before uploading.
 
 ## Build and package
 
@@ -11,10 +11,10 @@ From the repository root:
 ```sh
 CI=true npm test --prefix extension/app -- --watchAll=false --runInBand
 npm run build --prefix extension/app
-python3 scripts/package-extension.py ../_codex_output/loopygoopy-release-5.0.1
+python3 scripts/package-extension.py ../_codex_output/loopygoopy-release-5.0.2
 ```
 
-Upload `loopy-goopy-5.0.1.zip`. Its manifest is at the ZIP root. The package includes the compiled popup, content scripts, worker, migration document, icons, and font license. It excludes development dependencies, source maps, tests, and personal records. Do not upload the old repository-root `extension.zip`.
+Upload `loopy-goopy-5.0.2.zip`. Its manifest is at the ZIP root. The package includes the compiled popup, content scripts, worker, migration document, icons, and font license. It excludes development dependencies, source maps, tests, and personal records. Do not upload the old repository-root `extension.zip`.
 
 ## Store description — paste this
 
@@ -37,7 +37,7 @@ Requires Chrome 120 or later. Video playback remains on the original website. Lo
 
 ## Release notes — optional announcement copy
 
-Version 5.0.1 includes Prev and Next buttons that move the selected range by one four-beat block, retaining its length and disabling at section boundaries. It also adds an embedded practice view for prepared YouTube videos, selectable four-beat loops, adjustable speed, and independent lead-in and lead-out controls. The extension icon continues to open the manual editor. This release also fixes settings being associated with the wrong video and improves practice layout, visibility, and exit behavior.
+Version 5.0.2 moves practice controls and playback into the video tab so background-worker inactivity no longer interrupts the practice connection. It includes Prev and Next buttons that move the selected range by one four-beat block, retaining its length and disabling at section boundaries. It also adds an embedded practice view for prepared YouTube videos, selectable four-beat loops, adjustable speed, and independent lead-in and lead-out controls. The extension icon continues to open the manual editor. This release also fixes settings being associated with the wrong video and improves practice layout, visibility, and exit behavior.
 
 ## Privacy practices — prepared answers
 
@@ -61,7 +61,7 @@ No extension account or credentials are needed. Visit https://www.youtube.com/wa
 
 ## Before submitting
 
-1. Reload the unpacked build and check the golden example in Chrome, including two repeated cycles, lead styles, speed changes, exiting, and the original manual popup/bookmarks. Automated tests cover these components but do not establish complete installed-browser behavior.
+1. Reload the unpacked build and check the golden example in Chrome, including two repeated cycles, lead styles, speed changes, at least a minute paused before resuming, exiting, and the original manual popup/bookmarks. Automated tests cover these components but do not establish complete installed-browser behavior.
 2. **Compatibility limitation:** Automatic settings transfer supports the current `v0.0.2` records. Older `v0.0.1` records are left intact but are not loaded or converted. The local Ozzy repair was a separate one-computer operation and is not shipped. An upgrade from public 3.1.0 with real saved data has not been verified. Decide whether this limitation is acceptable before submitting an update to existing users; do not promise automatic migration of all historical bookmarks.
 3. Open the [Developer Dashboard](https://chrome.google.com/webstore/devconsole), select the item ID above, then **Package → Upload New Package**. Upload the complete ZIP.
 4. Update the Store listing and Privacy practices with the copy above. Keep existing valid store artwork; if adding practice screenshots, capture the actual installed extension at the dashboard's required size. No new screenshot assets are supplied in this release bundle.

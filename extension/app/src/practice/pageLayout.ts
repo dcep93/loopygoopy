@@ -1,5 +1,4 @@
-// Host dimensions use CSS pixels because YouTube has a 10px root while the
-// extension frame has a 16px root. Measured frame heights are CSS pixels too.
+// The shadow panel reports its natural height in CSS pixels.
 // Scoped overrides leave YouTube's player and its media element in place.
 export const practicePageCSS = `
 html.loopy-practice {
@@ -21,7 +20,7 @@ html.loopy-practice ytd-watch-flexy { --ytd-watch-flexy-masthead-height: 0px; }
 html.loopy-practice #columns { padding: 12px !important; max-width: none !important; margin: 0 !important; display: block !important; }
 html.loopy-practice #primary { padding: 0 !important; margin: 0 !important; max-width: none !important; width: 100% !important; }
 html.loopy-practice #primary-inner { display: flex !important; flex-direction: column !important; gap: 10px; width: 100% !important; }
-html.loopy-practice #loopy-practice-panel { position: relative; z-index: 1; order: -1; display: block; flex: none; width: 100%; max-width: 1248px; height: var(--loopy-controls-height); margin: 0 auto; border: 0; border-radius: 16px; color-scheme: dark; }
+html.loopy-practice #loopy-practice-panel { position: relative; z-index: 1; order: -1; display: block; flex: none; width: 100%; max-width: 1248px; height: auto; margin: 0 auto; border: 0; border-radius: 16px; color-scheme: dark; }
 html.loopy-practice #player { isolation: isolate; flex: none !important; width: 100% !important; height: var(--loopy-video-height) !important; margin: 0 !important; }
 html.loopy-practice :is(#player-container-outer, #player-container-inner, #player-container, ytd-player, #container.ytd-player) {
   width: 100% !important; height: 100% !important; min-height: 0 !important; max-height: none !important;

@@ -12,10 +12,7 @@ type InitResponse = {
 
 var _tab: TabState;
 function queryBoundTab(callback: (tabs: { id?: number }[]) => void) {
-  const session = new URLSearchParams(window.location.search).get("session");
-  if (session) {
-    window.chrome.runtime.sendMessage({ type: "practice-context", token: session }, (tab: { id?: number } | null) => callback(tab ? [tab] : []));
-  } else window.chrome.tabs.query({ currentWindow: true, active: true }, callback);
+  window.chrome.tabs.query({ currentWindow: true, active: true }, callback);
 }
 export default function getTab(options: { suppressAlert?: boolean } = {}): Promise<typeof _tab> {
   if (window.chrome?.tabs === undefined) {

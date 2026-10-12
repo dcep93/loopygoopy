@@ -29,7 +29,7 @@ def include(relative):
 for relative in (
     "manifest.json", "loopy_goopy_full.png", "loopy_goopy_128.png",
     "runtime/background.js", "runtime/practice.js", "runtime/migrationDocument.js",
-    "runtime/migrate.html", "app/src/app/LoopyGoopy/contentScript.js",
+    "runtime/migrate.html", "runtime/ComicRelief-Regular.ttf", "app/src/app/LoopyGoopy/contentScript.js",
     "app/src/app/LoopyGoopy/pagePlaybackBridge.js",
 ):
     include(relative)

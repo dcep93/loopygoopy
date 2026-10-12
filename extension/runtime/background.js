@@ -43,14 +43,8 @@
   }
 
   // src/practice/model.ts
-  var defaults = { first: 1, last: 8, speed: 1, leadIn: { beats: 2, style: "track" }, leadOut: { beats: 2, style: "track" } };
-  var paused = { phase: "paused", running: false, beat: 1, remaining: 0, cycle: 0 };
   function validDefinition(v, id) {
     return Boolean(v && v.schemaVersion === 1 && /^youtube:[\w-]{11}$/.test(v.mediaId) && (!id || v.mediaId === id) && v.sourceUrl === `https://www.youtube.com/watch?v=${v.mediaId.slice(8)}` && typeof v.title === "string" && v.title.length > 0 && v.title.length < 200 && Number.isFinite(v.bpm) && v.bpm > 0 && v.bpm <= 400 && Number.isFinite(v.firstBeat) && v.firstBeat >= 0 && v.totalBeats === 32 && Number.isSafeInteger(v.revision) && v.revision > 0 && v.status === "published");
-  }
-  function validPreferences(v) {
-    const lead = (l) => l && Number.isInteger(l.beats) && l.beats >= 0 && l.beats <= 32 && ["track", "silent", "metronome"].includes(l.style);
-    return Boolean(v && Number.isInteger(v.first) && Number.isInteger(v.last) && v.first >= 1 && v.last <= 32 && v.first <= v.last && (v.first - 1) % 4 === 0 && v.last % 4 === 0 && Number.isFinite(v.speed) && v.speed >= 0.25 && v.speed <= 1.5 && lead(v.leadIn) && lead(v.leadOut));
   }
   function validCatalog(value) {
     return Boolean(value && value.schemaVersion === 1 && Array.isArray(value.videos) && value.videos.length <= 1e3 && value.videos.every((video) => validDefinition(video)) && new Set(value.videos.map((video) => video.mediaId)).size === value.videos.length);
@@ -114,125 +108,25 @@
   }
 
   // src/practice/background.ts
-  var hosts = /* @__PURE__ */ new Map();
-  var views = /* @__PURE__ */ new Map();
-  var writes = /* @__PURE__ */ new Map();
-  var send = (port, value) => {
-    try {
-      port.postMessage(value);
-    } catch {
-    }
-  };
-  function broadcast(host) {
-    views.forEach((h, port) => {
-      if (h === host) send(port, { type: "snapshot", ...host.snapshot });
-    });
-  }
-  async function load(host, refresh = false) {
-    const id = host.id;
-    const [catalog, saved] = await Promise.all([loadDefinition(id, refresh), chrome.storage.local.get(`practice-prefs:${id}`)]);
-    if (hosts.get(host.tabId) !== host) return;
-    const p = saved[`practice-prefs:${id}`];
-    host.snapshot = { ...catalog, mediaId: id, prefs: validPreferences(p) ? p : structuredClone(defaults), playback: { ...paused, beat: validPreferences(p) ? p.first : defaults.first }, loading: false };
-    send(host.port, { type: "configure", ...host.snapshot });
-    broadcast(host);
-  }
-  function persist(id, prefs) {
-    const next = (writes.get(id) || Promise.resolve()).catch(() => {
-    }).then(() => chrome.storage.local.set({ [`practice-prefs:${id}`]: prefs }));
-    writes.set(id, next);
-    return next;
-  }
-  chrome.runtime.onConnect.addListener((port) => {
-    if (port.name === "loopy-practice-host") {
-      const tabId = port.sender?.tab?.id;
-      if (!Number.isInteger(tabId) || port.sender.frameId !== 0 || !/^https:\/\/www\.youtube\.com\//.test(port.sender.url || "")) {
-        port.disconnect();
-        return;
-      }
-      let host;
-      port.onMessage.addListener((message) => {
-        if (message.type === "hello" && /^youtube:[\w-]{11}$/.test(message.mediaId)) {
-          const page = new URL(message.url);
-          if (page.origin !== "https://www.youtube.com" || page.pathname !== "/watch" || `youtube:${page.searchParams.get("v")}` !== message.mediaId) return;
-          const old = hosts.get(tabId);
-          if (old) views.forEach((h, p) => {
-            if (h === old) {
-              send(p, { type: "stale" });
-              views.delete(p);
-            }
-          });
-          host = { port, tabId, id: message.mediaId, token: crypto.randomUUID(), snapshot: { loading: true, mediaId: message.mediaId } };
-          hosts.set(tabId, host);
-          send(port, { type: "bound", token: host.token });
-          host.loading = load(host).catch(() => {
-            if (host) {
-              host.snapshot = { loading: false, error: "Could not open practice settings." };
-              broadcast(host);
-            }
-          });
-        } else if (message.type === "playback" && host && hosts.get(tabId) === host) {
-          host.snapshot.playback = message.playback;
-          broadcast(host);
-        }
-      });
-      port.onDisconnect.addListener(() => {
-        if (host && hosts.get(tabId) === host) {
-          hosts.delete(tabId);
-          views.forEach((h, p) => {
-            if (h === host) {
-              send(p, { type: "stale" });
-              views.delete(p);
-            }
-          });
-        }
-      });
-    } else if (port.name === "loopy-practice-view") {
-      if (!port.sender?.url?.startsWith(chrome.runtime.getURL("app/build/index.html"))) {
-        port.disconnect();
-        return;
-      }
-      port.onMessage.addListener(async (message) => {
-        if (message.type === "attach") {
-          let host2;
-          if (message.token) host2 = Array.from(hosts.values()).find((h) => h.token === message.token && (!port.sender.tab || port.sender.tab.id === h.tabId));
-          else if (!port.sender.tab && Number.isInteger(message.tabId)) host2 = hosts.get(message.tabId);
-          if (!host2) {
-            send(port, { type: "unavailable" });
-            return;
-          }
-          views.set(port, host2);
-          send(port, { type: "snapshot", ...host2.snapshot });
-          return;
-        }
-        const host = views.get(port);
-        if (!host || hosts.get(host.tabId) !== host || message.mediaId !== host.id) return;
-        if (message.type === "preferences" && validPreferences(message.prefs)) {
-          host.snapshot.prefs = message.prefs;
-          send(host.port, { type: "preferences", prefs: message.prefs });
-          broadcast(host);
-          try {
-            await persist(host.id, message.prefs);
-          } catch {
-            send(port, { type: "save-error" });
-          }
-        } else if (["play", "pause", "exit", "manual"].includes(message.type)) send(host.port, { type: message.type });
-        else if (message.type === "retry" && !host.snapshot.playback?.running) await load(host, true);
-        else if (message.type === "height" && Number.isFinite(message.height)) send(host.port, { type: "height", height: Math.max(1, Math.min(1800, Math.ceil(message.height))) });
-      });
-      port.onDisconnect.addListener(() => views.delete(port));
-    }
-  });
   chrome.runtime.onMessage.addListener((message, sender, reply) => {
     if (message?.target === "record-migration") return;
     if (message?.type === "ensure-record-transfer" && sender.url?.startsWith(chrome.runtime.getURL("app/build/index.html"))) {
       ensureRecordTransfer().then(() => reply({ ok: true }), (error) => reply({ error: error instanceof Error ? error.message : String(error) }));
       return true;
     }
-    if (message?.type === "practice-context" && sender.url?.startsWith(chrome.runtime.getURL("app/build/index.html"))) {
-      const host = Array.from(hosts.values()).find((h) => h.token === message.token && (!sender.tab || sender.tab.id === h.tabId));
-      reply(host ? { id: host.tabId } : null);
-      return;
+    if (message?.type === "practice-definition") {
+      let allowed = false;
+      try {
+        const url = new URL(sender.url);
+        allowed = Number.isInteger(sender.tab?.id) && sender.frameId === 0 && url.origin === "https://www.youtube.com" && url.pathname === "/watch" && /^youtube:[\w-]{11}$/.test(message.mediaId) && `youtube:${url.searchParams.get("v")}` === message.mediaId;
+      } catch {
+      }
+      if (!allowed) {
+        reply({ ok: false });
+        return;
+      }
+      loadDefinition(message.mediaId, message.refresh === true).then((result) => reply({ ok: true, ...result }), () => reply({ ok: false }));
+      return true;
     }
     reply(false);
   });

@@ -1,27 +1,27 @@
-import { PracticeEngine } from './engine';
+import { PracticeSession } from './session';
+import { mountControls } from './mountControls';
 import { practicePageCSS } from './pageLayout';
 import { createPracticeEntry } from './entryLink';
-import { validDefinition, validPreferences } from './model';
+import { validDefinition } from './model';
 declare const chrome: any;
 
-if (window === window.top && location.hostname === 'www.youtube.com') {
-  let port: any, engine: PracticeEngine | undefined, token = '', href = '', videoId = '';
-  let frame: HTMLIFrameElement | undefined, style: HTMLStyleElement | undefined, observedVideo: HTMLVideoElement | undefined;
-  let configuration: any, disposed = false, lastReport = 0, practiceRequested = false;
+export function startPracticePage() {
+  let session: PracticeSession | undefined, unsubscribe: (() => void) | undefined, href = '', videoId = '';
+  let panel: HTMLDivElement | undefined, unmount: (() => void) | undefined, style: HTMLStyleElement | undefined;
+  let disposed = false, practiceRequested = false;
   let entry: HTMLDivElement | undefined;
-  const post = (message: any) => { try { port?.postMessage(message); } catch {} };
   function removeEntry() { entry?.remove(); entry = undefined; }
   function updateEntry() {
     const parent = document.querySelector('ytd-masthead #center');
-    if (disposed || practiceRequested || !token || !parent || !document.querySelector('#movie_player video') ||
-        !validDefinition(configuration?.definition, videoId)) { removeEntry(); return; }
+    if (disposed || practiceRequested || !session || !parent || !document.querySelector('#movie_player video') ||
+        !validDefinition(session?.snapshot.definition, videoId)) { removeEntry(); return; }
     const url = new URL(location.href);
     if (url.pathname !== '/watch' || `youtube:${url.searchParams.get('v')}` !== videoId) { removeEntry(); return; }
     const entryVideoId = videoId;
     if (!entry) entry = createPracticeEntry(() => {
       // Navigation can happen between our periodic inspection and a click.
       inspect();
-      if (videoId !== entryVideoId || !entry?.isConnected || !validDefinition(configuration?.definition, videoId)) return;
+      if (videoId !== entryVideoId || !entry?.isConnected || !validDefinition(session?.snapshot.definition, videoId)) return;
       const target = new URL(location.href); target.searchParams.set('loopygoopy', '');
       restore(); practiceRequested = true; removeEntry();
       history.replaceState(history.state, '', target.href); href = location.href;
@@ -33,7 +33,7 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
   }
   function restore() {
     const wasPractice = document.documentElement.classList.contains('loopy-practice');
-    frame?.remove(); style?.remove(); frame = undefined; style = undefined;
+    unmount?.(); unmount = undefined; panel?.remove(); style?.remove(); panel = undefined; style = undefined;
     document.documentElement.classList.remove('loopy-practice', 'loopy-practice-lead');
     document.documentElement.style.removeProperty('--loopy-controls-height');
     if (wasPractice && !disposed) requestAnimationFrame(() => {
@@ -44,71 +44,61 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
       }
     });
   }
-  function teardown() { engine?.dispose(); engine = undefined; observedVideo = undefined; configuration = undefined; removeEntry(); restore(); token = ''; }
-  function exit(manual = false) {
+  function teardown() { unsubscribe?.(); unsubscribe = undefined; session?.dispose(); session = undefined; removeEntry(); restore(); }
+  function exit() {
     practiceRequested = false;
-    engine?.dispose(); engine = undefined; restore();
+    session?.releaseMedia(); restore();
     const url = new URL(location.href); url.searchParams.delete('loopygoopy');
     if (url.hash === '#loopygoopy') url.hash = '';
     history.replaceState(history.state, '', url.href); href = location.href;
-    if (manual) { frame = document.createElement('iframe'); frame.title = 'Loopy Goopy manual controls'; frame.src = chrome.runtime.getURL(`app/build/index.html?practice=1&session=${token}&manual=1`); frame.style.cssText = 'width:100%;height:680px;border:0'; document.querySelector('#primary-inner')?.appendChild(frame); }
     updateEntry();
   }
   function configure() {
-    if (document.querySelector('#movie_player.ad-showing')) { if (engine?.state.running) engine.pause(); return; }
+    if (!practiceRequested) return;
+    if (document.querySelector('#movie_player.ad-showing')) { session?.pause(); return; }
     const media = document.querySelector<HTMLVideoElement>('#movie_player video');
-    if (!media || !configuration || !validDefinition(configuration.definition, videoId) || !validPreferences(configuration.prefs)) return;
-    if (engine && observedVideo === media) return;
-    engine?.dispose(); observedVideo = media;
-    engine = new PracticeEngine(media, configuration.definition, configuration.prefs, playback => {
-      document.documentElement.classList.toggle('loopy-practice-lead', practiceRequested && playback.running &&
-        (playback.phase === 'lead-in' || playback.phase === 'lead-out'));
-      // Bound outbound updates while keeping playback scheduling independent of UI.
-      const now = performance.now();
-      if (now - lastReport > 80 || !playback.running || playback.phase === 'error') { post({ type: 'playback', playback }); lastReport = now; }
-    });
+    if (media) session?.attachMedia(media);
+    else session?.releaseMedia();
   }
   function mount() {
-    if (!token || frame || !practiceRequested) return;
+    if (!session || !practiceRequested) return;
+    if (panel?.isConnected) return;
+    if (panel) restore();
     const parent = document.querySelector('#primary-inner');
     if (!parent || !document.head || !document.querySelector('#movie_player video')) return;
     removeEntry();
-    observedVideo?.pause(); document.querySelector<HTMLVideoElement>('#movie_player video')?.pause();
+    if (!session.snapshot.playback?.running) document.querySelector<HTMLVideoElement>('#movie_player video')?.pause();
     style = document.createElement('style');
-    style.textContent = practicePageCSS;
+    // Font faces must be registered in the document for use inside a shadow root.
+    style.textContent = `@font-face { font-family: "Loopy Comic Relief"; src: url("${chrome.runtime.getURL('runtime/ComicRelief-Regular.ttf')}") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }` + practicePageCSS;
     document.head.appendChild(style); document.documentElement.classList.add('loopy-practice');
-    frame = document.createElement('iframe'); frame.id = 'loopy-practice-panel'; frame.title = 'Loopy Goopy practice controls';
-    frame.src = chrome.runtime.getURL(`app/build/index.html?practice=1&session=${token}`);
-    parent.prepend(frame);
+    panel = document.createElement('div'); panel.id = 'loopy-practice-panel';
+    parent.prepend(panel);
+    const boundSession = session;
+    unmount = mountControls(panel, boundSession, {
+      change: boundSession.change, pause: boundSession.pause, exit,
+      play: () => {
+        if (session !== boundSession) return;
+        if (document.querySelector('#movie_player.ad-showing')) { boundSession.reportError('Wait for the ad to finish, then press Play.'); return; }
+        configure(); window.dispatchEvent(new Event('loopy-practice-start')); boundSession.play();
+      },
+      retry: () => { void boundSession.load(true); },
+    }, height => {
+      if (session !== boundSession || !panel || !Number.isFinite(height) || height <= 0) return;
+      document.documentElement.style.setProperty('--loopy-controls-height', `${Math.ceil(height)}px`);
+    });
   }
-  function connect() {
-    if (disposed || !videoId) return;
-    try {
-      const currentPort = chrome.runtime.connect({ name: 'loopy-practice-host' });
-      port = currentPort;
-      currentPort.onMessage.addListener((m: any) => {
-        if (port !== currentPort) return;
-        if (m.type === 'bound') { if (token && token !== m.token) restore(); token = m.token; mount(); updateEntry(); }
-        if (m.type === 'configure') { engine?.dispose(); engine = undefined; configuration = m; configure(); updateEntry(); }
-        if (m.type === 'preferences' && validPreferences(m.prefs)) { if (configuration) configuration.prefs = m.prefs; void engine?.update(m.prefs); }
-        if (m.type === 'play') {
-          if (document.querySelector('#movie_player.ad-showing')) { post({ type: 'playback', playback: { phase: 'error', running: false, beat: 1, remaining: 0, cycle: 0, error: 'Wait for the ad to finish, then press Play.' } }); return; }
-          configure();
-          // Stop the legacy loop before using its existing media element.
-          window.dispatchEvent(new Event('loopy-practice-start'));
-          void engine?.play();
-        }
-        if (m.type === 'pause') engine?.pause();
-        if (m.type === 'exit') exit();
-        if (m.type === 'manual') exit(true);
-        if (m.type === 'height' && frame && Number.isFinite(m.height) && m.height > 0) {
-          frame.style.height = `${m.height}px`;
-          if (practiceRequested) document.documentElement.style.setProperty('--loopy-controls-height', `${m.height}px`);
-        }
-      });
-      currentPort.onDisconnect.addListener(() => { if (port !== currentPort) return; engine?.pause(); if (!disposed && videoId) setTimeout(connect, 750); });
-      post({ type: 'hello', mediaId: videoId, url: location.href });
-    } catch { engine?.pause(); }
+  function startSession() {
+    if (!videoId) return;
+    const current = new PracticeSession(videoId); session = current;
+    unsubscribe = current.subscribe(() => {
+      if (session !== current) return;
+      const playback = current.snapshot.playback;
+      document.documentElement.classList.toggle('loopy-practice-lead', !!(practiceRequested && playback?.running &&
+        (playback.phase === 'lead-in' || playback.phase === 'lead-out')));
+      configure(); updateEntry();
+    });
+    void current.load();
   }
   function inspect() {
     if (disposed) return;
@@ -126,14 +116,13 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
         history.replaceState(history.state, '', url.href); href = location.href;
       }
       if (changedVideo) {
-        videoId = ''; const oldPort = port; port = undefined; oldPort?.disconnect(); teardown();
-        videoId = nextVideoId; connect();
+        teardown(); videoId = nextVideoId; startSession();
       }
     }
     configure(); mount(); updateEntry();
   }
   // Explicit manual actions take control; merely opening the popup does not.
-  const manualControl = () => { if (engine?.state.running) engine.pause(); };
+  const manualControl = () => session?.pause();
   window.addEventListener('loopy-manual-control', manualControl);
   const timer = setInterval(inspect, 500); inspect();
   document.addEventListener('yt-navigate-start', inspect);
@@ -144,6 +133,8 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
     disposed = true; window.removeEventListener('loopy-manual-control', manualControl);
     document.removeEventListener('yt-navigate-start', inspect); document.removeEventListener('yt-navigate-finish', inspect);
     window.removeEventListener('popstate', inspect); window.removeEventListener('hashchange', inspect);
-    clearInterval(timer); teardown(); port?.disconnect();
+    clearInterval(timer); teardown();
   }, { once: true });
 }
+
+if (window === window.top && location.hostname === 'www.youtube.com') startPracticePage();

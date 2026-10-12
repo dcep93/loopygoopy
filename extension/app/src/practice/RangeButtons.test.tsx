@@ -1,5 +1,5 @@
 import { render,screen,fireEvent } from '@testing-library/react';
-import { RangeButtons } from './PracticeApp';
+import { RangeButtons } from './PracticeControls';
 test('a distant click selects a new block and a selected end click trims the range',()=>{
   const change=jest.fn();render(<RangeButtons first={1} last={8} onChange={change}/>);
   fireEvent.click(screen.getByRole('button',{name:'Beats 17 to 20'}),{detail:0});expect(change).toHaveBeenLastCalledWith({first:17,last:20});

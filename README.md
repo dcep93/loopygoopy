@@ -31,6 +31,10 @@ Prepared videos supply their timing. Other videos still use the manual controls.
 
 Supported `v0.0.2` video settings, bookmark names, and bookmark configurations are copied to shared extension storage on first use, verified, and left intact in the original storage. Older `v0.0.1` records are not converted or loaded. Practice preferences are separate from those records. Private settings and bookmarks are never published with the catalog. See the [privacy policy](PRIVACY.md).
 
+## Runtime architecture
+
+Practice controls and the playback engine run together in the YouTube tab. The controls use Shadow DOM for style isolation and call the engine directly. Playback has no background-worker connection or session token. Preferences save directly to Chrome extension storage. The worker handles bounded catalog requests and the manual editor's existing settings migration; a catalog request that fails or times out uses the saved or bundled catalog.
+
 ## Publishing prepared videos
 
 Prepared timings live in [`catalog.json`](catalog.json), served directly by [raw.githubusercontent.com](https://raw.githubusercontent.com/dcep93/loopygoopy/master/catalog.json). The extension downloads the whole file, caches it for an hour, and matches video IDs locally. It uses saved or bundled definitions if the request fails.
