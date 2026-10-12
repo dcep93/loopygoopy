@@ -92,9 +92,14 @@ export class PracticeEngine {
       if (this.media.paused) { this.pause(); return; }
       if (time !== previous) { previous = time; movedAt = this.now(); }
       const buffering = this.media.readyState < 3 || this.media.seeking || this.now() - movedAt > 300;
+      // Seek positions are rounded by the media element. Allow 1 ms at beat
+      // boundaries and never show more than the configured lead duration.
+      const remaining = phase === 'practice' ? 0 : Math.max(1, Math.min(
+        phase === 'lead-in' ? this.prefs.leadIn.beats : this.prefs.leadOut.beats,
+        Math.ceil((to - time - .001) * this.definition.bpm / 60)));
       this.emit({ phase: buffering ? 'buffering' : phase,
         beat: phase === 'practice' ? Math.max(this.prefs.first, Math.min(this.prefs.last, Math.floor((time - this.definition.firstBeat) * this.definition.bpm / 60) + 1)) : this.state.beat,
-        remaining: phase === 'practice' ? 0 : Math.max(1, Math.ceil((to - time) * this.definition.bpm / 60)) });
+        remaining });
       await this.wait(16, g);
     }
     if (this.alive(g)) this.media.pause();
@@ -109,7 +114,10 @@ export class PracticeEngine {
     }
     const from = before ? Math.max(0, start - lead.beats * beatSeconds) : end;
     const to = before ? start : Math.min(this.media.duration, end + lead.beats * beatSeconds);
-    const missing = Math.max(0, lead.beats - (to - from) / beatSeconds);
+    // Only pad footage actually clipped by a video edge. Subtracting the
+    // computed interval length can invent a tiny missing beat through rounding.
+    const missing = (before ? Math.max(0, lead.beats * beatSeconds - start) :
+      Math.max(0, end + lead.beats * beatSeconds - this.media.duration)) / beatSeconds;
     if (before && missing) { await this.seek(0, g); await this.frozen(missing, phase, false, g); }
     await this.moving(from, to, phase, g);
     if (!before && missing) await this.frozen(missing, phase, false, g);

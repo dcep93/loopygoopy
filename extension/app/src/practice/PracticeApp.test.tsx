@@ -41,8 +41,10 @@ test('compact controls retain playback, speed and independent lead settings', as
   const port=setupConnection(); render(<PracticeApp/>);
   fireEvent.click(await screen.findByRole('button',{name:'▶ Play'}));
   expect(port.postMessage).toHaveBeenLastCalledWith({type:'play',mediaId:golden.mediaId});
-  fireEvent.click(screen.getByRole('button',{name:'0.5×'}));
-  expect(port.postMessage).toHaveBeenLastCalledWith({type:'preferences',mediaId:golden.mediaId,prefs:{...defaults,speed:.5}});
+  fireEvent.click(screen.getByRole('button',{name:'Slower'}));
+  expect(port.postMessage).toHaveBeenLastCalledWith({type:'preferences',mediaId:golden.mediaId,prefs:{...defaults,speed:.95}});
+  fireEvent.click(screen.getByRole('button',{name:'Faster'}));
+  expect(port.postMessage).toHaveBeenLastCalledWith({type:'preferences',mediaId:golden.mediaId,prefs:{...defaults,speed:1.05}});
   fireEvent.change(screen.getByRole('spinbutton',{name:'Lead-in beats'}),{target:{value:'4'}});
   expect(port.postMessage).toHaveBeenLastCalledWith({type:'preferences',mediaId:golden.mediaId,prefs:{...defaults,leadIn:{...defaults.leadIn,beats:4}}});
   fireEvent.click(within(screen.getByRole('group',{name:'Lead-out sound'})).getByRole('button',{name:'metronome'}));

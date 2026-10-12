@@ -115,13 +115,13 @@ export default function PracticeApp() {
   if (manual) return <div className="manual-shell"><button onClick={() => send('exit')}>Close controls</button><Main /></div>;
   const { definition: d, prefs: p } = snapshot, playback = snapshot.playback || paused;
   const change = (patch: Partial<Preferences>) => { if (p) send('preferences', { prefs: { ...p, ...patch } }); };
-  const phase = playback.phase === 'lead-in' ? 'Get ready' : playback.phase === 'lead-out' ? 'Reset' : playback.phase === 'buffering' ? 'Buffering' : playback.phase === 'seeking' ? 'Getting ready' : '';
+  const phase = playback.phase === 'buffering' ? 'Buffering' : '';
   const brand = <a className="brand" href="https://github.com/dcep93/loopygoopy#practice" target="_blank" rel="noreferrer">loopy goopy</a>;
   return <main className="practice-panel embedded">
     <header className="practice-header">{(!d || !p) && brand}
       {d && p && <>
         <div className="practice-title"><h1>{d.title}</h1></div>
-        <div className="transport">{brand}<div className={`counter phase-${playback.phase}`}><span className="count">{['lead-in', 'lead-out'].includes(playback.phase) ? playback.remaining : playback.beat}</span>{phase && <span className="phase">{phase}{['lead-in', 'lead-out'].includes(playback.phase) && <small>beats remaining</small>}</span>}</div>
+        <div className="transport">{brand}<div className={`counter phase-${playback.phase}`}><span className="count">{['lead-in', 'lead-out'].includes(playback.phase) ? playback.remaining : playback.beat}</span>{phase && <span className="phase">{phase}</span>}</div>
           <button className="play" onClick={() => send(playback.running ? 'pause' : 'play')}>{playback.running ? 'Ⅱ Pause' : '▶ Play'}</button>
         </div>
       </>}
@@ -132,7 +132,7 @@ export default function PracticeApp() {
       <div className="empty"><h1>This video isn’t prepared yet</h1><p>{snapshot.notice || 'You can still use the manual loop controls.'}</p><button onClick={() => send('retry')}>Retry</button><button onClick={() => { send('manual'); setManual(true); }}>Manual controls</button></div> : <>
       <RangeButtons first={p.first} last={p.last} onChange={change} />
       <div className="practice-settings">
-        <div className="speed"><span>Speed</span><div className="segments" role="group" aria-label="Playback speed"><button aria-label="Slower" disabled={p.speed <= .25} onClick={() => change({ speed: Math.max(.25, +(p.speed - .05).toFixed(2)) })}>−</button>{[.5, .75, 1].map(speed => <button key={speed} aria-pressed={p.speed === speed} onClick={() => change({ speed })}>{speed}×</button>)}<button aria-label="Faster" disabled={p.speed >= 1.5} onClick={() => change({ speed: Math.min(1.5, +(p.speed + .05).toFixed(2)) })}>+</button></div><small>{Math.round(p.speed * 100)}%</small></div>
+        <div className="speed segments" role="group" aria-label="Playback speed"><button aria-label="Slower" disabled={p.speed <= .25} onClick={() => change({ speed: Math.max(.25, +(p.speed - .05).toFixed(2)) })}>−</button><output aria-label="Current speed" aria-live="polite">{Math.round(p.speed * 100)}%</output><button aria-label="Faster" disabled={p.speed >= 1.5} onClick={() => change({ speed: Math.min(1.5, +(p.speed + .05).toFixed(2)) })}>+</button></div>
         <LeadControls label="Lead-in" value={p.leadIn} onChange={leadIn => change({ leadIn })} />
         <LeadControls label="Lead-out" value={p.leadOut} onChange={leadOut => change({ leadOut })} />
       </div>

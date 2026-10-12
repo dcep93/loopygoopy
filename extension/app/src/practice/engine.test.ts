@@ -1,5 +1,6 @@
 import { PracticeEngine } from './engine';
 import { defaults, Definition, Preferences } from './model';
+import golden from './golden.json';
 const definition: Definition = { schemaVersion:1, mediaId:'youtube:xzeGxm72GOo',sourceUrl:'https://www.youtube.com/watch?v=xzeGxm72GOo',title:'Example',bpm:120,firstBeat:10,totalBeats:32,revision:1,status:'published' };
 let time: number, media: any, engine: PracticeEngine;
 const flush = async () => { for(let i=0;i<12;i++) await Promise.resolve(); };
@@ -36,6 +37,32 @@ test('track leads play adjacent footage and zero leads skip immediately',async()
   await advance(1100);expect(engine.state.phase).toBe('practice');
   await advance(2100);expect(engine.state.phase).toBe('lead-out');expect(media.currentTime).toBeGreaterThanOrEqual(12);
   engine.pause();const plays=media.play.mock.calls.length;await advance(3000);expect(media.play).toHaveBeenCalledTimes(plays);
+});
+test('track lead countdown tolerates rounded seek times without phantom lead steps',async()=>{
+  const seeks:number[]=[], updates:any[]=[];
+  let current=0;
+  Object.defineProperty(media,'currentTime',{get:()=>current,set:value=>{seeks.push(value);current=Math.floor(value*1e6)/1e6;}});
+  engine=new PracticeEngine(media,golden as Definition,{...defaults,last:4},state=>updates.push({...state}),()=>time);
+  void engine.play();await flush();
+  expect(seeks).not.toContain(0);
+  expect(engine.state.phase).toBe('lead-in');
+  expect(engine.state.remaining).toBe(2);
+  await advance(6200);
+  for(const phase of ['lead-in','lead-out']) {
+    const counts=updates.filter(s=>s.phase===phase).map(s=>s.remaining);
+    expect(counts).toContain(2);expect(counts).toContain(1);
+    expect(counts.every(count=>count===1||count===2)).toBe(true);
+  }
+});
+test('track leads still pad genuinely missing footage at both video edges',async()=>{
+  media.duration=2.5;
+  engine=new PracticeEngine(media,{...definition,firstBeat:.25},{...defaults,last:4},()=>{},()=>time);
+  void engine.play();await flush();
+  expect(media.currentTime).toBe(0);expect(media.paused).toBe(true);
+  await advance(700);expect(engine.state.phase).toBe('lead-in');expect(media.paused).toBe(true);
+  await advance(350);expect(engine.state.phase).toBe('practice');
+  await advance(2100);expect(engine.state.phase).toBe('lead-out');
+  await advance(950);expect(engine.state.cycle).toBe(2);
 });
 test('changing a selection while paused seeks but does not play, restoring media settings on exit',async()=>{
   media.playbackRate=.8;await engine.update({...defaults,first:17,last:24});

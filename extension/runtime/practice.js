@@ -152,10 +152,14 @@
           movedAt = this.now();
         }
         const buffering = this.media.readyState < 3 || this.media.seeking || this.now() - movedAt > 300;
+        const remaining = phase === "practice" ? 0 : Math.max(1, Math.min(
+          phase === "lead-in" ? this.prefs.leadIn.beats : this.prefs.leadOut.beats,
+          Math.ceil((to - time - 1e-3) * this.definition.bpm / 60)
+        ));
         this.emit({
           phase: buffering ? "buffering" : phase,
           beat: phase === "practice" ? Math.max(this.prefs.first, Math.min(this.prefs.last, Math.floor((time - this.definition.firstBeat) * this.definition.bpm / 60) + 1)) : this.state.beat,
-          remaining: phase === "practice" ? 0 : Math.max(1, Math.ceil((to - time) * this.definition.bpm / 60))
+          remaining
         });
         await this.wait(16, g);
       }
@@ -172,7 +176,7 @@
       }
       const from = before ? Math.max(0, start - lead.beats * beatSeconds) : end;
       const to = before ? start : Math.min(this.media.duration, end + lead.beats * beatSeconds);
-      const missing = Math.max(0, lead.beats - (to - from) / beatSeconds);
+      const missing = (before ? Math.max(0, lead.beats * beatSeconds - start) : Math.max(0, end + lead.beats * beatSeconds - this.media.duration)) / beatSeconds;
       if (before && missing) {
         await this.seek(0, g);
         await this.frozen(missing, phase, false, g);
@@ -252,7 +256,7 @@ html.loopy-practice :is(#player-container-outer, #player-container-inner, #playe
 html.loopy-practice #movie_player { width: 100% !important; height: 100% !important; background: transparent !important; }
 html.loopy-practice #movie_player .html5-video-container { width: 100% !important; height: 100% !important; }
 html.loopy-practice #movie_player video { object-fit: contain !important; width: 100% !important; height: 100% !important; left: 0 !important; top: 0 !important; }
-html.loopy-practice.loopy-practice-lead #movie_player video { opacity: .8 !important; }
+html.loopy-practice.loopy-practice-lead #movie_player video { opacity: .5 !important; }
 `;
 
   // src/practice/entryLink.ts

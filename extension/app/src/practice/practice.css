@@ -58,10 +58,10 @@ body:has(.practice-panel) { background: transparent; }
 .practice-panel .count { font-size: 1.55rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ww-title-pink); min-width: 1.5ch; text-align: center; }
 .practice-panel :is(.phase-lead-in, .phase-lead-out) .count { color: var(--ww-accent-amber); }
 .practice-panel .phase { font-size: .8rem; white-space: nowrap; }
-.practice-panel .phase small { display: block; font-size: .625rem; color: var(--ww-text-muted); }
 .practice-panel .practice-settings { display: grid; grid-template-columns: auto auto auto; gap: 1rem; align-items: center; justify-content: space-between; }
 .practice-panel :is(.speed, .lead-row) { display: flex; align-items: center; gap: .5rem; white-space: nowrap; min-width: 0; }
-.practice-panel .speed > span, .practice-panel .speed small, .practice-panel .lead-row legend, .practice-panel .duration { font-size: .75rem; color: var(--ww-text-muted); }
+.practice-panel .speed output { min-width: 4ch; text-align: center; font-size: .8rem; font-variant-numeric: tabular-nums; }
+.practice-panel .lead-row legend, .practice-panel .duration { font-size: .75rem; color: var(--ww-text-muted); }
 .practice-panel .segments { display: flex; gap: .2rem; }
 .practice-panel .segments button { font-size: .75rem; padding: .375rem .5rem; border-radius: .5rem; }
 .practice-panel .lead-row { border: 0; margin: 0; padding: 0; }
