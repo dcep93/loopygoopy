@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import WeightStream from './WeightStream';
 import { Lead, Preferences, paused, range } from './model';
 import { PracticeSnapshot } from './session';
 
@@ -56,7 +57,7 @@ function LeadControls({ label, value, onChange }: { label: string; value: Lead; 
   </fieldset>;
 }
 
-export default function PracticeControls({ snapshot, actions }: { snapshot: PracticeSnapshot; actions: PracticeActions }) {
+export default function PracticeControls({ snapshot, actions, readBeat }: { snapshot: PracticeSnapshot; actions: PracticeActions; readBeat?: () => number }) {
   const { definition: d, prefs: p } = snapshot, playback = snapshot.playback || paused;
   const change = (patch: Partial<Preferences>) => { if (p) actions.change({ ...p, ...patch }); };
   const phase = playback.phase === 'buffering' ? 'Buffering' : '';
@@ -83,6 +84,7 @@ export default function PracticeControls({ snapshot, actions }: { snapshot: Prac
         <LeadControls label="Lead-in" value={p.leadIn} onChange={leadIn => change({ leadIn })} />
         <LeadControls label="Lead-out" value={p.leadOut} onChange={leadOut => change({ leadOut })} />
       </div>
+      {d.footwork && <WeightStream footwork={d.footwork} first={p.first} last={p.last} readBeat={readBeat} />}
       {playback.error && <p className="error" role="alert">{playback.error}</p>}
     </>}{snapshot.saveError && <p className="error" role="alert">{snapshot.saveError}</p>}
   </main>;

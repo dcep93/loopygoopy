@@ -55,3 +55,5 @@ The build validates the public catalog and copies it into the extension as an of
 For catalog-only edits after an initial build, run `node scripts/validate-catalog.mjs` from the repository root, then commit and push `catalog.json`. No extension release is needed to publish additional timing records.
 
 The updated extension still needs installed-Chrome verification before a Chrome Web Store release. Catalog publication and extension publication are separate. The [store release guide](docs/chrome-web-store-release.md) includes packaging instructions, listing copy, permission explanations, and the upgrade limitation.
+
+Prepared guides can include a scrolling foot-weight strip below the controls: R/L for full counts, r/l for half counts, - for held weight, and * for special actions without a weight transfer. The fixed center marker follows video time, including speed changes, pauses, seeks and track leads. The example uses the main choreography sequence and includes the initial pickup.

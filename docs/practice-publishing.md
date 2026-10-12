@@ -30,3 +30,9 @@ The golden example uses 81 numbered beats/minute with beat 1 at approximately 12
 After building, reload Loopy Goopy in Chrome's Extensions page and refresh the golden-example page. Browser automation cannot operate the extension-management page in this environment, so the reload requires the user.
 
 Check the embedded layout and player sizing; lead/speed combinations; consistent original popup behavior on all videos and explicit manual playback takeover; navigation between prepared and unprepared videos; idle/resume without a background-worker connection; and the real saved Ozzy bookmarks after the one-time migration. Before a public Chrome Web Store release, also assess migration from the currently published extension version: automatic transfer supports `v0.0.2` records only, and does not convert older `v0.0.1` records. Automated tests do not replace these installed-Chrome checks. Use the [release guide](chrome-web-store-release.md) and [privacy policy](../PRIVACY.md) for the store update.
+
+## Optional weight stream
+
+Add `footwork: { sourceUrl, cues }` to an entry and increase its revision. Each cue has a one-based `beat` (half-count increments), `duration` (0.5 or 1), and `symbol` (R, L, r, l, -, *). R/L/- last one count; r/l last half a count; * may last either. Cues must be ordered, non-overlapping and bounded between 0.5 and the exclusive end at 33. Missing footwork omits the strip. The source URL must be HTTPS and is attribution data, never executed or fetched by the extension.
+
+The example includes the pickup at 0.5 and its next occurrence at 32.5. It follows the main two-walk sequence at 15–16. Special actions retain the previous weight, including the press/wobble through 24 until the transfer at 24.5. See `docs/weight-stream-design.md` for the confirmed notation choices. The renderer does not extrapolate choreography beyond the supplied cues.

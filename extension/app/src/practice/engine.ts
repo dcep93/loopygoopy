@@ -17,6 +17,10 @@ export class PracticeEngine {
     this.originalRate = media.playbackRate;
     this.originalLoop = media.loop;
   }
+  // The strip follows the same picture during track leads, frozen leads and seeks.
+  readBeat = () => this.controlled && Number.isFinite(this.media.currentTime)
+    ? 1 + (this.media.currentTime - this.definition.firstBeat) * this.definition.bpm / 60
+    : this.prefs.first;
   private emit(patch: Partial<Playback>) { this.state = { ...this.state, ...patch }; this.publish(this.state); }
   private alive(g: number) { return this.generation === g; }
   private wait(ms: number, g: number): Promise<void> {

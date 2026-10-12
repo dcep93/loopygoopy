@@ -17,6 +17,7 @@ export class PracticeSession {
   constructor(readonly mediaId: string) {}
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
   getSnapshot = () => this.snapshot;
+  readBeat = () => this.engine?.readBeat() ?? this.snapshot.prefs?.first ?? 1;
   private publish(patch: Partial<PracticeSnapshot>) {
     if (this.disposed) return;
     this.snapshot = { ...this.snapshot, ...patch };

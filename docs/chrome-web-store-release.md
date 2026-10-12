@@ -1,8 +1,8 @@
-# Chrome Web Store release: 5.0.2
+# Chrome Web Store release: 5.0.3
 
 Update the existing **Loopy Goopy** item: `addfplpnjjbiockjmfegacimgkcmfefn`.
 [Public listing](https://chromewebstore.google.com/detail/loopy-goopy/addfplpnjjbiockjmfegacimgkcmfefn).
-The public version checked October 12, 2026 was 3.1.0. The new package is 5.0.2; if an unpublished dashboard package already uses that version or a higher one, increase the manifest version and rebuild before uploading.
+The public version checked October 12, 2026 was 3.1.0. The new package is 5.0.3; if an unpublished dashboard package already uses that version or a higher one, increase the manifest version and rebuild before uploading.
 
 ## Build and package
 
@@ -11,10 +11,10 @@ From the repository root:
 ```sh
 CI=true npm test --prefix extension/app -- --watchAll=false --runInBand
 npm run build --prefix extension/app
-python3 scripts/package-extension.py ../_codex_output/loopygoopy-release-5.0.2
+python3 scripts/package-extension.py ../_codex_output/loopygoopy-release-5.0.3
 ```
 
-Upload `loopy-goopy-5.0.2.zip`. Its manifest is at the ZIP root. The package includes the compiled popup, content scripts, worker, migration document, icons, and font license. It excludes development dependencies, source maps, tests, and personal records. Do not upload the old repository-root `extension.zip`.
+Upload `loopy-goopy-5.0.3.zip`. Its manifest is at the ZIP root. The package includes the compiled popup, content scripts, worker, migration document, icons, and font license. It excludes development dependencies, source maps, tests, and personal records. Do not upload the old repository-root `extension.zip`.
 
 ## Store description — paste this
 
@@ -26,7 +26,7 @@ On prepared YouTube videos, click “loopy goopy” beside the search bar to ope
 • Use Prev and Next beside Play to move that loop one block backward or forward.
 • Slow down or speed up playback with simple minus and plus controls.
 • Set lead-in and lead-out durations independently, using the original track, silence, or a metronome.
-• Follow the beat count while your chosen section repeats.
+• Follow the beat count while your chosen section repeats. Prepared guides can also show a synced scrolling foot-weight sequence.
 • Exit practice mode to return to the normal YouTube page.
 
 Prepared videos include their timing, so you do not need to work out the tempo yourself. The prepared catalog currently contains one example and can grow through catalog updates. Other supported videos use the manual controls.
@@ -37,7 +37,7 @@ Requires Chrome 120 or later. Video playback remains on the original website. Lo
 
 ## Release notes — optional announcement copy
 
-Version 5.0.2 moves practice controls and playback into the video tab so background-worker inactivity no longer interrupts the practice connection. It includes Prev and Next buttons that move the selected range by one four-beat block, retaining its length and disabling at section boundaries. It also adds an embedded practice view for prepared YouTube videos, selectable four-beat loops, adjustable speed, and independent lead-in and lead-out controls. The extension icon continues to open the manual editor. This release also fixes settings being associated with the wrong video and improves practice layout, visibility, and exit behavior.
+Version 5.0.3 adds a synced weight stream beneath the controls for the prepared example, with count-based spacing, half-count steps, and special-action markers. Practice controls and playback run together in the video tab so background-worker inactivity does not interrupt the practice connection. It includes Prev and Next buttons that move the selected range by one four-beat block, retaining its length and disabling at section boundaries. It also adds an embedded practice view for prepared YouTube videos, selectable four-beat loops, adjustable speed, and independent lead-in and lead-out controls. The extension icon continues to open the manual editor. This release also fixes settings being associated with the wrong video and improves practice layout, visibility, and exit behavior.
 
 ## Privacy practices — prepared answers
 
@@ -49,7 +49,7 @@ Version 5.0.2 moves practice controls and playback into the video tab so backgro
 
 **Host access:** Content scripts inspect and control media elements on the supported YouTube, Instagram, existing specific Google Drive folder, and local-file pages listed in the manifest, including supported YouTube embeds. File access additionally requires the user's Chrome setting. Access to raw.githubusercontent.com downloads the public practice timing catalog from a fixed URL. The current video is matched locally; personal settings are not uploaded.
 
-**Remote code:** No. All executable code is packaged with the extension. The remote catalog is validated JSON containing video identities, titles, tempo, beat timing, and section length; it is not executable code.
+**Remote code:** No. All executable code is packaged with the extension. The remote catalog is validated JSON containing video identities, titles, tempo, beat timing, and section length, and optional timed choreography symbols with a source link; it is not executable code.
 
 **Privacy policy URL:** https://github.com/dcep93/loopygoopy/blob/master/PRIVACY.md
 

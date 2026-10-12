@@ -6,7 +6,7 @@ import css from './practice.css';
 
 function Controls({ session, actions }: { session: PracticeSession; actions: PracticeActions }) {
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot);
-  return <PracticeControls snapshot={snapshot} actions={actions} />;
+  return <PracticeControls snapshot={snapshot} actions={actions} readBeat={session.readBeat} />;
 }
 
 export function mountControls(host: HTMLElement, session: PracticeSession, actions: PracticeActions, onHeight: (height: number) => void) {

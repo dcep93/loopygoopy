@@ -44,10 +44,25 @@
 
   // src/practice/model.ts
   function validDefinition(v, id) {
-    return Boolean(v && v.schemaVersion === 1 && /^youtube:[\w-]{11}$/.test(v.mediaId) && (!id || v.mediaId === id) && v.sourceUrl === `https://www.youtube.com/watch?v=${v.mediaId.slice(8)}` && typeof v.title === "string" && v.title.length > 0 && v.title.length < 200 && Number.isFinite(v.bpm) && v.bpm > 0 && v.bpm <= 400 && Number.isFinite(v.firstBeat) && v.firstBeat >= 0 && v.totalBeats === 32 && Number.isSafeInteger(v.revision) && v.revision > 0 && v.status === "published");
+    return Boolean(v && v.schemaVersion === 1 && /^youtube:[\w-]{11}$/.test(v.mediaId) && (!id || v.mediaId === id) && v.sourceUrl === `https://www.youtube.com/watch?v=${v.mediaId.slice(8)}` && typeof v.title === "string" && v.title.length > 0 && v.title.length < 200 && Number.isFinite(v.bpm) && v.bpm > 0 && v.bpm <= 400 && Number.isFinite(v.firstBeat) && v.firstBeat >= 0 && v.totalBeats === 32 && Number.isSafeInteger(v.revision) && v.revision > 0 && v.status === "published" && (v.footwork === void 0 || validFootwork(v.footwork)));
   }
   function validCatalog(value) {
     return Boolean(value && value.schemaVersion === 1 && Array.isArray(value.videos) && value.videos.length <= 1e3 && value.videos.every((video) => validDefinition(video)) && new Set(value.videos.map((video) => video.mediaId)).size === value.videos.length);
+  }
+  function validFootwork(value) {
+    if (!value || typeof value.sourceUrl !== "string") return false;
+    try {
+      if (new URL(value.sourceUrl).protocol !== "https:") return false;
+    } catch {
+      return false;
+    }
+    if (!Array.isArray(value.cues) || !value.cues.length || value.cues.length > 65) return false;
+    let end = 0.5;
+    return value.cues.every((cue) => {
+      if (!cue || !Number.isFinite(cue.beat) || !Number.isInteger(cue.beat * 2) || cue.beat < end || ![0.5, 1].includes(cue.duration) || cue.beat + cue.duration > 33 || !["R", "L", "r", "l", "-", "*"].includes(cue.symbol) || ["R", "L", "-"].includes(cue.symbol) && cue.duration !== 1 || ["r", "l"].includes(cue.symbol) && cue.duration !== 0.5) return false;
+      end = cue.beat + cue.duration;
+      return true;
+    });
   }
 
   // src/practice/bundled-catalog.json
@@ -62,15 +77,310 @@
         bpm: 81,
         firstBeat: 12.64,
         totalBeats: 32,
-        revision: 1,
-        status: "published"
+        revision: 2,
+        status: "published",
+        footwork: {
+          sourceUrl: "https://www.copperknob.co.uk/stepsheets/K3PHTPZ/3-tequila-floor/download/pdf",
+          cues: [
+            {
+              beat: 0.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 1,
+              duration: 1,
+              symbol: "L"
+            },
+            {
+              beat: 2,
+              duration: 1,
+              symbol: "R"
+            },
+            {
+              beat: 3,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 3.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 4,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 4.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 5.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 6,
+              duration: 1,
+              symbol: "R"
+            },
+            {
+              beat: 7,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 7.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 8,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 8.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 9,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 9.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 10,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 10.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 11,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 11.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 12,
+              duration: 1,
+              symbol: "R"
+            },
+            {
+              beat: 13,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 13.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 14,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 14.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 15,
+              duration: 1,
+              symbol: "R"
+            },
+            {
+              beat: 16,
+              duration: 1,
+              symbol: "L"
+            },
+            {
+              beat: 17,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 17.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 18,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 18.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 19,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 19.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 20,
+              duration: 1,
+              symbol: "R"
+            },
+            {
+              beat: 21,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 21.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 22,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 22.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 23,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 23.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 24,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 24.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 25,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 25.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 26,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 26.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 27,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 27.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 28,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 28.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 29,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 29.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 30,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 30.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 31,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 31.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 32,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 32.5,
+              duration: 0.5,
+              symbol: "r"
+            }
+          ]
+        }
       }
     ]
   };
 
   // src/practice/catalog.ts
   var catalogUrl = "https://raw.githubusercontent.com/dcep93/loopygoopy/master/catalog.json";
-  var catalogKey = "practice-catalog-v1";
+  var catalogKey = "practice-catalog-v2";
   var refreshInterval = 60 * 60 * 1e3;
   var pending2;
   async function readCatalog(refresh) {

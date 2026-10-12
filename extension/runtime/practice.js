@@ -12152,7 +12152,7 @@
   var defaults = { first: 1, last: 8, speed: 1, leadIn: { beats: 2, style: "track" }, leadOut: { beats: 2, style: "track" } };
   var paused = { phase: "paused", running: false, beat: 1, remaining: 0, cycle: 0 };
   function validDefinition(v, id) {
-    return Boolean(v && v.schemaVersion === 1 && /^youtube:[\w-]{11}$/.test(v.mediaId) && (!id || v.mediaId === id) && v.sourceUrl === `https://www.youtube.com/watch?v=${v.mediaId.slice(8)}` && typeof v.title === "string" && v.title.length > 0 && v.title.length < 200 && Number.isFinite(v.bpm) && v.bpm > 0 && v.bpm <= 400 && Number.isFinite(v.firstBeat) && v.firstBeat >= 0 && v.totalBeats === 32 && Number.isSafeInteger(v.revision) && v.revision > 0 && v.status === "published");
+    return Boolean(v && v.schemaVersion === 1 && /^youtube:[\w-]{11}$/.test(v.mediaId) && (!id || v.mediaId === id) && v.sourceUrl === `https://www.youtube.com/watch?v=${v.mediaId.slice(8)}` && typeof v.title === "string" && v.title.length > 0 && v.title.length < 200 && Number.isFinite(v.bpm) && v.bpm > 0 && v.bpm <= 400 && Number.isFinite(v.firstBeat) && v.firstBeat >= 0 && v.totalBeats === 32 && Number.isSafeInteger(v.revision) && v.revision > 0 && v.status === "published" && (v.footwork === void 0 || validFootwork(v.footwork)));
   }
   function validPreferences(v) {
     const lead = (l) => l && Number.isInteger(l.beats) && l.beats >= 0 && l.beats <= 32 && ["track", "silent", "metronome"].includes(l.style);
@@ -12168,6 +12168,21 @@
   function validCatalog(value) {
     return Boolean(value && value.schemaVersion === 1 && Array.isArray(value.videos) && value.videos.length <= 1e3 && value.videos.every((video) => validDefinition(video)) && new Set(value.videos.map((video) => video.mediaId)).size === value.videos.length);
   }
+  function validFootwork(value) {
+    if (!value || typeof value.sourceUrl !== "string") return false;
+    try {
+      if (new URL(value.sourceUrl).protocol !== "https:") return false;
+    } catch {
+      return false;
+    }
+    if (!Array.isArray(value.cues) || !value.cues.length || value.cues.length > 65) return false;
+    let end = 0.5;
+    return value.cues.every((cue) => {
+      if (!cue || !Number.isFinite(cue.beat) || !Number.isInteger(cue.beat * 2) || cue.beat < end || ![0.5, 1].includes(cue.duration) || cue.beat + cue.duration > 33 || !["R", "L", "r", "l", "-", "*"].includes(cue.symbol) || ["R", "L", "-"].includes(cue.symbol) && cue.duration !== 1 || ["r", "l"].includes(cue.symbol) && cue.duration !== 0.5) return false;
+      end = cue.beat + cue.duration;
+      return true;
+    });
+  }
 
   // src/practice/engine.ts
   var PracticeEngine = class {
@@ -12181,6 +12196,8 @@
       this.tones = /* @__PURE__ */ new Set();
       this.controlled = false;
       this.state = { ...paused };
+      // The strip follows the same picture during track leads, frozen leads and seeks.
+      this.readBeat = () => this.controlled && Number.isFinite(this.media.currentTime) ? 1 + (this.media.currentTime - this.definition.firstBeat) * this.definition.bpm / 60 : this.prefs.first;
       this.originalRate = media.playbackRate;
       this.originalLoop = media.loop;
     }
@@ -12393,8 +12410,303 @@
         bpm: 81,
         firstBeat: 12.64,
         totalBeats: 32,
-        revision: 1,
-        status: "published"
+        revision: 2,
+        status: "published",
+        footwork: {
+          sourceUrl: "https://www.copperknob.co.uk/stepsheets/K3PHTPZ/3-tequila-floor/download/pdf",
+          cues: [
+            {
+              beat: 0.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 1,
+              duration: 1,
+              symbol: "L"
+            },
+            {
+              beat: 2,
+              duration: 1,
+              symbol: "R"
+            },
+            {
+              beat: 3,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 3.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 4,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 4.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 5.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 6,
+              duration: 1,
+              symbol: "R"
+            },
+            {
+              beat: 7,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 7.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 8,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 8.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 9,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 9.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 10,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 10.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 11,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 11.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 12,
+              duration: 1,
+              symbol: "R"
+            },
+            {
+              beat: 13,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 13.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 14,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 14.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 15,
+              duration: 1,
+              symbol: "R"
+            },
+            {
+              beat: 16,
+              duration: 1,
+              symbol: "L"
+            },
+            {
+              beat: 17,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 17.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 18,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 18.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 19,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 19.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 20,
+              duration: 1,
+              symbol: "R"
+            },
+            {
+              beat: 21,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 21.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 22,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 22.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 23,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 23.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 24,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 24.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 25,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 25.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 26,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 26.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 27,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 27.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 28,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 28.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 29,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 29.5,
+              duration: 0.5,
+              symbol: "r"
+            },
+            {
+              beat: 30,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 30.5,
+              duration: 0.5,
+              symbol: "l"
+            },
+            {
+              beat: 31,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 31.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 32,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 32.5,
+              duration: 0.5,
+              symbol: "r"
+            }
+          ]
+        }
       }
     ]
   };
@@ -12414,7 +12726,7 @@
     } catch {
       let saved;
       try {
-        saved = (await window.chrome.storage.local.get("practice-catalog-v1"))["practice-catalog-v1"];
+        saved = (await window.chrome.storage.local.get("practice-catalog-v2"))["practice-catalog-v2"];
       } catch {
       }
       const catalog = validCatalog(saved?.catalog) ? saved.catalog : bundled_catalog_default;
@@ -12441,6 +12753,7 @@
         };
       };
       this.getSnapshot = () => this.snapshot;
+      this.readBeat = () => this.engine?.readBeat() ?? this.snapshot.prefs?.first ?? 1;
       this.play = () => {
         if (!this.disposed) void this.engine?.play();
       };
@@ -12516,17 +12829,70 @@
   };
 
   // src/practice/mountControls.tsx
-  var import_react2 = __toESM(require_react());
+  var import_react3 = __toESM(require_react());
   var import_client = __toESM(require_client());
 
   // src/practice/PracticeControls.tsx
+  var import_react2 = __toESM(require_react());
+
+  // src/practice/WeightStream.tsx
   var import_react = __toESM(require_react());
   var import_jsx_runtime = __toESM(require_jsx_runtime());
+  var pixelsPerBeat = 64;
+  function weightAt(cues, beat) {
+    let weight;
+    for (const cue of cues) {
+      if (cue.beat > beat) break;
+      if (/[rl]/i.test(cue.symbol)) weight = cue.symbol.toUpperCase();
+    }
+    return weight;
+  }
+  function WeightStream({ footwork, first, last, readBeat }) {
+    const strip = (0, import_react.useRef)(null);
+    const viewport = (0, import_react.useRef)(null);
+    (0, import_react.useEffect)(() => {
+      let frame, previous = -2;
+      strip.current.querySelectorAll("[data-current]").forEach((cue) => cue.removeAttribute("data-current"));
+      const tick = () => {
+        const position = readBeat?.() ?? first;
+        const beat = Number.isFinite(position) ? position : first;
+        strip.current.style.transform = `translate3d(${-beat * pixelsPerBeat}px, 0, 0)`;
+        const current = footwork.cues.findIndex((c) => beat >= c.beat && beat < c.beat + c.duration);
+        if (current !== previous) {
+          if (previous >= 0) strip.current.children[previous].removeAttribute("data-current");
+          if (current >= 0) strip.current.children[current].setAttribute("data-current", "true");
+          const weight = weightAt(footwork.cues, beat);
+          viewport.current.setAttribute("aria-label", `Weight stream${current >= 0 ? `: ${footwork.cues[current].symbol}${weight ? `, ${weight === "R" ? "right" : "left"} foot weighted` : ""}` : ""}. Uppercase: one count. Lowercase: half count. Dash: hold. Star: special action, retain weight.`);
+          previous = current;
+        }
+        frame = requestAnimationFrame(tick);
+      };
+      tick();
+      return () => cancelAnimationFrame(frame);
+    }, [footwork, first, readBeat]);
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "weight-stream", ref: viewport, role: "img", "aria-label": "Weight stream", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "weight-now", "aria-hidden": "true" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "weight-strip", ref: strip, "aria-hidden": "true", children: footwork.cues.map((cue) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+        "span",
+        {
+          className: "weight-cue",
+          "data-selected": cue.beat >= first && cue.beat < last + 1,
+          style: { left: cue.beat * pixelsPerBeat },
+          title: `Count ${cue.beat}: ${cue.symbol}`,
+          children: cue.symbol
+        },
+        cue.beat
+      )) })
+    ] });
+  }
+
+  // src/practice/PracticeControls.tsx
+  var import_jsx_runtime2 = __toESM(require_jsx_runtime());
   function RangeButtons({ first, last, onChange }) {
-    const row = (0, import_react.useRef)(null);
-    const gesture = (0, import_react.useRef)(void 0);
-    const keyboardAnchor = (0, import_react.useRef)(void 0);
-    const [preview, setPreview] = (0, import_react.useState)();
+    const row = (0, import_react2.useRef)(null);
+    const gesture = (0, import_react2.useRef)(void 0);
+    const keyboardAnchor = (0, import_react2.useRef)(void 0);
+    const [preview, setPreview] = (0, import_react2.useState)();
     const selected = preview || { first, last };
     const clickedRange = (index) => {
       const start = (first - 1) / 4, end = last / 4 - 1;
@@ -12546,7 +12912,7 @@
         return Math.abs(x - (box.left + box.width / 2)) < Math.abs(x - (previous.left + previous.width / 2)) ? i : best;
       }, 0);
     };
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
       "div",
       {
         className: "beat-blocks",
@@ -12576,7 +12942,7 @@
           gesture.current = void 0;
           setPreview(void 0);
         },
-        children: Array.from({ length: 8 }, (_, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+        children: Array.from({ length: 8 }, (_, i) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
           "button",
           {
             type: "button",
@@ -12608,7 +12974,7 @@
             },
             children: [
               i * 4 + 1,
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "\u2013" }),
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: "\u2013" }),
               i * 4 + 4
             ]
           },
@@ -12618,10 +12984,10 @@
     );
   }
   function LeadControls({ label, value, onChange }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("fieldset", { className: "lead-row", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("legend", { children: label }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { className: "duration", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("fieldset", { className: "lead-row", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("legend", { children: label }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { className: "duration", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
           "input",
           {
             type: "number",
@@ -12638,70 +13004,173 @@
         ),
         " beats"
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "segments", role: "group", "aria-label": `${label} sound`, children: ["track", "silent", "metronome"].map((style) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", "aria-pressed": value.style === style, onClick: () => onChange({ ...value, style }), children: style }, style)) })
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "segments", role: "group", "aria-label": `${label} sound`, children: ["track", "silent", "metronome"].map((style) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { type: "button", "aria-pressed": value.style === style, onClick: () => onChange({ ...value, style }), children: style }, style)) })
     ] });
   }
-  function PracticeControls({ snapshot, actions }) {
+  function PracticeControls({ snapshot, actions, readBeat }) {
     const { definition: d, prefs: p } = snapshot, playback = snapshot.playback || paused;
     const change = (patch) => {
       if (p) actions.change({ ...p, ...patch });
     };
     const phase = playback.phase === "buffering" ? "Buffering" : "";
-    const brand = /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", { className: "brand", href: "https://github.com/dcep93/loopygoopy#practice", target: "_blank", rel: "noreferrer", children: "loopy goopy" });
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", { className: "practice-panel embedded", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { className: "practice-header", children: [
-        d && p && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "practice-title", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", { children: d.title }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "transport", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: `counter phase-${playback.phase}`, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "count", children: ["lead-in", "lead-out"].includes(playback.phase) ? playback.remaining : playback.beat }),
-              phase && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "phase", children: phase })
+    const brand = /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("a", { className: "brand", href: "https://github.com/dcep93/loopygoopy#practice", target: "_blank", rel: "noreferrer", children: "loopy goopy" });
+    return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("main", { className: "practice-panel embedded", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("header", { className: "practice-header", children: [
+        d && p && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "practice-title", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("h1", { children: d.title }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "transport", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: `counter phase-${playback.phase}`, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "count", children: ["lead-in", "lead-out"].includes(playback.phase) ? playback.remaining : playback.beat }),
+              phase && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "phase", children: phase })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "play", onClick: () => playback.running ? actions.pause() : actions.play(), children: playback.running ? "\u2161 Pause" : "\u25B6 Play" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { disabled: p.first <= 1, onClick: () => change({ first: p.first - 4, last: p.last - 4 }), children: "Prev" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { disabled: p.last >= d.totalBeats, onClick: () => change({ first: p.first + 4, last: p.last + 4 }), children: "Next" })
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "play", onClick: () => playback.running ? actions.pause() : actions.play(), children: playback.running ? "\u2161 Pause" : "\u25B6 Play" }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { disabled: p.first <= 1, onClick: () => change({ first: p.first - 4, last: p.last - 4 }), children: "Prev" }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { disabled: p.last >= d.totalBeats, onClick: () => change({ first: p.first + 4, last: p.last + 4 }), children: "Next" })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { className: "text-button exit", onClick: () => actions.exit(), children: "Exit practice mode" }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { className: "text-button exit", onClick: () => actions.exit(), children: "Exit practice mode" }),
         brand
       ] }),
-      snapshot.loading ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "empty", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", { children: "Preparing your practice\u2026" }) }) : snapshot.error ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "empty", role: "alert", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", { children: "Practice unavailable" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: snapshot.error }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { onClick: actions.retry, children: "Retry" })
-      ] }) : !d || !p ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "empty", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", { children: "This video isn\u2019t prepared yet" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: snapshot.notice || "Use the extension toolbar icon for manual loop controls." }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { onClick: actions.retry, children: "Retry" })
-      ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RangeButtons, { first: p.first, last: p.last, onChange: change }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "practice-settings", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "speed segments", role: "group", "aria-label": "Playback speed", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "Speed" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { "aria-label": "Slower", disabled: p.speed <= 0.25, onClick: () => change({ speed: Math.max(0.25, +(p.speed - 0.05).toFixed(2)) }), children: "\u2212" }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("output", { "aria-label": "Current speed", "aria-live": "polite", children: [
+      snapshot.loading ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "empty", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("h1", { children: "Preparing your practice\u2026" }) }) : snapshot.error ? /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "empty", role: "alert", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("h1", { children: "Practice unavailable" }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { children: snapshot.error }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { onClick: actions.retry, children: "Retry" })
+      ] }) : !d || !p ? /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "empty", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("h1", { children: "This video isn\u2019t prepared yet" }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { children: snapshot.notice || "Use the extension toolbar icon for manual loop controls." }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { onClick: actions.retry, children: "Retry" })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(RangeButtons, { first: p.first, last: p.last, onChange: change }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "practice-settings", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "speed segments", role: "group", "aria-label": "Playback speed", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: "Speed" }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { "aria-label": "Slower", disabled: p.speed <= 0.25, onClick: () => change({ speed: Math.max(0.25, +(p.speed - 0.05).toFixed(2)) }), children: "\u2212" }),
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("output", { "aria-label": "Current speed", "aria-live": "polite", children: [
               Math.round(p.speed * 100),
               "%"
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { "aria-label": "Faster", disabled: p.speed >= 1.5, onClick: () => change({ speed: Math.min(1.5, +(p.speed + 0.05).toFixed(2)) }), children: "+" })
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { "aria-label": "Faster", disabled: p.speed >= 1.5, onClick: () => change({ speed: Math.min(1.5, +(p.speed + 0.05).toFixed(2)) }), children: "+" })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LeadControls, { label: "Lead-in", value: p.leadIn, onChange: (leadIn) => change({ leadIn }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LeadControls, { label: "Lead-out", value: p.leadOut, onChange: (leadOut) => change({ leadOut }) })
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(LeadControls, { label: "Lead-in", value: p.leadIn, onChange: (leadIn) => change({ leadIn }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(LeadControls, { label: "Lead-out", value: p.leadOut, onChange: (leadOut) => change({ leadOut }) })
         ] }),
-        playback.error && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { className: "error", role: "alert", children: playback.error })
+        d.footwork && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(WeightStream, { footwork: d.footwork, first: p.first, last: p.last, readBeat }),
+        playback.error && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { className: "error", role: "alert", children: playback.error })
       ] }),
-      snapshot.saveError && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { className: "error", role: "alert", children: snapshot.saveError })
+      snapshot.saveError && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { className: "error", role: "alert", children: snapshot.saveError })
     ] });
   }
 
   // src/practice/practice.css
-  var practice_default = '/* Multisport palette and newapp title stack, scoped to embedded practice. */\n@font-face {\n  font-family: "Loopy Comic Relief";\n  src: url("./fonts/ComicRelief-Regular.ttf") format("truetype");\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n}\nhtml:has(.practice-panel) { background: #1a1411; color-scheme: dark; }\nbody:has(.practice-panel) { background: transparent; }\n.practice-panel {\n  --app-title-font: "Comic Sans MS", "Comic Sans", "Loopy Comic Relief", sans-serif;\n  --ww-panel-soft: rgba(36, 28, 24, .78);\n  --ww-border: rgba(201, 156, 107, .2);\n  --ww-text: #fff;\n  --ww-text-muted: rgba(255, 255, 255, .72);\n  --ww-accent-amber: #c99c6b;\n  --ww-title-pink: #ff7bc3;\n  box-sizing: border-box;\n  display: grid;\n  gap: .625rem;\n  width: 100%;\n  padding: .75rem 1rem;\n  border: 1px solid var(--ww-border);\n  border-radius: 1rem;\n  background: var(--ww-panel-soft);\n  color: var(--ww-text);\n  font: 1rem/1.4 system-ui, sans-serif;\n  color-scheme: dark;\n}\n.practice-panel * { box-sizing: border-box; }\n.practice-panel button, .practice-panel input {\n  font: inherit;\n  border: 1px solid var(--ww-border);\n  border-radius: .7rem;\n  color: var(--ww-text);\n  background: rgba(232, 206, 171, .06);\n  padding: .4rem .65rem;\n}\n.practice-panel button { cursor: pointer; white-space: nowrap; }\n.practice-panel button:hover { border-color: var(--ww-accent-amber); }\n.practice-panel :is(button, input, a):focus-visible { outline: 2px solid var(--ww-title-pink); outline-offset: 2px; }\n.practice-panel button:disabled { opacity: .4; cursor: default; }\n.practice-panel .practice-header { display: flex; align-items: center; gap: 1rem; min-width: 0; }\n.practice-panel .brand { font: 400 1.65rem/.95 var(--app-title-font); letter-spacing: -.06em; color: var(--ww-title-pink); white-space: nowrap; text-decoration: none; }\n.practice-panel .practice-title { min-width: 0; }\n.practice-panel h1 { font-size: .9rem; margin: 0; font-weight: 500; }\n.practice-panel .text-button { background: none; border: 0; color: var(--ww-text-muted); font-size: .75rem; padding: .25rem; }\n.practice-panel .exit { margin-left: auto; }\n.practice-panel .transport + .exit { margin-left: 0; }\n.practice-panel .beat-blocks { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: .4rem; touch-action: none; user-select: none; }\n.practice-panel .beat-blocks button { padding: .5rem .25rem; font-weight: 650; font-variant-numeric: tabular-nums; }\n.practice-panel .beat-blocks button span { opacity: .7; }\n.practice-panel button[aria-pressed=true] { border-color: rgba(232, 206, 171, .5); background: linear-gradient(135deg, rgba(232, 206, 171, .22), rgba(217, 174, 119, .20)); color: #ffe1bc; }\n.practice-panel .transport { display: flex; align-items: center; gap: .75rem; margin-left: auto; }\n.practice-panel button.play { background: var(--ww-accent-amber); border-color: rgba(255, 191, 105, .5); color: #21150e; border-radius: 999px; padding: .4rem 1.1rem; font-weight: 700; }\n.practice-panel .counter { display: flex; align-items: center; gap: .5rem; }\n.practice-panel .count { font-size: 1.55rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ww-title-pink); min-width: 1.5ch; text-align: center; }\n.practice-panel :is(.phase-lead-in, .phase-lead-out) .count { color: var(--ww-accent-amber); }\n.practice-panel .phase { font-size: .8rem; white-space: nowrap; }\n.practice-panel .practice-settings { display: grid; grid-template-columns: auto auto auto; gap: 1rem; align-items: center; justify-content: space-between; }\n.practice-panel :is(.speed, .lead-row) { display: flex; align-items: center; gap: .5rem; white-space: nowrap; min-width: 0; }\n.practice-panel .speed output { min-width: 4ch; text-align: center; font-size: .8rem; font-variant-numeric: tabular-nums; }\n.practice-panel .speed > span, .practice-panel .lead-row legend, .practice-panel .duration { font-size: .75rem; color: var(--ww-text-muted); }\n.practice-panel .segments { display: flex; gap: .2rem; }\n.practice-panel .segments button { font-size: .75rem; padding: .375rem .5rem; border-radius: .5rem; }\n.practice-panel .lead-row { border: 0; margin: 0; padding: 0; }\n.practice-panel .lead-row legend { float: left; width: auto; margin: 0; padding: 0; }\n.practice-panel .duration { display: flex; align-items: center; gap: .5rem; }\n.practice-panel .duration input { width: 2.75rem; font-size: .8rem; padding: .35rem .3rem; }\n.practice-panel .lead-row button { text-transform: capitalize; }\n.practice-panel .empty { padding: 1rem 0; }\n.practice-panel .empty h1 { font-size: 1.2rem; margin-bottom: .5rem; }\n.practice-panel .empty button { margin: .5rem .5rem 0 0; }\n.practice-panel .error { background: rgba(52, 13, 19, .76); color: #ff9fb0; border: 1px solid rgba(255, 158, 174, .28); border-radius: .5rem; padding: .75rem; margin: 0; }\n.manual-shell { padding: .75rem; background: #ddd; color: #171717; }\n@media (max-width: 68rem) {\n  .practice-panel { gap: .5rem; }\n  .practice-panel .practice-settings { grid-template-columns: auto auto; gap: .5rem; }\n  .practice-panel .speed { grid-column: 1 / -1; }\n  .practice-panel .brand { font-size: 1.4rem; }\n  .practice-panel .transport { gap: .4rem; }\n  .practice-panel .phase { font-size: .7rem; }\n}\n@media (max-width: 44rem) {\n  .practice-panel { padding: .625rem; }\n  .practice-panel .practice-header { flex-wrap: wrap; gap: .5rem; }\n  .practice-panel .practice-title { flex: 1; }\n  .practice-panel .transport { margin-left: 0; }\n  .practice-panel .practice-settings { grid-template-columns: 1fr; }\n  .practice-panel :is(.speed, .lead-row) { justify-content: space-between; }\n  .practice-panel .beat-blocks { gap: .2rem; }\n  .practice-panel .beat-blocks button { font-size: .75rem; }\n}\n';
+  var practice_default = `/* Multisport palette and newapp title stack, scoped to embedded practice. */
+@font-face {
+  font-family: "Loopy Comic Relief";
+  src: url("./fonts/ComicRelief-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+html:has(.practice-panel) { background: #1a1411; color-scheme: dark; }
+body:has(.practice-panel) { background: transparent; }
+.practice-panel {
+  --app-title-font: "Comic Sans MS", "Comic Sans", "Loopy Comic Relief", sans-serif;
+  --ww-panel-soft: rgba(36, 28, 24, .78);
+  --ww-border: rgba(201, 156, 107, .2);
+  --ww-text: #fff;
+  --ww-text-muted: rgba(255, 255, 255, .72);
+  --ww-accent-amber: #c99c6b;
+  --ww-title-pink: #ff7bc3;
+  box-sizing: border-box;
+  display: grid;
+  gap: .625rem;
+  width: 100%;
+  padding: .75rem 1rem;
+  border: 1px solid var(--ww-border);
+  border-radius: 1rem;
+  background: var(--ww-panel-soft);
+  color: var(--ww-text);
+  font: 1rem/1.4 system-ui, sans-serif;
+  color-scheme: dark;
+}
+.practice-panel * { box-sizing: border-box; }
+.practice-panel button, .practice-panel input {
+  font: inherit;
+  border: 1px solid var(--ww-border);
+  border-radius: .7rem;
+  color: var(--ww-text);
+  background: rgba(232, 206, 171, .06);
+  padding: .4rem .65rem;
+}
+.practice-panel button { cursor: pointer; white-space: nowrap; }
+.practice-panel button:hover { border-color: var(--ww-accent-amber); }
+.practice-panel :is(button, input, a):focus-visible { outline: 2px solid var(--ww-title-pink); outline-offset: 2px; }
+.practice-panel button:disabled { opacity: .4; cursor: default; }
+.practice-panel .practice-header { display: flex; align-items: center; gap: 1rem; min-width: 0; }
+.practice-panel .brand { font: 400 1.65rem/.95 var(--app-title-font); letter-spacing: -.06em; color: var(--ww-title-pink); white-space: nowrap; text-decoration: none; }
+.practice-panel .practice-title { min-width: 0; }
+.practice-panel h1 { font-size: .9rem; margin: 0; font-weight: 500; }
+.practice-panel .text-button { background: none; border: 0; color: var(--ww-text-muted); font-size: .75rem; padding: .25rem; }
+.practice-panel .exit { margin-left: auto; }
+.practice-panel .transport + .exit { margin-left: 0; }
+.practice-panel .beat-blocks { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: .4rem; touch-action: none; user-select: none; }
+.practice-panel .beat-blocks button { padding: .5rem .25rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.practice-panel .beat-blocks button span { opacity: .7; }
+.practice-panel button[aria-pressed=true] { border-color: rgba(232, 206, 171, .5); background: linear-gradient(135deg, rgba(232, 206, 171, .22), rgba(217, 174, 119, .20)); color: #ffe1bc; }
+.practice-panel .transport { display: flex; align-items: center; gap: .75rem; margin-left: auto; }
+.practice-panel button.play { background: var(--ww-accent-amber); border-color: rgba(255, 191, 105, .5); color: #21150e; border-radius: 999px; padding: .4rem 1.1rem; font-weight: 700; }
+.practice-panel .counter { display: flex; align-items: center; gap: .5rem; }
+.practice-panel .count { font-size: 1.55rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ww-title-pink); min-width: 1.5ch; text-align: center; }
+.practice-panel :is(.phase-lead-in, .phase-lead-out) .count { color: var(--ww-accent-amber); }
+.practice-panel .phase { font-size: .8rem; white-space: nowrap; }
+.practice-panel .practice-settings { display: grid; grid-template-columns: auto auto auto; gap: 1rem; align-items: center; justify-content: space-between; }
+.practice-panel :is(.speed, .lead-row) { display: flex; align-items: center; gap: .5rem; white-space: nowrap; min-width: 0; }
+.practice-panel .speed output { min-width: 4ch; text-align: center; font-size: .8rem; font-variant-numeric: tabular-nums; }
+.practice-panel .speed > span, .practice-panel .lead-row legend, .practice-panel .duration { font-size: .75rem; color: var(--ww-text-muted); }
+.practice-panel .segments { display: flex; gap: .2rem; }
+.practice-panel .segments button { font-size: .75rem; padding: .375rem .5rem; border-radius: .5rem; }
+.practice-panel .lead-row { border: 0; margin: 0; padding: 0; }
+.practice-panel .lead-row legend { float: left; width: auto; margin: 0; padding: 0; }
+.practice-panel .duration { display: flex; align-items: center; gap: .5rem; }
+.practice-panel .duration input { width: 2.75rem; font-size: .8rem; padding: .35rem .3rem; }
+.practice-panel .lead-row button { text-transform: capitalize; }
+.practice-panel .empty { padding: 1rem 0; }
+.practice-panel .empty h1 { font-size: 1.2rem; margin-bottom: .5rem; }
+.practice-panel .empty button { margin: .5rem .5rem 0 0; }
+.practice-panel .error { background: rgba(52, 13, 19, .76); color: #ff9fb0; border: 1px solid rgba(255, 158, 174, .28); border-radius: .5rem; padding: .75rem; margin: 0; }
+.manual-shell { padding: .75rem; background: #ddd; color: #171717; }
+@media (max-width: 68rem) {
+  .practice-panel { gap: .5rem; }
+  .practice-panel .practice-settings { grid-template-columns: auto auto; gap: .5rem; }
+  .practice-panel .speed { grid-column: 1 / -1; }
+  .practice-panel .brand { font-size: 1.4rem; }
+  .practice-panel .transport { gap: .4rem; }
+  .practice-panel .phase { font-size: .7rem; }
+}
+@media (max-width: 44rem) {
+  .practice-panel { padding: .625rem; }
+  .practice-panel .practice-header { flex-wrap: wrap; gap: .5rem; }
+  .practice-panel .practice-title { flex: 1; }
+  .practice-panel .transport { margin-left: 0; }
+  .practice-panel .practice-settings { grid-template-columns: 1fr; }
+  .practice-panel :is(.speed, .lead-row) { justify-content: space-between; }
+  .practice-panel .beat-blocks { gap: .2rem; }
+  .practice-panel .beat-blocks button { font-size: .75rem; }
+}
+/* Time, rather than character index, sets spacing. No easing: track media time. */
+.practice-panel .weight-stream { position: relative; height: 3.75rem; min-width: 0; overflow: hidden; border-top: 1px solid var(--ww-border); }
+.practice-panel .weight-strip { position: absolute; top: 0; left: 50%; height: 100%; width: 0; will-change: transform; }
+.practice-panel .weight-cue { position: absolute; top: .55rem; transform: translateX(-50%); font: 500 1.9rem/1.3 ui-monospace, monospace; color: var(--ww-text-muted); opacity: .5; }
+.practice-panel .weight-cue[data-selected=true] { color: #ffe1bc; opacity: 1; }
+.practice-panel .weight-cue[data-current=true] { color: var(--ww-title-pink); opacity: 1; }
+.practice-panel .weight-now { position: absolute; left: 50%; top: .2rem; bottom: .2rem; width: 1.8rem; transform: translateX(-50%); border-radius: .35rem; background: rgba(255, 123, 195, .08); border: 1px solid rgba(255, 123, 195, .3); }
+.practice-panel .weight-now::before { content: ''; position: absolute; top: -.1rem; left: 50%; transform: translateX(-50%); border: .2rem solid transparent; border-top-color: var(--ww-title-pink); }
+`;
 
   // src/practice/mountControls.tsx
-  var import_jsx_runtime2 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime3 = __toESM(require_jsx_runtime());
   function Controls({ session, actions }) {
-    const snapshot = (0, import_react2.useSyncExternalStore)(session.subscribe, session.getSnapshot);
-    return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(PracticeControls, { snapshot, actions });
+    const snapshot = (0, import_react3.useSyncExternalStore)(session.subscribe, session.getSnapshot);
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(PracticeControls, { snapshot, actions, readBeat: session.readBeat });
   }
   function mountControls(host, session, actions, onHeight) {
     const shadow = host.attachShadow({ mode: "open" });
@@ -12711,7 +13180,7 @@
     shadow.append(style, container);
     for (const event of ["keydown", "keyup", "keypress"]) shadow.addEventListener(event, (e) => e.stopPropagation());
     const root = (0, import_client.createRoot)(container);
-    root.render(/* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Controls, { session, actions }));
+    root.render(/* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Controls, { session, actions }));
     const measure = () => {
       const height = Math.ceil(container.getBoundingClientRect().height);
       if (height > 0) onHeight(height);

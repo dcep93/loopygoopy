@@ -14,7 +14,7 @@ export async function requestDefinition(mediaId: string, refresh = false): Promi
     return { definition: response.definition, notice: response.notice };
   } catch {
     let saved: any;
-    try { saved = (await window.chrome.storage.local.get('practice-catalog-v1'))['practice-catalog-v1']; } catch {}
+    try { saved = (await window.chrome.storage.local.get('practice-catalog-v2'))['practice-catalog-v2']; } catch {}
     const catalog = validCatalog(saved?.catalog) ? saved.catalog : bundled;
     return { definition: catalog.videos.find((v: Definition) => v.mediaId === mediaId), notice: 'Using the saved practice catalog.' };
   } finally { clearTimeout(timer); }

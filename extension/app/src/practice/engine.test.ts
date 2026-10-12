@@ -105,3 +105,20 @@ test('an obsolete play promise cannot pause a newer playback cycle',async()=>{
   void engine.play();await flush();expect(media.paused).toBe(false);
   resolveOld();await flush();expect(media.paused).toBe(false);expect(engine.state.running).toBe(true);
 });
+test('fractional stream position follows media through speed, buffering, pause, selection and repeat',async()=>{
+  setup({speed:.5,last:4,leadIn:{beats:0,style:'track'},leadOut:{beats:0,style:'track'}});
+  expect(engine.readBeat()).toBe(1);
+  void engine.play();await flush();await advance(500);
+  expect(engine.readBeat()).toBeCloseTo(1.5);
+  await advance(1000,false);expect(engine.readBeat()).toBeCloseTo(1.5);
+  engine.pause();await advance(1000);expect(engine.readBeat()).toBeCloseTo(1.5);
+  await engine.update({...engine.prefs,first:9,last:12,speed:1});expect(engine.readBeat()).toBeCloseTo(9);
+  void engine.play();await flush();await advance(500);expect(engine.readBeat()).toBeCloseTo(10);
+  await advance(1600);expect(engine.state.cycle).toBe(2);expect(engine.readBeat()).toBeGreaterThanOrEqual(9);expect(engine.readBeat()).toBeLessThan(10);
+});
+test('fractional stream follows track pickup and holds with frozen leads',async()=>{
+  void engine.play();await flush();expect(engine.readBeat()).toBeCloseTo(-1);
+  await advance(750);expect(engine.readBeat()).toBeCloseTo(.5);
+  engine.pause();await engine.update({...defaults,leadIn:{beats:2,style:'silent'}});
+  void engine.play();await flush();const position=engine.readBeat();await advance(500);expect(engine.readBeat()).toBe(position);
+});
