@@ -76,8 +76,11 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
     }
     configure(); mount();
   }
+  // Explicit manual actions take control; merely opening the popup does not.
+  const manualControl = () => { if (engine?.state.running) engine.pause(); };
+  window.addEventListener('loopy-manual-control', manualControl);
   const timer = setInterval(inspect, 500); inspect();
   document.addEventListener('yt-navigate-finish', inspect);
   window.addEventListener('popstate', inspect);
-  window.addEventListener('pagehide', () => { disposed = true; clearInterval(timer); teardown(); port?.disconnect(); }, { once: true });
+  window.addEventListener('pagehide', () => { disposed = true; window.removeEventListener('loopy-manual-control', manualControl); clearInterval(timer); teardown(); port?.disconnect(); }, { once: true });
 }

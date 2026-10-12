@@ -62,12 +62,13 @@ export default function PracticeApp() {
       setConnectionError(false);
       try {
         await transferRecords(); if (closed) return;
-        if (!window.chrome?.runtime?.connect) { setManual(true); return; }
+        // The toolbar popup always uses the original controls, regardless of catalog data.
+        if (!embedded || !window.chrome?.runtime?.connect) { setManual(true); return; }
         port = window.chrome.runtime.connect({ name: 'loopy-practice-view' }); connection.current = port;
         port.onMessage.addListener((m: any) => {
           if (closed) return;
-          if (m.type === 'snapshot') { setSnapshot(m); if (!embedded && !m.loading && !m.definition) setManual(true); }
-          if (m.type === 'unavailable') { if (!embedded) setManual(true); else setSnapshot({ loading: false, error: 'The video connection changed. Reload this page.' }); }
+          if (m.type === 'snapshot') setSnapshot(m);
+          if (m.type === 'unavailable') setSnapshot({ loading: false, error: 'The video connection changed. Reload this page.' });
           if (m.type === 'stale') setSnapshot({ loading: false, error: 'This video session ended. Reload the page to reconnect.' });
           if (m.type === 'save-error') setSaveError('Settings could not be saved. Your current session is still running.');
         });
@@ -86,17 +87,25 @@ export default function PracticeApp() {
     // The bound session ID changes only when the iframe is replaced.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [embedded, snapshot.mediaId, manual]);
-  // Ordinary videos retain the original popup root and layout.
-  if (manual && !embedded) return <Main />;
+  const retry = () => {
+    if (connectionError) { setSnapshot({ loading: true }); setConnectionAttempt(n => n + 1); }
+    else send('retry');
+  };
+  if (!embedded) {
+    if (manual) return <Main />;
+    return <div style={{ width: '800px', padding: '.5em', backgroundColor: '#aaaaaa' }}>
+      {snapshot.error ? <div role="alert">{snapshot.error} <button onClick={retry}>Retry</button></div> : 'Loading settings…'}
+    </div>;
+  }
   if (manual) return <div className="manual-shell"><button onClick={() => send('exit')}>Close controls</button><Main /></div>;
   const { definition: d, prefs: p } = snapshot, playback = snapshot.playback || paused;
   const change = (patch: Partial<Preferences>) => { if (p) send('preferences', { prefs: { ...p, ...patch } }); };
   const phase = playback.phase === 'lead-in' ? 'Get ready' : playback.phase === 'lead-out' ? 'Reset' : playback.phase === 'buffering' ? 'Buffering' : playback.phase === 'seeking' ? 'Getting ready' : playback.running ? 'Practicing' : 'Ready to practice';
-  return <main className={`practice-panel ${embedded ? 'embedded' : 'popup'}`}>
+  return <main className="practice-panel embedded">
     <header><a className="brand" href="https://github.com/dcep93/loopygoopy#practice" target="_blank" rel="noreferrer">loopy goopy<span> ↗</span></a>
       {embedded && <button className="text-button" onClick={() => send('exit')}>Exit practice mode</button>}</header>
     {snapshot.loading ? <div className="empty"><h1>Preparing your practice…</h1></div> : snapshot.error ?
-      <div className="empty" role="alert"><h1>Let’s reconnect</h1><p>{snapshot.error}</p><button onClick={() => { if (connectionError) { setSnapshot({ loading: true }); setConnectionAttempt(n => n + 1); } else send('retry'); }}>Retry</button></div> : !d || !p ?
+      <div className="empty" role="alert"><h1>Let’s reconnect</h1><p>{snapshot.error}</p><button onClick={retry}>Retry</button></div> : !d || !p ?
       <div className="empty"><h1>This video isn’t prepared yet</h1><p>{snapshot.notice || 'You can still use the manual loop controls.'}</p><button onClick={() => send('retry')}>Retry</button><button onClick={() => { send('manual'); setManual(true); }}>Manual controls</button></div> : <>
       <div className="practice-heading"><div><p className="eyebrow">{d.title}</p><h1>One part at a time.</h1></div><p className="selection" aria-live="polite">Beats <strong>{p.first}–{p.last}</strong><span> of {d.totalBeats}</span></p></div>
       <RangeButtons first={p.first} last={p.last} onChange={change} />

@@ -362,12 +362,17 @@
       } catch {
       }
     };
+    const manualControl = () => {
+      if (engine?.state.running) engine.pause();
+    };
+    window.addEventListener("loopy-manual-control", manualControl);
     const timer = setInterval(inspect2, 500);
     inspect2();
     document.addEventListener("yt-navigate-finish", inspect2);
     window.addEventListener("popstate", inspect2);
     window.addEventListener("pagehide", () => {
       disposed = true;
+      window.removeEventListener("loopy-manual-control", manualControl);
       clearInterval(timer);
       teardown2();
       port?.disconnect();

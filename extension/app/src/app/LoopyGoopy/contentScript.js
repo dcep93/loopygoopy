@@ -144,6 +144,7 @@ function pause() {
 }
 const messageTasks = {
     [MessageType.start]: (payload) => {
+        window.dispatchEvent(new Event("loopy-manual-control"));
         ensureState({ refreshTargets: true, reason: "start" });
         if (_state.iframe && !_state.media) {
             return Promise.resolve().then(() => sendFrameMessage(_state.iframe, MessageType.start, payload));
@@ -174,6 +175,7 @@ const messageTasks = {
             });
     },
     [MessageType.stop]: () => {
+        window.dispatchEvent(new Event("loopy-manual-control"));
         ensureState();
         if (_state.iframe && !_state.media) {
             return Promise.resolve()
@@ -215,6 +217,7 @@ const messageTasks = {
         return Promise.resolve({ success: true });
     },
     [MessageType.seek]: (payload) => {
+        window.dispatchEvent(new Event("loopy-manual-control"));
         ensureState({ refreshTargets: true, reason: "seek" });
         if (_state.iframe && !_state.media) {
             return Promise.resolve().then(() => sendFrameMessage(_state.iframe, MessageType.seek, payload));

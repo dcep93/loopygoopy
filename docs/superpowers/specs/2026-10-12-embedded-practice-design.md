@@ -8,7 +8,7 @@ A prepared YouTube video opens as a focused practice page when its URL contains 
 
 The first published example is https://www.youtube.com/watch?v=xzeGxm72GOo&loopygoopy. Prepare one verified, constant-tempo, 32-beat section from this video. Its timing must be calibrated against the footage before publication; the previously saved BPM or start time is not sufficient evidence. Adding the other videos is a subsequent authoring workflow, not a requirement to prepare 30 videos in this implementation.
 
-V1 includes the focused YouTube layout, shared practice controls, repeating playback phases, a remotely published JSON catalog. It excludes automatic tempo detection, automatic progression through sections, multiple demonstrations per video, variable-tempo beat maps, learner accounts, and a custom publishing dashboard.
+V1 includes the focused YouTube layout, embedded practice controls, repeating playback phases, a remotely published JSON catalog. It excludes automatic tempo detection, automatic progression through sections, multiple demonstrations per video, variable-tempo beat maps, learner accounts, and a custom publishing dashboard.
 
 ## Page and controls
 
@@ -52,15 +52,15 @@ After lead-out, seek to the next cycle's starting position. Frozen leads show an
 
 Drive practice beat display and interval boundaries from the player's actual media time, not a single wall-clock timeout. Buffering and seeking must not advance the displayed practice count. Synthetic frozen phases use a monotonic clock and cancellable audio scheduling. Seek completion precedes starting the next phase. Pause cancels scheduled clicks and holds position; Play restarts the selected range with its lead-in. Navigation, exiting practice mode, and a replaced session stop the old controller and restore page/audio state.
 
-## Shared UI and state
+## Popup behavior and practice state
 
-Extract reusable controls from the current popup. The embedded panel and popup render the same practice component and communicate with the same per-tab controller; opening or closing the popup does not reset playback. The embedded panel is packaged with the extension, preferably as an extension-owned iframe for CSS isolation and build reuse. The existing YouTube player stays outside this frame.
+User correction: clicking the extension icon must always open the original manual popup, for prepared and unprepared videos alike. The popup must not use catalog availability to choose a UI or connect to the prepared-practice view. Only the extension-owned iframe created by a YouTube URL with `&loopygoopy` renders the new practice controls. Opening or closing the popup does not change page mode or reset playback; explicit manual playback/seek actions stop any active practice cycle before taking control. The existing YouTube player stays mounted outside the iframe.
 
 The content script controls the player and reports phase, media time, buffering, and playback status. Extension messaging binds each view to its actual tab and video, validates the sender/session, and rejects stale or mismatched commands. Remove reliance on a single remembered background tab when routing shared controls. Navigation invalidates the old session before loading another video's settings.
 
 Use one extension-owned persistent store for both surfaces. `chrome.storage.local` is the proposed store because the background controller can access it directly. Port the current v0.0.2 records once from extension localStorage through a packaged offscreen extension document (avoiding embedded-frame storage partitioning), verify writes before marking the port complete, and retain existing data until verification succeeds. This is a one-time transfer, not an ongoing fallback. Existing IDs, source metadata, bookmarks, and manual configs remain intact. Guided preferences occupy a separate field/namespace so curated timing does not overwrite personal presets, including Ozzy's.
 
-Multiple tabs have separate playback sessions even when they show the same video. Saved preferences are per video; an edit in one tab must not seek or restart another tab's active session. Popup edits affect its bound tab and are reflected in that tab's embedded panel immediately. Serialize persistence and guard asynchronous initialization against stale responses.
+Multiple tabs have separate playback sessions even when they show the same video. Saved preferences are per video; an edit in one tab must not seek or restart another tab's active session. The original popup retains its own manual configurations and bookmarks, bound to its actual video; guided practice preferences remain separate. Serialize persistence and guard asynchronous initialization against stale responses.
 
 ## Publishing the catalog
 
@@ -81,7 +81,7 @@ Meaningful verification covers:
 - Selection of 1–4, default 1–8, 1–12, 17–24, and 1–32; reverse drag, cancellation, release outside, and keyboard access.
 - Every combination of lead style and zero/nonzero duration; 0.5×, 0.75×, and 1× speed; correct frozen frames and repeated leads.
 - Boundary timing against the actual golden video, including buffering, seek delay, cancellation, and avoiding leftover metronome clicks.
-- Popup/panel synchronization, popup closure, switching videos, multiple tabs, and exit restoring the ordinary page.
+- Consistent original popup on every video, explicit embedded-mode activation, popup closure, switching videos, multiple tabs, and exit restoring the ordinary page.
 - Exact preservation of the existing migrated configs through the storage transfer, including Ozzy's original presets.
 - Missing/invalid catalog entries, cached offline use, revisions, shared downloads, and ensuring every request uses the same URL without a video ID.
 

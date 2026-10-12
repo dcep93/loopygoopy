@@ -20,7 +20,7 @@ Open [the prepared example](https://www.youtube.com/watch?v=xzeGxm72GOo&loopygoo
 - Keyboard: focus a block and press Enter/Space to select it; Shift+Arrow extends a range. Arrow keys move focus.
 - Choose speed, then Play. Repetitions continue until Pause.
 - Lead-in and lead-out each have their own beat duration and Track/Silent/Metronome choice. Track plays adjacent footage; Silent and Metronome freeze the picture at the selected boundaries. Their duration follows playback speed.
-- The extension popup uses the same controls and active video session. No Save button is needed.
+- Clicking the extension icon always opens the original manual controls, on every video. The new beat-practice controls appear only in the page when its URL contains `&loopygoopy`. Practice preferences save automatically.
 
 Prepared videos supply their timing. Other videos still use the manual controls. Advanced opens manual controls for a prepared video.
 

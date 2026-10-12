@@ -198,6 +198,7 @@ function pause() {
 
 const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
   [MessageType.start]: (payload: { config: NumberConfigType }) => {
+    window.dispatchEvent(new Event("loopy-manual-control"));
     ensureState({ refreshTargets: true, reason: "start" });
     if (_state.iframe && !_state.media) {
       return Promise.resolve().then(() =>
@@ -232,6 +233,7 @@ const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
       });
   },
   [MessageType.stop]: () => {
+    window.dispatchEvent(new Event("loopy-manual-control"));
     ensureState();
     if (_state.iframe && !_state.media) {
       return Promise.resolve()
@@ -279,6 +281,7 @@ const messageTasks: { [mType in MessageType]: (payload: any) => any } = {
     return Promise.resolve({ success: true });
   },
   [MessageType.seek]: (payload: { time: number }) => {
+    window.dispatchEvent(new Event("loopy-manual-control"));
     ensureState({ refreshTargets: true, reason: "seek" });
     if (_state.iframe && !_state.media) {
       return Promise.resolve().then(() =>
