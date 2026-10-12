@@ -112,3 +112,55 @@ test('modified clicks remain native links, and a fragment opts in until explicit
 test('ads cannot start practice playback',async()=>{
   await start(`${golden.sourceUrl}&loopygoopy`);document.querySelector('#movie_player')!.classList.add('ad-showing');actions.play();expect(controller.play).not.toHaveBeenCalled();
 });
+function autoplayAttempt(event='play') {
+  const media=document.querySelector('video')!;
+  Object.defineProperty(media,'paused',{configurable:true,value:false});
+  media.dispatchEvent(new Event(event));
+  return media;
+}
+test('practice startup suppresses delayed and repeated autoplay after the controls mount',async()=>{
+  await start(`${golden.sourceUrl}&loopygoopy`);
+  for(const event of ['play','playing','loadedmetadata','play']) {
+    (HTMLMediaElement.prototype.pause as jest.Mock).mockClear();
+    const media=autoplayAttempt(event);
+    expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledTimes(1);
+    expect((HTMLMediaElement.prototype.pause as jest.Mock).mock.instances[0]).toBe(media);
+  }
+});
+test('startup guard catches a late player before the next inspection',async()=>{
+  await start(`${golden.sourceUrl}&loopygoopy`,false);player();
+  (HTMLMediaElement.prototype.pause as jest.Mock).mockClear();autoplayAttempt();
+  expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledTimes(1);
+});
+test('ordinary playback and deliberate practice Play are not blocked by the startup guard',async()=>{
+  await start();autoplayAttempt();expect(HTMLMediaElement.prototype.pause).not.toHaveBeenCalled();
+  entry()!.click();actions.play();(HTMLMediaElement.prototype.pause as jest.Mock).mockClear();
+  autoplayAttempt();autoplayAttempt('playing');jest.advanceTimersByTime(1000);
+  expect(HTMLMediaElement.prototype.pause).not.toHaveBeenCalled();expect(controller.play).toHaveBeenCalledTimes(1);
+});
+test.each(['exit','navigate','manual','pagehide'])('startup guard releases on %s',async(action)=>{
+  await start(`${golden.sourceUrl}&loopygoopy`);
+  if(action==='exit')actions.exit();
+  if(action==='navigate')pageLocation.href='https://www.youtube.com/watch?v=O_vU27GXPpk';
+  if(action==='manual')window.dispatchEvent(new Event('loopy-manual-control'));
+  if(action==='pagehide')window.dispatchEvent(new Event('pagehide'));
+  (HTMLMediaElement.prototype.pause as jest.Mock).mockClear();autoplayAttempt();
+  expect(HTMLMediaElement.prototype.pause).not.toHaveBeenCalled();
+});
+test('already-playing late media is paused on inspection, and ad completion is held too',async()=>{
+  await start(`${golden.sourceUrl}&loopygoopy`,false);player();
+  const media=document.querySelector('video')!;
+  Object.defineProperty(media,'paused',{configurable:true,value:false});
+  jest.advanceTimersByTime(500);expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled();
+  document.querySelector('#movie_player')!.classList.add('ad-showing');
+  (HTMLMediaElement.prototype.pause as jest.Mock).mockClear();autoplayAttempt();actions.play();
+  expect(HTMLMediaElement.prototype.pause).not.toHaveBeenCalled();expect(controller.play).not.toHaveBeenCalled();
+  document.querySelector('#movie_player')!.classList.remove('ad-showing');autoplayAttempt();
+  expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledTimes(1);
+});
+test('exiting and reentering practice rearms startup pause, including after URL cleanup',async()=>{
+  await start(`${golden.sourceUrl}&loopygoopy`);actions.play();actions.exit();entry()!.click();
+  await navigate(golden.sourceUrl);
+  (HTMLMediaElement.prototype.pause as jest.Mock).mockClear();autoplayAttempt();
+  expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledTimes(1);
+});

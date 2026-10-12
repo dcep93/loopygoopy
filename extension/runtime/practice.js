@@ -13288,7 +13288,7 @@ html.loopy-practice.loopy-practice-lead #movie_player video { opacity: .5 !impor
   function startPracticePage() {
     let session, unsubscribe, href = "", videoId = "";
     let panel, unmount, style;
-    let disposed = false, practiceRequested = false;
+    let disposed = false, practiceRequested = false, awaitingPracticePlay = false;
     let entry;
     function removeEntry() {
       entry?.remove();
@@ -13313,6 +13313,7 @@ html.loopy-practice.loopy-practice-lead #movie_player video { opacity: .5 !impor
         target.searchParams.set("loopygoopy", "");
         restore();
         practiceRequested = true;
+        awaitingPracticePlay = true;
         removeEntry();
         history.replaceState(history.state, "", target.href);
         href = location.href;
@@ -13349,6 +13350,7 @@ html.loopy-practice.loopy-practice-lead #movie_player video { opacity: .5 !impor
     }
     function exit() {
       practiceRequested = false;
+      awaitingPracticePlay = false;
       session?.releaseMedia();
       restore();
       const url = new URL(location.href);
@@ -13358,8 +13360,16 @@ html.loopy-practice.loopy-practice-lead #movie_player video { opacity: .5 !impor
       href = location.href;
       updateEntry();
     }
+    function holdStartupPlayback(event) {
+      if (disposed || !practiceRequested || !awaitingPracticePlay) return;
+      const url = new URL(location.href);
+      if (url.pathname !== "/watch" || `youtube:${url.searchParams.get("v")}` !== videoId || document.querySelector("#movie_player.ad-showing")) return;
+      const media = event?.target instanceof HTMLVideoElement ? event.target : document.querySelector("#movie_player video");
+      if (media?.closest("#movie_player") && !media.paused) media.pause();
+    }
     function configure() {
       if (!practiceRequested) return;
+      holdStartupPlayback();
       if (document.querySelector("#movie_player.ad-showing")) {
         session?.pause();
         return;
@@ -13375,7 +13385,6 @@ html.loopy-practice.loopy-practice-lead #movie_player video { opacity: .5 !impor
       const parent = document.querySelector("#primary-inner");
       if (!parent || !document.head || !document.querySelector("#movie_player video")) return;
       removeEntry();
-      if (!session.snapshot.playback?.running) document.querySelector("#movie_player video")?.pause();
       style = document.createElement("style");
       style.textContent = `@font-face { font-family: "Loopy Comic Relief"; src: url("${chrome.runtime.getURL("runtime/ComicRelief-Regular.ttf")}") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }` + practicePageCSS;
       document.head.appendChild(style);
@@ -13394,6 +13403,7 @@ html.loopy-practice.loopy-practice-lead #movie_player video { opacity: .5 !impor
             boundSession.reportError("Wait for the ad to finish, then press Play.");
             return;
           }
+          awaitingPracticePlay = false;
           configure();
           window.dispatchEvent(new Event("loopy-practice-start"));
           boundSession.play();
@@ -13427,7 +13437,10 @@ html.loopy-practice.loopy-practice-lead #movie_player video { opacity: .5 !impor
         const nextVideoId = id && /^[\w-]{11}$/.test(id) ? `youtube:${id}` : "";
         const requested = url.searchParams.has("loopygoopy") || url.hash === "#loopygoopy";
         const changedVideo = nextVideoId !== videoId;
-        practiceRequested = !!nextVideoId && (requested || !changedVideo && practiceRequested);
+        const nextPracticeRequested = !!nextVideoId && (requested || !changedVideo && practiceRequested);
+        if (nextPracticeRequested && (!practiceRequested || changedVideo)) awaitingPracticePlay = true;
+        if (!nextPracticeRequested) awaitingPracticePlay = false;
+        practiceRequested = nextPracticeRequested;
         if (practiceRequested && !url.searchParams.has("loopygoopy")) {
           url.searchParams.set("loopygoopy", "");
           history.replaceState(history.state, "", url.href);
@@ -13443,7 +13456,12 @@ html.loopy-practice.loopy-practice-lead #movie_player video { opacity: .5 !impor
       mount();
       updateEntry();
     }
-    const manualControl = () => session?.pause();
+    const manualControl = () => {
+      awaitingPracticePlay = false;
+      session?.pause();
+    };
+    const startupEvents = ["play", "playing", "loadedmetadata"];
+    startupEvents.forEach((event) => document.addEventListener(event, holdStartupPlayback, true));
     window.addEventListener("loopy-manual-control", manualControl);
     const timer = setInterval(inspect, 500);
     inspect();
@@ -13453,6 +13471,7 @@ html.loopy-practice.loopy-practice-lead #movie_player video { opacity: .5 !impor
     window.addEventListener("hashchange", inspect);
     window.addEventListener("pagehide", () => {
       disposed = true;
+      startupEvents.forEach((event) => document.removeEventListener(event, holdStartupPlayback, true));
       window.removeEventListener("loopy-manual-control", manualControl);
       document.removeEventListener("yt-navigate-start", inspect);
       document.removeEventListener("yt-navigate-finish", inspect);

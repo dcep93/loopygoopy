@@ -8,7 +8,7 @@ declare const chrome: any;
 export function startPracticePage() {
   let session: PracticeSession | undefined, unsubscribe: (() => void) | undefined, href = '', videoId = '';
   let panel: HTMLDivElement | undefined, unmount: (() => void) | undefined, style: HTMLStyleElement | undefined;
-  let disposed = false, practiceRequested = false;
+  let disposed = false, practiceRequested = false, awaitingPracticePlay = false;
   let entry: HTMLDivElement | undefined;
   function removeEntry() { entry?.remove(); entry = undefined; }
   function updateEntry() {
@@ -23,7 +23,7 @@ export function startPracticePage() {
       inspect();
       if (videoId !== entryVideoId || !entry?.isConnected || !validDefinition(session?.snapshot.definition, videoId)) return;
       const target = new URL(location.href); target.searchParams.set('loopygoopy', '');
-      restore(); practiceRequested = true; removeEntry();
+      restore(); practiceRequested = true; awaitingPracticePlay = true; removeEntry();
       history.replaceState(history.state, '', target.href); href = location.href;
       configure(); mount();
     });
@@ -46,15 +46,26 @@ export function startPracticePage() {
   }
   function teardown() { unsubscribe?.(); unsubscribe = undefined; session?.dispose(); session = undefined; removeEntry(); restore(); }
   function exit() {
-    practiceRequested = false;
+    practiceRequested = false; awaitingPracticePlay = false;
     session?.releaseMedia(); restore();
     const url = new URL(location.href); url.searchParams.delete('loopygoopy');
     if (url.hash === '#loopygoopy') url.hash = '';
     history.replaceState(history.state, '', url.href); href = location.href;
     updateEntry();
   }
+  function holdStartupPlayback(event?: Event) {
+    if (disposed || !practiceRequested || !awaitingPracticePlay) return;
+    // A media event can arrive before the SPA navigation inspection. Never hold
+    // playback on a different video, even if the old session is still attached.
+    const url = new URL(location.href);
+    if (url.pathname !== '/watch' || `youtube:${url.searchParams.get('v')}` !== videoId ||
+        document.querySelector('#movie_player.ad-showing')) return;
+    const media = event?.target instanceof HTMLVideoElement ? event.target : document.querySelector<HTMLVideoElement>('#movie_player video');
+    if (media?.closest('#movie_player') && !media.paused) media.pause();
+  }
   function configure() {
     if (!practiceRequested) return;
+    holdStartupPlayback();
     if (document.querySelector('#movie_player.ad-showing')) { session?.pause(); return; }
     const media = document.querySelector<HTMLVideoElement>('#movie_player video');
     if (media) session?.attachMedia(media);
@@ -67,7 +78,6 @@ export function startPracticePage() {
     const parent = document.querySelector('#primary-inner');
     if (!parent || !document.head || !document.querySelector('#movie_player video')) return;
     removeEntry();
-    if (!session.snapshot.playback?.running) document.querySelector<HTMLVideoElement>('#movie_player video')?.pause();
     style = document.createElement('style');
     // Font faces must be registered in the document for use inside a shadow root.
     style.textContent = `@font-face { font-family: "Loopy Comic Relief"; src: url("${chrome.runtime.getURL('runtime/ComicRelief-Regular.ttf')}") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }` + practicePageCSS;
@@ -80,6 +90,7 @@ export function startPracticePage() {
       play: () => {
         if (session !== boundSession) return;
         if (document.querySelector('#movie_player.ad-showing')) { boundSession.reportError('Wait for the ad to finish, then press Play.'); return; }
+        awaitingPracticePlay = false;
         configure(); window.dispatchEvent(new Event('loopy-practice-start')); boundSession.play();
       },
       retry: () => { void boundSession.load(true); },
@@ -110,7 +121,10 @@ export function startPracticePage() {
       const changedVideo = nextVideoId !== videoId;
       // Capture opt-in at document_start, before YouTube normalizes its URL.
       // Keep it only for this video; navigation to another video starts fresh.
-      practiceRequested = !!nextVideoId && (requested || (!changedVideo && practiceRequested));
+      const nextPracticeRequested = !!nextVideoId && (requested || (!changedVideo && practiceRequested));
+      if (nextPracticeRequested && (!practiceRequested || changedVideo)) awaitingPracticePlay = true;
+      if (!nextPracticeRequested) awaitingPracticePlay = false;
+      practiceRequested = nextPracticeRequested;
       if (practiceRequested && !url.searchParams.has('loopygoopy')) {
         url.searchParams.set('loopygoopy', '');
         history.replaceState(history.state, '', url.href); href = location.href;
@@ -122,7 +136,11 @@ export function startPracticePage() {
     configure(); mount(); updateEntry();
   }
   // Explicit manual actions take control; merely opening the popup does not.
-  const manualControl = () => session?.pause();
+  const manualControl = () => { awaitingPracticePlay = false; session?.pause(); };
+  // These media events do not bubble. Capture also covers players inserted or
+  // replaced after document_start, before the next periodic DOM inspection.
+  const startupEvents = ['play', 'playing', 'loadedmetadata'];
+  startupEvents.forEach(event => document.addEventListener(event, holdStartupPlayback, true));
   window.addEventListener('loopy-manual-control', manualControl);
   const timer = setInterval(inspect, 500); inspect();
   document.addEventListener('yt-navigate-start', inspect);
@@ -130,7 +148,8 @@ export function startPracticePage() {
   window.addEventListener('popstate', inspect);
   window.addEventListener('hashchange', inspect);
   window.addEventListener('pagehide', () => {
-    disposed = true; window.removeEventListener('loopy-manual-control', manualControl);
+    disposed = true; startupEvents.forEach(event => document.removeEventListener(event, holdStartupPlayback, true));
+    window.removeEventListener('loopy-manual-control', manualControl);
     document.removeEventListener('yt-navigate-start', inspect); document.removeEventListener('yt-navigate-finish', inspect);
     window.removeEventListener('popstate', inspect); window.removeEventListener('hashchange', inspect);
     clearInterval(timer); teardown();

@@ -57,3 +57,5 @@ For catalog-only edits after an initial build, run `node scripts/validate-catalo
 The updated extension still needs installed-Chrome verification before a Chrome Web Store release. Catalog publication and extension publication are separate. The [store release guide](docs/chrome-web-store-release.md) includes packaging instructions, listing copy, permission explanations, and the upgrade limitation.
 
 Prepared guides can include a scrolling foot-weight strip below the controls: R/L for quick steps (half a numbered count), R/L followed by - for slow steps (one count), r/l for super-quick steps (quarter-count), and * for special actions without a weight transfer. The fixed center marker follows video time, including speed changes, pauses, seeks and track leads. The example uses the main choreography sequence and includes the initial pickup.
+
+Practice mode opens paused and holds off delayed video autoplay until you press Play. Ordinary YouTube playback is unchanged; exiting practice or explicitly using the manual controls releases the startup hold.
