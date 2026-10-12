@@ -34,6 +34,7 @@ describe('practice URL opt-in', () => {
   let controller: { state: { running: boolean }; play: jest.Mock; pause: jest.Mock; dispose: jest.Mock };
   const plainUrl = golden.sourceUrl;
   const panel = () => document.querySelector('#loopy-practice-panel');
+  const entryLink = () => document.querySelector<HTMLAnchorElement>('#loopy-practice-entry a');
   const addPlayer = () => { document.body.innerHTML = '<div id="primary-inner"><div id="movie_player"><video></video></div></div>'; };
   const navigate = (url: string) => {
     pageLocation.href = url;
@@ -133,9 +134,79 @@ describe('practice URL opt-in', () => {
   });
   test('a normal visit stays normal even when the video is prepared', () => {
     start(plainUrl);
+    expect(entryLink()).toBeNull();
+    receive({ type: 'configure', definition: golden, prefs: defaults });
+    expect(entryLink()).toHaveTextContent('Enter practice mode');
+    expect(document.querySelector('#primary-inner')?.firstElementChild?.id).toBe('loopy-practice-entry');
     jest.advanceTimersByTime(1000);
     expect(panel()).toBeNull();
     expect(replaceState).not.toHaveBeenCalled();
+    expect(HTMLMediaElement.prototype.pause).not.toHaveBeenCalled();
+    expect(controller.play).not.toHaveBeenCalled();
+  });
+  test('the entry link uses saved settings, enters without replacing the video, and returns on exit', () => {
+    start(`${plainUrl}&t=42`);
+    const prefs = { ...defaults, first: 17, last: 24, speed: .75 };
+    receive({ type: 'configure', definition: golden, prefs });
+    const media = document.querySelector('video')!;
+    media.currentTime = 42;
+    expect(new URL(entryLink()!.href).searchParams.get('t')).toBe('42');
+    expect(new URL(entryLink()!.href).searchParams.has('loopygoopy')).toBe(true);
+    entryLink()!.click();
+    expect(panel()).not.toBeNull(); expect(entryLink()).toBeNull();
+    expect(document.querySelector('video')).toBe(media);
+    expect(media.currentTime).toBe(42);
+    expect(new URL(pageLocation.href).searchParams.has('loopygoopy')).toBe(true);
+    receive({ type: 'exit' });
+    expect(panel()).toBeNull(); expect(entryLink()).not.toBeNull();
+    entryLink()!.click();
+    expect(panel()).not.toBeNull(); expect(entryLink()).toBeNull();
+    const constructor = require('./engine').PracticeEngine as jest.Mock;
+    expect(constructor.mock.calls[constructor.mock.calls.length - 1].slice(0, 3)).toEqual([media, golden, prefs]);
+  });
+  test('entry follows catalog availability and clears immediately on navigation', () => {
+    start(plainUrl);
+    receive({ type: 'configure', prefs: defaults });
+    expect(entryLink()).toBeNull();
+    receive({ type: 'configure', definition: { ...golden, bpm: -1 }, prefs: defaults });
+    expect(entryLink()).toBeNull();
+    receive({ type: 'configure', definition: golden, prefs: defaults });
+    expect(entryLink()).not.toBeNull();
+    navigate('https://www.youtube.com/watch?v=O_vU27GXPpk');
+    receive({ type: 'bound', token: 'ozzy-session' });
+    expect(entryLink()).toBeNull();
+    receive({ type: 'configure', definition: golden, prefs: defaults });
+    expect(entryLink()).toBeNull();
+    navigate(plainUrl); receive({ type: 'bound', token: 'back-session' });
+    receive({ type: 'configure', definition: golden, prefs: defaults });
+    expect(entryLink()).not.toBeNull();
+    navigate('https://www.youtube.com/'); expect(entryLink()).toBeNull();
+  });
+  test('entry waits for the player and recovers after YouTube replaces its containers', () => {
+    start(plainUrl, false);
+    receive({ type: 'configure', definition: golden, prefs: defaults });
+    expect(entryLink()).toBeNull();
+    addPlayer(); jest.advanceTimersByTime(500);
+    expect(entryLink()).not.toBeNull();
+    addPlayer(); jest.advanceTimersByTime(500);
+    expect(entryLink()).not.toBeNull();
+    expect(document.querySelectorAll('#loopy-practice-entry')).toHaveLength(1);
+  });
+  test('a click racing with navigation cannot activate the previous trainer', () => {
+    start(plainUrl);
+    receive({ type: 'configure', definition: golden, prefs: defaults });
+    pageLocation.href = 'https://www.youtube.com/watch?v=O_vU27GXPpk';
+    entryLink()!.click();
+    expect(panel()).toBeNull(); expect(entryLink()).toBeNull();
+    expect(new URL(pageLocation.href).searchParams.has('loopygoopy')).toBe(false);
+  });
+  test('modified clicks retain native link behavior', () => {
+    start(plainUrl);
+    receive({ type: 'configure', definition: golden, prefs: defaults });
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true, ctrlKey: true });
+    entryLink()!.dispatchEvent(click);
+    expect(click.defaultPrevented).toBe(false);
+    expect(panel()).toBeNull(); expect(replaceState).not.toHaveBeenCalled();
   });
   test('navigation to another video clears opt-in, including when returning without a flag', () => {
     start(`${plainUrl}&loopygoopy`);

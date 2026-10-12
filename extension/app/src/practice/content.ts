@@ -1,5 +1,6 @@
 import { PracticeEngine } from './engine';
 import { practicePageCSS } from './pageLayout';
+import { createPracticeEntry } from './entryLink';
 import { validDefinition, validPreferences } from './model';
 declare const chrome: any;
 
@@ -7,7 +8,29 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
   let port: any, engine: PracticeEngine | undefined, token = '', href = '', videoId = '';
   let frame: HTMLIFrameElement | undefined, style: HTMLStyleElement | undefined, observedVideo: HTMLVideoElement | undefined;
   let configuration: any, disposed = false, lastReport = 0, practiceRequested = false;
+  let entry: HTMLDivElement | undefined;
   const post = (message: any) => { try { port?.postMessage(message); } catch {} };
+  function removeEntry() { entry?.remove(); entry = undefined; }
+  function updateEntry() {
+    const parent = document.querySelector('#primary-inner');
+    if (disposed || practiceRequested || !token || !parent || !parent.querySelector('#movie_player video') ||
+        !validDefinition(configuration?.definition, videoId)) { removeEntry(); return; }
+    const url = new URL(location.href);
+    if (url.pathname !== '/watch' || `youtube:${url.searchParams.get('v')}` !== videoId) { removeEntry(); return; }
+    const entryVideoId = videoId;
+    if (!entry) entry = createPracticeEntry(() => {
+      // Navigation can happen between our periodic inspection and a click.
+      inspect();
+      if (videoId !== entryVideoId || !entry?.isConnected || !validDefinition(configuration?.definition, videoId)) return;
+      const target = new URL(location.href); target.searchParams.set('loopygoopy', '');
+      restore(); practiceRequested = true; removeEntry();
+      history.replaceState(history.state, '', target.href); href = location.href;
+      configure(); mount();
+    });
+    url.searchParams.set('loopygoopy', '');
+    entry.querySelector('a')!.href = url.href;
+    if (entry.parentElement !== parent) parent.prepend(entry);
+  }
   function restore() {
     const wasPractice = document.documentElement.classList.contains('loopy-practice');
     frame?.remove(); style?.remove(); frame = undefined; style = undefined;
@@ -21,7 +44,7 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
       }
     });
   }
-  function teardown() { engine?.dispose(); engine = undefined; observedVideo = undefined; configuration = undefined; restore(); token = ''; }
+  function teardown() { engine?.dispose(); engine = undefined; observedVideo = undefined; configuration = undefined; removeEntry(); restore(); token = ''; }
   function exit(manual = false) {
     practiceRequested = false;
     engine?.dispose(); engine = undefined; restore();
@@ -29,6 +52,7 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
     if (url.hash === '#loopygoopy') url.hash = '';
     history.replaceState(history.state, '', url.href); href = location.href;
     if (manual) { frame = document.createElement('iframe'); frame.title = 'Loopy Goopy manual controls'; frame.src = chrome.runtime.getURL(`app/build/index.html?practice=1&session=${token}&manual=1`); frame.style.cssText = 'width:100%;height:680px;border:0'; document.querySelector('#primary-inner')?.appendChild(frame); }
+    updateEntry();
   }
   function configure() {
     if (document.querySelector('#movie_player.ad-showing')) { if (engine?.state.running) engine.pause(); return; }
@@ -46,6 +70,7 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
     if (!token || frame || !practiceRequested) return;
     const parent = document.querySelector('#primary-inner');
     if (!parent || !document.head || !document.querySelector('#movie_player video')) return;
+    removeEntry();
     observedVideo?.pause(); document.querySelector<HTMLVideoElement>('#movie_player video')?.pause();
     style = document.createElement('style');
     style.textContent = practicePageCSS;
@@ -61,8 +86,8 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
       port = currentPort;
       currentPort.onMessage.addListener((m: any) => {
         if (port !== currentPort) return;
-        if (m.type === 'bound') { if (token && token !== m.token) restore(); token = m.token; mount(); }
-        if (m.type === 'configure') { engine?.dispose(); engine = undefined; configuration = m; configure(); }
+        if (m.type === 'bound') { if (token && token !== m.token) restore(); token = m.token; mount(); updateEntry(); }
+        if (m.type === 'configure') { engine?.dispose(); engine = undefined; configuration = m; configure(); updateEntry(); }
         if (m.type === 'preferences' && validPreferences(m.prefs)) { if (configuration) configuration.prefs = m.prefs; void engine?.update(m.prefs); }
         if (m.type === 'play') {
           if (document.querySelector('#movie_player.ad-showing')) { post({ type: 'playback', playback: { phase: 'error', running: false, beat: 1, remaining: 0, cycle: 0, error: 'Wait for the ad to finish, then press Play.' } }); return; }
@@ -103,7 +128,7 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
         videoId = nextVideoId; connect();
       }
     }
-    configure(); mount();
+    configure(); mount(); updateEntry();
   }
   // Explicit manual actions take control; merely opening the popup does not.
   const manualControl = () => { if (engine?.state.running) engine.pause(); };

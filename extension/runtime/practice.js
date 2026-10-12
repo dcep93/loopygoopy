@@ -254,9 +254,65 @@ html.loopy-practice #movie_player .html5-video-container { width: 100% !importan
 html.loopy-practice #movie_player video { object-fit: contain !important; width: 100% !important; height: 100% !important; left: 0 !important; top: 0 !important; }
 `;
 
+  // src/practice/entryLink.ts
+  function createPracticeEntry(onEnter) {
+    const entry = document.createElement("div");
+    entry.id = "loopy-practice-entry";
+    const style = document.createElement("style");
+    style.textContent = `
+    #loopy-practice-entry { position: relative; z-index: 1; margin: 0 0 10px; font: 14px/1.4 Arial, sans-serif; }
+    #loopy-practice-entry a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid #655241; border-radius: 9px; background: #241c18; color: #f5e9dc; text-decoration: none; }
+    #loopy-practice-entry a:hover { background: #382c23; text-decoration: underline; }
+    #loopy-practice-entry a:focus-visible { outline: 2px solid #ff7bc3; outline-offset: 3px; }
+    #loopy-practice-entry span { color: #ff7bc3; }
+  `;
+    const link = document.createElement("a");
+    const brand = document.createElement("span");
+    brand.textContent = "loopy goopy";
+    link.append(brand, document.createTextNode(" \xB7 Enter practice mode"));
+    link.addEventListener("click", (event) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      onEnter();
+    });
+    entry.append(style, link);
+    return entry;
+  }
+
   // src/practice/content.ts
   if (window === window.top && location.hostname === "www.youtube.com") {
-    let restore2 = function() {
+    let removeEntry2 = function() {
+      entry?.remove();
+      entry = void 0;
+    }, updateEntry2 = function() {
+      const parent = document.querySelector("#primary-inner");
+      if (disposed || practiceRequested || !token || !parent || !parent.querySelector("#movie_player video") || !validDefinition(configuration?.definition, videoId)) {
+        removeEntry2();
+        return;
+      }
+      const url = new URL(location.href);
+      if (url.pathname !== "/watch" || `youtube:${url.searchParams.get("v")}` !== videoId) {
+        removeEntry2();
+        return;
+      }
+      const entryVideoId = videoId;
+      if (!entry) entry = createPracticeEntry(() => {
+        inspect2();
+        if (videoId !== entryVideoId || !entry?.isConnected || !validDefinition(configuration?.definition, videoId)) return;
+        const target = new URL(location.href);
+        target.searchParams.set("loopygoopy", "");
+        restore2();
+        practiceRequested = true;
+        removeEntry2();
+        history.replaceState(history.state, "", target.href);
+        href = location.href;
+        configure2();
+        mount2();
+      });
+      url.searchParams.set("loopygoopy", "");
+      entry.querySelector("a").href = url.href;
+      if (entry.parentElement !== parent) parent.prepend(entry);
+    }, restore2 = function() {
       const wasPractice = document.documentElement.classList.contains("loopy-practice");
       frame?.remove();
       style?.remove();
@@ -274,6 +330,7 @@ html.loopy-practice #movie_player video { object-fit: contain !important; width:
       engine = void 0;
       observedVideo = void 0;
       configuration = void 0;
+      removeEntry2();
       restore2();
       token = "";
     }, exit2 = function(manual = false) {
@@ -293,6 +350,7 @@ html.loopy-practice #movie_player video { object-fit: contain !important; width:
         frame.style.cssText = "width:100%;height:680px;border:0";
         document.querySelector("#primary-inner")?.appendChild(frame);
       }
+      updateEntry2();
     }, configure2 = function() {
       if (document.querySelector("#movie_player.ad-showing")) {
         if (engine?.state.running) engine.pause();
@@ -314,6 +372,7 @@ html.loopy-practice #movie_player video { object-fit: contain !important; width:
       if (!token || frame || !practiceRequested) return;
       const parent = document.querySelector("#primary-inner");
       if (!parent || !document.head || !document.querySelector("#movie_player video")) return;
+      removeEntry2();
       observedVideo?.pause();
       document.querySelector("#movie_player video")?.pause();
       style = document.createElement("style");
@@ -336,12 +395,14 @@ html.loopy-practice #movie_player video { object-fit: contain !important; width:
             if (token && token !== m.token) restore2();
             token = m.token;
             mount2();
+            updateEntry2();
           }
           if (m.type === "configure") {
             engine?.dispose();
             engine = void 0;
             configuration = m;
             configure2();
+            updateEntry2();
           }
           if (m.type === "preferences" && validPreferences(m.prefs)) {
             if (configuration) configuration.prefs = m.prefs;
@@ -399,11 +460,13 @@ html.loopy-practice #movie_player video { object-fit: contain !important; width:
       }
       configure2();
       mount2();
+      updateEntry2();
     };
-    restore = restore2, teardown = teardown2, exit = exit2, configure = configure2, mount = mount2, connect = connect2, inspect = inspect2;
+    removeEntry = removeEntry2, updateEntry = updateEntry2, restore = restore2, teardown = teardown2, exit = exit2, configure = configure2, mount = mount2, connect = connect2, inspect = inspect2;
     let port, engine, token = "", href = "", videoId = "";
     let frame, style, observedVideo;
     let configuration, disposed = false, lastReport = 0, practiceRequested = false;
+    let entry;
     const post = (message) => {
       try {
         port?.postMessage(message);
@@ -432,6 +495,8 @@ html.loopy-practice #movie_player video { object-fit: contain !important; width:
       port?.disconnect();
     }, { once: true });
   }
+  var removeEntry;
+  var updateEntry;
   var restore;
   var teardown;
   var exit;
