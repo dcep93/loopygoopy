@@ -86,7 +86,9 @@ export default function PracticeApp() {
     // The bound session ID changes only when the iframe is replaced.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [embedded, snapshot.mediaId, manual]);
-  if (manual) return <div className="manual-shell">{embedded && <button onClick={() => send('exit')}>Close controls</button>}<Main /></div>;
+  // Ordinary videos retain the original popup root and layout.
+  if (manual && !embedded) return <Main />;
+  if (manual) return <div className="manual-shell"><button onClick={() => send('exit')}>Close controls</button><Main /></div>;
   const { definition: d, prefs: p } = snapshot, playback = snapshot.playback || paused;
   const change = (patch: Partial<Preferences>) => { if (p) send('preferences', { prefs: { ...p, ...patch } }); };
   const phase = playback.phase === 'lead-in' ? 'Get ready' : playback.phase === 'lead-out' ? 'Reset' : playback.phase === 'buffering' ? 'Buffering' : playback.phase === 'seeking' ? 'Getting ready' : playback.running ? 'Practicing' : 'Ready to practice';
