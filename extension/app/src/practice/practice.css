@@ -45,7 +45,6 @@ body:has(.practice-panel) { background: transparent; }
 .practice-panel .brand { font: 400 1.65rem/.95 var(--app-title-font); letter-spacing: -.06em; color: var(--ww-title-pink); white-space: nowrap; text-decoration: none; }
 .practice-panel .practice-title { min-width: 0; }
 .practice-panel h1 { font-size: .9rem; margin: 0; font-weight: 500; }
-.practice-panel .selection { color: var(--ww-text-muted); font-size: .75rem; margin: 0; }
 .practice-panel .text-button { background: none; border: 0; color: var(--ww-text-muted); font-size: .75rem; padding: .25rem; }
 .practice-panel .exit { margin-left: auto; }
 .practice-panel .transport + .exit { margin-left: 0; }
@@ -70,8 +69,7 @@ body:has(.practice-panel) { background: transparent; }
 .practice-panel .duration { display: flex; align-items: center; gap: .5rem; }
 .practice-panel .duration input { width: 2.75rem; font-size: .8rem; padding: .35rem .3rem; }
 .practice-panel .lead-row button { text-transform: capitalize; }
-.practice-panel footer { display: flex; align-items: baseline; gap: .5rem; font-size: .6875rem; color: var(--ww-text-muted); }
-.practice-panel .hint { margin-right: auto; }
+.practice-panel footer { display: flex; justify-content: flex-end; align-items: baseline; gap: .5rem; font-size: .6875rem; color: var(--ww-text-muted); }
 .practice-panel details { text-align: right; }
 .practice-panel summary { cursor: pointer; }
 .practice-panel details p { margin: .5rem 0; }

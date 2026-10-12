@@ -1,9 +1,34 @@
 import { render,screen,fireEvent } from '@testing-library/react';
 import { RangeButtons } from './PracticeApp';
-test('keyboard click always selects a single block, independent of the old selection',()=>{
+test('a distant click selects a new block and a selected end click trims the range',()=>{
   const change=jest.fn();render(<RangeButtons first={1} last={8} onChange={change}/>);
   fireEvent.click(screen.getByRole('button',{name:'Beats 17 to 20'}),{detail:0});expect(change).toHaveBeenLastCalledWith({first:17,last:20});
-  fireEvent.click(screen.getByRole('button',{name:'Beats 5 to 8'}),{detail:0});expect(change).toHaveBeenLastCalledWith({first:5,last:8});
+  fireEvent.click(screen.getByRole('button',{name:'Beats 5 to 8'}),{detail:0});expect(change).toHaveBeenLastCalledWith({first:1,last:4});
+});
+test.each([
+  [9,16,1,{first:5,last:16}],
+  [9,16,4,{first:9,last:20}],
+  [5,20,1,{first:9,last:20}],
+  [5,20,4,{first:5,last:16}],
+  [1,16,1,{first:5,last:8}],
+  [1,8,5,{first:21,last:24}],
+])('click selection from %s–%s on block index %s works by keyboard and pointer',(first,last,index,expected)=>{
+  const change=jest.fn();render(<RangeButtons first={first as number} last={last as number} onChange={change}/>);
+  const buttons=screen.getAllByRole('button'),row=screen.getByRole('group');
+  const i=index as number;
+  fireEvent.click(buttons[i],{detail:0});expect(change).toHaveBeenLastCalledWith(expected);
+  change.mockClear();
+  (row as any).setPointerCapture=jest.fn();
+  buttons.forEach((b,j)=>{b.getBoundingClientRect=()=>({left:j*100,width:100} as DOMRect);});
+  const pointer=(target:Element,type:string)=>fireEvent(target,new MouseEvent(type,{bubbles:true,button:0,clientX:i*100+50}));
+  pointer(buttons[i],'pointerdown');pointer(row,'pointerup');
+  fireEvent.click(buttons[i],{detail:1});
+  expect(change).toHaveBeenCalledTimes(1);expect(change).toHaveBeenLastCalledWith(expected);
+});
+test('clicking the only selected block does not restart or clear the loop',()=>{
+  const change=jest.fn();render(<RangeButtons first={9} last={12} onChange={change}/>);
+  fireEvent.click(screen.getByRole('button',{name:'Beats 9 to 12'}),{detail:0});
+  expect(change).not.toHaveBeenCalled();
 });
 test('Shift-arrow extends a contiguous range and announces its selected blocks',()=>{
   const change=jest.fn();render(<RangeButtons first={17} last={24} onChange={change}/>);

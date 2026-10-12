@@ -8,10 +8,21 @@ type Snapshot = { definition?: Definition; prefs?: Preferences; playback?: Playb
 
 export function RangeButtons({ first, last, onChange }: { first: number; last: number; onChange: (v: { first: number; last: number }) => void }) {
   const row = useRef<HTMLDivElement>(null);
-  const gesture = useRef<{ anchor: number; end: number; pointer: number } | undefined>(undefined);
+  const gesture = useRef<{ anchor: number; dragged: boolean; pointer: number } | undefined>(undefined);
   const keyboardAnchor = useRef<number | undefined>(undefined);
   const [preview, setPreview] = useState<{ first: number; last: number }>();
   const selected = preview || { first, last };
+  const clickedRange = (index: number) => {
+    const start = (first - 1) / 4, end = last / 4 - 1;
+    if (index === start - 1) return range(index, end);
+    if (index === end + 1) return range(start, index);
+    if (start !== end && index === start) return range(start + 1, end);
+    if (start !== end && index === end) return range(start, end - 1);
+    return range(index, index);
+  };
+  const commit = (next: { first: number; last: number }) => {
+    if (next.first !== first || next.last !== last) onChange(next);
+  };
   const endpoint = (x: number) => {
     const buttons = Array.from(row.current!.querySelectorAll('button'));
     return buttons.reduce((best, button, i) => {
@@ -20,14 +31,14 @@ export function RangeButtons({ first, last, onChange }: { first: number; last: n
     }, 0);
   };
   return <div className="beat-blocks" ref={row} role="group" aria-label="Practice beat range"
-    onPointerMove={e => { const g = gesture.current; if (!g || g.pointer !== e.pointerId) return; g.end = endpoint(e.clientX); setPreview(range(g.anchor, g.end)); }}
-    onPointerUp={e => { const g = gesture.current; if (!g || g.pointer !== e.pointerId) return; gesture.current = undefined; setPreview(undefined); onChange(range(g.anchor, endpoint(e.clientX))); }}
+    onPointerMove={e => { const g = gesture.current; if (!g || g.pointer !== e.pointerId) return; const end = endpoint(e.clientX); g.dragged ||= end !== g.anchor; setPreview(g.dragged ? range(g.anchor, end) : clickedRange(g.anchor)); }}
+    onPointerUp={e => { const g = gesture.current; if (!g || g.pointer !== e.pointerId) return; const end = endpoint(e.clientX); gesture.current = undefined; setPreview(undefined); commit(g.dragged || end !== g.anchor ? range(g.anchor, end) : clickedRange(g.anchor)); }}
     onPointerCancel={() => { gesture.current = undefined; setPreview(undefined); }}
     onLostPointerCapture={() => { gesture.current = undefined; setPreview(undefined); }}>
     {Array.from({ length: 8 }, (_, i) => <button key={i} type="button" aria-label={`Beats ${i * 4 + 1} to ${i * 4 + 4}`}
       aria-pressed={i * 4 + 1 >= selected.first && i * 4 + 4 <= selected.last}
-      onPointerDown={e => { if (e.button !== 0) return; e.preventDefault(); e.currentTarget.focus(); gesture.current = { anchor: i, end: i, pointer: e.pointerId }; row.current?.setPointerCapture(e.pointerId); setPreview(range(i, i)); }}
-      onClick={e => { if (e.detail === 0) onChange(range(i, i)); }}
+      onPointerDown={e => { if (e.button !== 0) return; e.preventDefault(); e.currentTarget.focus(); gesture.current = { anchor: i, dragged: false, pointer: e.pointerId }; row.current?.setPointerCapture(e.pointerId); setPreview(clickedRange(i)); }}
+      onClick={e => { if (e.detail === 0) commit(clickedRange(i)); }}
       onKeyUp={e => { if (e.key === 'Shift') keyboardAnchor.current = undefined; }}
       onKeyDown={e => {
         if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
@@ -104,12 +115,12 @@ export default function PracticeApp() {
   if (manual) return <div className="manual-shell"><button onClick={() => send('exit')}>Close controls</button><Main /></div>;
   const { definition: d, prefs: p } = snapshot, playback = snapshot.playback || paused;
   const change = (patch: Partial<Preferences>) => { if (p) send('preferences', { prefs: { ...p, ...patch } }); };
-  const phase = playback.phase === 'lead-in' ? 'Get ready' : playback.phase === 'lead-out' ? 'Reset' : playback.phase === 'buffering' ? 'Buffering' : playback.phase === 'seeking' ? 'Getting ready' : playback.running ? 'Practicing' : 'Ready to practice';
+  const phase = playback.phase === 'lead-in' ? 'Get ready' : playback.phase === 'lead-out' ? 'Reset' : playback.phase === 'buffering' ? 'Buffering' : playback.phase === 'seeking' ? 'Getting ready' : '';
   return <main className="practice-panel embedded">
     <header className="practice-header"><a className="brand" href="https://github.com/dcep93/loopygoopy#practice" target="_blank" rel="noreferrer">loopy goopy</a>
       {d && p && <>
-        <div className="practice-title"><h1>{d.title}</h1><p className="selection" aria-live="polite">Beats {p.first}–{p.last} of {d.totalBeats}</p></div>
-        <div className="transport"><div className={`counter phase-${playback.phase}`}><span className="count">{['lead-in', 'lead-out'].includes(playback.phase) ? playback.remaining : playback.beat}</span><span className="phase">{phase}{['lead-in', 'lead-out'].includes(playback.phase) && <small>beats remaining</small>}</span></div>
+        <div className="practice-title"><h1>{d.title}</h1></div>
+        <div className="transport"><div className={`counter phase-${playback.phase}`}><span className="count">{['lead-in', 'lead-out'].includes(playback.phase) ? playback.remaining : playback.beat}</span>{phase && <span className="phase">{phase}{['lead-in', 'lead-out'].includes(playback.phase) && <small>beats remaining</small>}</span>}</div>
           <button className="play" onClick={() => send(playback.running ? 'pause' : 'play')}>{playback.running ? 'Ⅱ Pause' : '▶ Play'}</button>
         </div>
       </>}
@@ -124,7 +135,7 @@ export default function PracticeApp() {
         <LeadControls label="Lead-in" value={p.leadIn} onChange={leadIn => change({ leadIn })} />
         <LeadControls label="Lead-out" value={p.leadOut} onChange={leadOut => change({ leadOut })} />
       </div>
-      <footer><span className="hint">Click a block · Drag across blocks to select a range</span><span>Repeats until you pause{playback.cycle > 0 ? ` · Repeat ${playback.cycle}` : ''}</span><details><summary>Advanced</summary><p>Prepared tempo: {d.bpm} BPM · First beat: {d.firstBeat}s</p><p>{snapshot.notice || 'Practice guide loaded.'}</p><button onClick={() => { send('manual'); setManual(true); }}>Open manual controls</button></details></footer>
+      <footer><span>Repeats until you pause{playback.cycle > 0 ? ` · Repeat ${playback.cycle}` : ''}</span><details><summary>Advanced</summary><p>Prepared tempo: {d.bpm} BPM · First beat: {d.firstBeat}s</p><p>{snapshot.notice || 'Practice guide loaded.'}</p><button onClick={() => { send('manual'); setManual(true); }}>Open manual controls</button></details></footer>
       {playback.error && <p className="error" role="alert">{playback.error}</p>}
     </>}{saveError && <p className="error" role="alert">{saveError}</p>}
   </main>;
