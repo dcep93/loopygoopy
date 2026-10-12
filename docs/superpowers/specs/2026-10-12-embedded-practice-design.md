@@ -1,6 +1,6 @@
 # Embedded practice mode
 
-Status: approved with `yesi`; local implementation built. Installed-Chrome verification and Firebase deployment remain pending. See `docs/practice-publishing.md` for current setup and verification gates.
+Status: approved with `yesi`; local implementation built. The user subsequently chose a raw GitHub JSON catalog with no website or database. Installed-Chrome verification remains pending. See `docs/practice-publishing.md` for current setup and verification gates.
 
 ## Outcome and scope
 
@@ -8,7 +8,7 @@ A prepared YouTube video opens as a focused practice page when its URL contains 
 
 The first published example is https://www.youtube.com/watch?v=xzeGxm72GOo&loopygoopy. Prepare one verified, constant-tempo, 32-beat section from this video. Its timing must be calibrated against the footage before publication; the previously saved BPM or start time is not sufficient evidence. Adding the other videos is a subsequent authoring workflow, not a requirement to prepare 30 videos in this implementation.
 
-V1 includes the focused YouTube layout, shared practice controls, repeating playback phases, a remotely published catalog, and a small hosted library. It excludes automatic tempo detection, automatic progression through sections, multiple demonstrations per video, variable-tempo beat maps, learner accounts, and a custom publishing dashboard.
+V1 includes the focused YouTube layout, shared practice controls, repeating playback phases, a remotely published JSON catalog. It excludes automatic tempo detection, automatic progression through sections, multiple demonstrations per video, variable-tempo beat maps, learner accounts, and a custom publishing dashboard.
 
 ## Page and controls
 
@@ -62,23 +62,19 @@ Use one extension-owned persistent store for both surfaces. `chrome.storage.loca
 
 Multiple tabs have separate playback sessions even when they show the same video. Saved preferences are per video; an edit in one tab must not seek or restart another tab's active session. Popup edits affect its bound tab and are reflected in that tab's embedded panel immediately. Serialize persistence and guard asynchronous initialization against stale responses.
 
-## Publishing and the hosted site
+## Publishing the catalog
 
-Recommend Firestore for catalog data and Firebase Hosting for a small library at `loopygoopy.web.app`. Compared with bundling data in the extension, either hosted JSON or Firestore permits additions without an extension release. Firestore additionally permits editing individual entries without redeploying the site; a JSON catalog is the lower-complexity alternative if database publishing is unwanted.
+The user selected a single public `catalog.json` file served from `https://raw.githubusercontent.com/dcep93/loopygoopy/master/catalog.json`. No Firebase, GitHub Pages, hosted library, publishing service, or credentials are needed. An ordinary commit and push publishes catalog changes, subject to GitHub caching.
 
-Each catalog entry has a schema version, stable media ID, source URL, display title, original BPM, first-beat timestamp, total beat count, publication status, and revision. V1 validates 32 beats and positive finite BPM. Derive four-beat buttons from the definition. Publish only verified entries; reject invalid timestamps and unrecognized schemas rather than guessing timing.
+Each definition retains its schema version, media ID, canonical URL, title, BPM, first-beat timestamp, 32-beat count, published status, and revision. The catalog envelope has schemaVersion 1 and a videos array with unique media IDs. Validate the entire catalog before caching it. Keep drafts and all personal configs out of this public file and public Git history.
 
-The library lists published titles and opens canonical YouTube links with `&loopygoopy`. It explains the extension requirement. Learners do not sign in. Publishing uses the existing Firebase console or an owner-only script; do not build an authoring app in V1. Public clients can read published definitions only. Drafts and writes require owner authorization, with rules and validation tested before deployment. Store no private learner configs in the public catalog.
+Fetch the same complete catalog for every video, and perform video matching locally. Cache it in extension storage for one hour; concurrent sessions share one in-flight fetch. Retry explicitly refreshes it. A failed request or invalid response uses the last valid cache, then the catalog bundled with the installed extension. Successfully fetched catalogs are authoritative for missing entries. An active session keeps its definition until reloaded/retried while paused. Remote content is JSON data only; UI and playback code remain packaged in the extension.
 
-Fetch catalog data through the extension, validate it, and cache the last valid published definition per video. Remote content is data only; playback/UI code remains packaged with the extension. Refresh when opening a session. Pin an active session to its definition revision so a remote timing change cannot interrupt playback. Keep learner speed/range/lead preferences separate from the published definition.
-
-If an entry is missing, say “This video isn't prepared yet” and offer exit or the existing manual controls; do not fabricate tempo. If offline, use a cached valid entry. If no valid entry is available, explain the loading failure and allow retry/exit. The golden entry can be packaged as an initial fallback.
-
-The repository currently has no Firebase deployment configuration, and this review did not establish the live site's state. Implementation must inspect the existing Firebase project, site, and owner access before provisioning or deploying, preserve any existing hosted content, and resolve unavailable access explicitly.
+Publishing is editing and validating the JSON, then committing and pushing to master. Extension code updates still use the Chrome Web Store release workflow. The existing practice preferences and saved manual configs remain untouched. The branding link points to the repository README instead of an undeployed site.
 
 ## Delivery and validation
 
-Implement and validate the local golden-example experience first, then add catalog publishing and the hosted library using the same definition schema. Do not deploy an uncalibrated example or overwrite an existing Firebase site without inspecting it.
+Validate the local golden-example experience and the catalog loader. Verify the public raw file after pushing. Installed-Chrome playback checks remain required before releasing the extension.
 
 Meaningful verification covers:
 
@@ -87,12 +83,11 @@ Meaningful verification covers:
 - Boundary timing against the actual golden video, including buffering, seek delay, cancellation, and avoiding leftover metronome clicks.
 - Popup/panel synchronization, popup closure, switching videos, multiple tabs, and exit restoring the ordinary page.
 - Exact preservation of the existing migrated configs through the storage transfer, including Ozzy's original presets.
-- Missing/invalid catalog entries, cached offline use, revisions, and unauthorized draft access/writes.
+- Missing/invalid catalog entries, cached offline use, revisions, shared downloads, and ensuring every request uses the same URL without a video ID.
 
 Regenerate the shipped content script with `tsc`, rebuild the popup, run targeted tests, and verify the end-to-end experience in Chrome. Automated coverage and build results are recorded with the implementation; installed-browser checks remain a separate delivery gate.
 
 ## References
 
 - Chrome content scripts: https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts
-- Firebase Hosting: https://firebase.google.com/docs/hosting
-- Firestore access rules: https://firebase.google.com/docs/firestore/security/get-started
+- GitHub raw files: https://docs.github.com/en/repositories/working-with-files/using-files/viewing-and-understanding-files
