@@ -123,6 +123,8 @@ export default function PracticeApp() {
         <div className="practice-title"><h1>{d.title}</h1></div>
         <div className="transport"><div className={`counter phase-${playback.phase}`}><span className="count">{['lead-in', 'lead-out'].includes(playback.phase) ? playback.remaining : playback.beat}</span>{phase && <span className="phase">{phase}</span>}</div>
           <button className="play" onClick={() => send(playback.running ? 'pause' : 'play')}>{playback.running ? 'Ⅱ Pause' : '▶ Play'}</button>
+          <button disabled={p.first <= 1} onClick={() => change({ first: p.first - 4, last: p.last - 4 })}>Prev</button>
+          <button disabled={p.last >= d.totalBeats} onClick={() => change({ first: p.first + 4, last: p.last + 4 })}>Next</button>
         </div>
       </>}
       <button className="text-button exit" onClick={() => send('exit')}>Exit practice mode</button>

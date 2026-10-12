@@ -11,10 +11,11 @@ beforeEach(() => {
   (transferRecords as jest.Mock).mockResolvedValue(undefined);
 });
 afterEach(() => { delete window.chrome; jest.resetAllMocks(); });
-function setupConnection(definition: any = golden) {
+function setupConnection(definition: any = golden, prefs = defaults, echoPreferences = false) {
   let receive: (message: any) => void;
   const port={postMessage:jest.fn((message:any)=>{
-    if(message.type==='attach')receive({type:'snapshot',definition,prefs:defaults,playback:paused,mediaId:definition?.mediaId,loading:false});
+    if(message.type==='attach')receive({type:'snapshot',definition,prefs,playback:paused,mediaId:definition?.mediaId,loading:false});
+    if(echoPreferences && message.type==='preferences')receive({type:'snapshot',definition,prefs:message.prefs,playback:paused,mediaId:definition?.mediaId,loading:false});
   }),onMessage:{addListener:(handler:any)=>{receive=handler;}},onDisconnect:{addListener:jest.fn()},disconnect:jest.fn()};
   window.chrome={runtime:{connect:jest.fn(()=>port)},tabs:{query:jest.fn((_query:any,callback:any)=>callback([{id:12}]))}};
   return port;
@@ -59,4 +60,37 @@ test('Retry reruns failed storage initialization before opening the original pop
   expect(await screen.findByText('Original popup controls')).toBeInTheDocument();
   await waitFor(()=>expect(transferRecords).toHaveBeenCalledTimes(2));
   expect(window.chrome.runtime.connect).not.toHaveBeenCalled();
+});
+test.each([
+  [1, 8, 'Next', 5, 12],
+  [5, 12, 'Prev', 1, 8],
+  [13, 16, 'Next', 17, 20],
+  [13, 16, 'Prev', 9, 12],
+])('transport shifts %s–%s with %s and keeps other preferences', async (first, last, direction, nextFirst, nextLast) => {
+  window.history.replaceState({}, '', '/?practice=1&session=frame-token');
+  const prefs={...defaults,first,last,speed:.75,leadIn:{beats:4,style:'silent' as const}};
+  const port=setupConnection(golden,prefs,true); render(<PracticeApp/>);
+  const play=await screen.findByRole('button',{name:'▶ Play'});
+  expect(play.nextElementSibling).toHaveTextContent('Prev');
+  expect(play.nextElementSibling?.nextElementSibling).toHaveTextContent('Next');
+  fireEvent.click(screen.getByRole('button',{name:direction}));
+  expect(port.postMessage).toHaveBeenLastCalledWith({type:'preferences',mediaId:golden.mediaId,prefs:{...prefs,first:nextFirst,last:nextLast}});
+  const selected=within(screen.getByRole('group',{name:'Practice beat range'})).getAllByRole('button',{pressed:true});
+  expect(selected[0]).toHaveAccessibleName(`Beats ${nextFirst} to ${nextFirst+3}`);
+  expect(selected[selected.length-1]).toHaveAccessibleName(`Beats ${nextLast-3} to ${nextLast}`);
+  fireEvent.click(screen.getByRole('button',{name:direction==='Next'?'Prev':'Next'}));
+  expect(port.postMessage).toHaveBeenLastCalledWith({type:'preferences',mediaId:golden.mediaId,prefs});
+});
+test.each([
+  [1,4,true,false], [29,32,false,true], [1,32,true,true],
+])('transport disables shifts outside %s–%s', async (first,last,prevDisabled,nextDisabled) => {
+  window.history.replaceState({}, '', '/?practice=1&session=frame-token');
+  const port=setupConnection(golden,{...defaults,first,last},true); render(<PracticeApp/>);
+  const prev=await screen.findByRole('button',{name:'Prev'}),next=screen.getByRole('button',{name:'Next'});
+  expect((prev as HTMLButtonElement).disabled).toBe(prevDisabled);
+  expect((next as HTMLButtonElement).disabled).toBe(nextDisabled);
+  port.postMessage.mockClear();
+  if(prevDisabled)fireEvent.click(prev);
+  if(nextDisabled)fireEvent.click(next);
+  expect(port.postMessage).not.toHaveBeenCalled();
 });

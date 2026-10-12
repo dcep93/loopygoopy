@@ -23,6 +23,7 @@ The extension captures the flag before YouTube loads and retains it if YouTube c
 - Click an adjacent four-beat block to extend the selection. Click a selected edge to remove it, unless it is the only selected block. Click a selected interior block or a distant unselected block to select only that block. Drag across blocks to choose a contiguous range; dragging from `17–20` through `21–24` selects beats 17–24.
 - Keyboard: focus a block and press Enter/Space to select it; Shift+Arrow extends a range. Arrow keys move focus.
 - Adjust Speed with minus/plus, then Play. Repetitions continue until Pause.
+- Prev and Next beside Play shift the selected range by one four-beat block while keeping its length, including a single-block selection. They disable at the section boundaries.
 - Lead-in and lead-out each have their own beat duration and Track/Silent/Metronome choice. Track plays adjacent footage; Silent and Metronome freeze the picture at the selected boundaries. Their duration follows playback speed. During either lead phase, the video has 50% opacity while the controls stay fully visible.
 - Clicking the extension icon always opens the original manual controls, on every video. The beat-practice controls appear in the page after opting in with the page link or URL flag. Practice preferences save automatically.
 

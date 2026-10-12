@@ -1,8 +1,8 @@
-# Chrome Web Store release: 5.0.0
+# Chrome Web Store release: 5.0.1
 
 Update the existing **Loopy Goopy** item: `addfplpnjjbiockjmfegacimgkcmfefn`.
 [Public listing](https://chromewebstore.google.com/detail/loopy-goopy/addfplpnjjbiockjmfegacimgkcmfefn).
-The public version checked October 12, 2026 was 3.1.0. The new package is 5.0.0; if an unpublished dashboard package already uses that version or a higher one, increase the manifest version and rebuild before uploading.
+The public version checked October 12, 2026 was 3.1.0. The new package is 5.0.1; if an unpublished dashboard package already uses that version or a higher one, increase the manifest version and rebuild before uploading.
 
 ## Build and package
 
@@ -11,10 +11,10 @@ From the repository root:
 ```sh
 CI=true npm test --prefix extension/app -- --watchAll=false --runInBand
 npm run build --prefix extension/app
-python3 scripts/package-extension.py ../_codex_output/loopygoopy-release-5.0.0
+python3 scripts/package-extension.py ../_codex_output/loopygoopy-release-5.0.1
 ```
 
-Upload `loopy-goopy-5.0.0.zip`. Its manifest is at the ZIP root. The package includes the compiled popup, content scripts, worker, migration document, icons, and font license. It excludes development dependencies, source maps, tests, and personal records. Do not upload the old repository-root `extension.zip`.
+Upload `loopy-goopy-5.0.1.zip`. Its manifest is at the ZIP root. The package includes the compiled popup, content scripts, worker, migration document, icons, and font license. It excludes development dependencies, source maps, tests, and personal records. Do not upload the old repository-root `extension.zip`.
 
 ## Store description — paste this
 
@@ -23,6 +23,7 @@ Practice a video one part at a time with Loopy Goopy.
 On prepared YouTube videos, click “loopy goopy” beside the search bar to open a focused practice view. Compact controls sit above the video so you can see the demonstration and your controls together.
 
 • Select four-beat blocks and combine neighboring blocks into one continuous loop.
+• Use Prev and Next beside Play to move that loop one block backward or forward.
 • Slow down or speed up playback with simple minus and plus controls.
 • Set lead-in and lead-out durations independently, using the original track, silence, or a metronome.
 • Follow the beat count while your chosen section repeats.
@@ -36,7 +37,7 @@ Requires Chrome 120 or later. Video playback remains on the original website. Lo
 
 ## Release notes — optional announcement copy
 
-Version 5.0.0 adds an embedded practice view for prepared YouTube videos, selectable four-beat loops, adjustable speed, and independent lead-in and lead-out controls. The extension icon continues to open the manual editor. This release also fixes settings being associated with the wrong video and improves practice layout, visibility, and exit behavior.
+Version 5.0.1 includes Prev and Next buttons that move the selected range by one four-beat block, retaining its length and disabling at section boundaries. It also adds an embedded practice view for prepared YouTube videos, selectable four-beat loops, adjustable speed, and independent lead-in and lead-out controls. The extension icon continues to open the manual editor. This release also fixes settings being associated with the wrong video and improves practice layout, visibility, and exit behavior.
 
 ## Privacy practices — prepared answers
 
