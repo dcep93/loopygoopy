@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Main from "./Main";
 import getTab from "./LoopyGoopy/getTab";
-import { CountInStyle, Field } from "./LoopyGoopy/shared";
+import { CountInStyle, Field, MessageType } from "./LoopyGoopy/shared";
 import { setStorageKey } from "./LoopyGoopy/storage";
 import { getRefs, setConfig } from "./LoopyGoopy/utils";
 
@@ -315,6 +315,70 @@ describe("Main bookmark controls", () => {
     expect(container.querySelector("textarea")).toHaveValue("");
     expect(getStoredConfig()[Field.start_time]).toBe("1.25");
     expect(getStoredConfig().bookmarks).toHaveLength(1);
+  });
+
+  it("seeks to a selected bookmark start time when it changes", async () => {
+    (getTab as jest.MockedFunction<typeof getTab>).mockResolvedValue({
+      id: 123,
+      mediaId: "media-123",
+    });
+    primeStoredConfig(
+      {
+        [Field.original_BPM]: "111",
+        [Field.start_time]: "1.25",
+      },
+      [
+        {
+          bookmark_name: "chorus",
+          config: {
+            [Field.start_time]: "9.5",
+          },
+        },
+      ]
+    );
+
+    await renderMain();
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "bookmark" }), "0");
+
+    await waitFor(() =>
+      expect(window.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        123,
+        { mType: MessageType.seek, payload: { time: 9.5 } },
+        expect.any(Function)
+      )
+    );
+  });
+
+  it("seeks to a selected bookmark start time even when it matches the current config", async () => {
+    (getTab as jest.MockedFunction<typeof getTab>).mockResolvedValue({
+      id: 123,
+      mediaId: "media-123",
+    });
+    primeStoredConfig(
+      {
+        [Field.original_BPM]: "111",
+        [Field.start_time]: "9.5",
+      },
+      [
+        {
+          bookmark_name: "chorus",
+          config: {
+            [Field.start_time]: "9.5",
+          },
+        },
+      ]
+    );
+
+    await renderMain();
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "bookmark" }), "0");
+
+    await waitFor(() =>
+      expect(window.chrome.tabs.sendMessage).toHaveBeenCalledWith(
+        123,
+        { mType: MessageType.seek, payload: { time: 9.5 } },
+        expect.any(Function)
+      )
+    );
   });
 
   it("does nothing when switching the bookmark dropdown back to the empty option", async () => {

@@ -145,7 +145,7 @@ function logInput(message: string, details?: Record<string, unknown>) {
   debugLog(LOG_SOURCE, message, details);
 }
 
-function seekToStartTime(valueStr: string) {
+export function seekToStartTime(valueStr: string) {
   const time = parseFloat(valueStr);
   if (!Number.isFinite(time)) {
     logInput("seek skipped invalid start time", { value: valueStr });

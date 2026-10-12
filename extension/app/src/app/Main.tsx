@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import ActionButton, { Action } from "./LoopyGoopy/ActionButton";
 import { Field } from "./LoopyGoopy/shared";
 import getTab from "./LoopyGoopy/getTab";
-import Input from "./LoopyGoopy/Input";
+import Input, { seekToStartTime } from "./LoopyGoopy/Input";
 import Notes from "./LoopyGoopy/Notes";
 import { save, setStorageKey, storageKey } from "./LoopyGoopy/storage";
 import { debugLog, setDebugTabId } from "./LoopyGoopy/debug";
@@ -130,8 +130,13 @@ export default function Main() {
       bookmarkName: bookmark.bookmark_name,
       config: describeConfigForLog(bookmark.config),
     });
+    const nextStartTime = bookmark.config[Field.start_time];
     applyConfigSansBookmarks(bookmark.config);
     save(getConfig());
+    if (nextStartTime !== undefined && !isFalseyStartTime(nextStartTime)) {
+      logPopup("bookmark seek start time", { startTime: nextStartTime });
+      seekToStartTime(nextStartTime);
+    }
   }
 
   function handleBookmarkSave() {
