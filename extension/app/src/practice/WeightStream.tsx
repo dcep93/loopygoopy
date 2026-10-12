@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Footwork, WeightCue } from './model';
 
-export const pixelsPerBeat = 128;
+export const pixelsPerBeat = 64;
 export function weightAt(cues: WeightCue[], beat: number): 'R' | 'L' | undefined {
   let weight: 'R' | 'L' | undefined;
   for (const cue of cues) {

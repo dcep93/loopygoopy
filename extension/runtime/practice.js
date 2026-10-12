@@ -12873,7 +12873,7 @@
   // src/practice/WeightStream.tsx
   var import_react = __toESM(require_react());
   var import_jsx_runtime = __toESM(require_jsx_runtime());
-  var pixelsPerBeat = 128;
+  var pixelsPerBeat = 64;
   function weightAt(cues, beat) {
     let weight;
     for (const cue of cues) {

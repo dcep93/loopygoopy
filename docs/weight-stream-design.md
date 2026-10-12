@@ -1,6 +1,6 @@
 # Synced weight stream
 
-Add a compact row below practice settings, preserving the existing controls and video fit. A fixed center marker represents the video's current count; the symbols move right to left at 128 pixels per numbered count (64 per quick step). Read media time each animation frame instead of advancing an independent clock. Pauses, buffering, seeking, rate changes and loop restarts therefore stay aligned with the picture. Silent/metronome leads hold the strip with the frozen video.
+Add a compact row below practice settings, preserving the existing controls and video fit. A fixed center marker represents the video's current count; the symbols move right to left at 64 pixels per numbered count (32 per quick step). Read media time each animation frame instead of advancing an independent clock. Pauses, buffering, seeking, rate changes and loop restarts therefore stay aligned with the picture. Silent/metronome leads hold the strip with the frozen video.
 
 Catalog entries may include optional, validated choreography cues and a source link. R/L are quick steps occupying half a numbered count, r/l are super-quick steps occupying a quarter-count, - holds weight for another half-count so R - is slow, and * a special action without changing the previous weighted foot. Symbols are placed by their timed onset, so super-quick events are twice as dense as quick events. No strip appears for entries without cues.
 

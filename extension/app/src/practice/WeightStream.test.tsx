@@ -16,7 +16,7 @@ test.each([
   expect(cues.map(c=>c.beat)).toEqual(beats);
   expect(validFootwork({...footwork,cues})).toBe(true);
   const {container}=render(<WeightStream footwork={{...footwork,cues}} first={1} last={8}/>);
-  expect(Array.from(container.querySelectorAll<HTMLElement>('.weight-cue')).map(c=>parseFloat(c.style.left))).toEqual(beats.map(b=>b*128));
+  expect(Array.from(container.querySelectorAll<HTMLElement>('.weight-cue')).map(c=>parseFloat(c.style.left))).toEqual(beats.map(b=>b*64));
 });
 test('special and hold symbols retain the preceding weight',()=>{
   const cues=sequence('R L r * - L');
@@ -56,11 +56,11 @@ test('animation reads the media clock, handles seeks and stops on unmount',()=>{
   const view=render(<WeightStream footwork={footwork} first={1} last={8} readBeat={()=>beat}/>);
   const strip=view.container.querySelector<HTMLElement>('.weight-strip')!;
   const frame=()=>act(()=>tick(1000));
-  expect(strip.style.transform).toBe('translate3d(-128px, 0, 0)');
-  beat=1.5;frame();expect(strip.style.transform).toBe('translate3d(-192px, 0, 0)');
-  frame();expect(strip.style.transform).toBe('translate3d(-192px, 0, 0)');
+  expect(strip.style.transform).toBe('translate3d(-64px, 0, 0)');
+  beat=1.5;frame();expect(strip.style.transform).toBe('translate3d(-96px, 0, 0)');
+  frame();expect(strip.style.transform).toBe('translate3d(-96px, 0, 0)');
   beat=24;frame();expect(screen.getByRole('img')).toHaveAccessibleName(expect.stringContaining('left foot weighted'));
   beat=24.5;frame();expect(screen.getByRole('img')).toHaveAccessibleName(expect.stringContaining('right foot weighted'));
-  beat=.5;frame();expect(strip.style.transform).toBe('translate3d(-64px, 0, 0)');
+  beat=.5;frame();expect(strip.style.transform).toBe('translate3d(-32px, 0, 0)');
   view.unmount();expect(cancel).toHaveBeenLastCalledWith(42);request.mockRestore();cancel.mockRestore();
 });

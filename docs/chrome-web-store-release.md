@@ -1,8 +1,8 @@
-# Chrome Web Store release: 5.0.5
+# Chrome Web Store release: 5.0.6
 
 Update the existing **Loopy Goopy** item: `addfplpnjjbiockjmfegacimgkcmfefn`.
 [Public listing](https://chromewebstore.google.com/detail/loopy-goopy/addfplpnjjbiockjmfegacimgkcmfefn).
-The public version checked October 12, 2026 was 3.1.0. The new package is 5.0.5; if an unpublished dashboard package already uses that version or a higher one, increase the manifest version and rebuild before uploading.
+The public version checked October 12, 2026 was 3.1.0. The new package is 5.0.6; if an unpublished dashboard package already uses that version or a higher one, increase the manifest version and rebuild before uploading.
 
 ## Build and package
 
@@ -11,10 +11,10 @@ From the repository root:
 ```sh
 CI=true npm test --prefix extension/app -- --watchAll=false --runInBand
 npm run build --prefix extension/app
-python3 scripts/package-extension.py ../_codex_output/loopygoopy-release-5.0.5
+python3 scripts/package-extension.py ../_codex_output/loopygoopy-release-5.0.6
 ```
 
-Upload `loopy-goopy-5.0.5.zip`. Its manifest is at the ZIP root. The package includes the compiled popup, content scripts, worker, migration document, icons, and font license. It excludes development dependencies, source maps, tests, and personal records. Do not upload the old repository-root `extension.zip`.
+Upload `loopy-goopy-5.0.6.zip`. Its manifest is at the ZIP root. The package includes the compiled popup, content scripts, worker, migration document, icons, and font license. It excludes development dependencies, source maps, tests, and personal records. Do not upload the old repository-root `extension.zip`.
 
 ## Store description — paste this
 
@@ -37,7 +37,7 @@ Requires Chrome 120 or later. Video playback remains on the original website. Lo
 
 ## Release notes — optional announcement copy
 
-Version 5.0.5 keeps practice-mode startup paused until Play is pressed, including delayed YouTube autoplay and late player creation. It also corrects the weight-stream notation: uppercase letters are quick steps, a letter plus dash is slow, and lowercase letters are super-quick. It includes a synced weight stream beneath the controls for the prepared example, with count-based spacing, half-count steps, and special-action markers. Practice controls and playback run together in the video tab so background-worker inactivity does not interrupt the practice connection. It includes Prev and Next buttons that move the selected range by one four-beat block, retaining its length and disabling at section boundaries. It also adds an embedded practice view for prepared YouTube videos, selectable four-beat loops, adjustable speed, and independent lead-in and lead-out controls. The extension icon continues to open the manual editor. This release also fixes settings being associated with the wrong video and improves practice layout, visibility, and exit behavior.
+Version 5.0.6 halves the visual scroll speed and symbol spacing while preserving video synchronization and step durations. It keeps practice-mode startup paused until Play is pressed, including delayed YouTube autoplay and late player creation. It also corrects the weight-stream notation: uppercase letters are quick steps, a letter plus dash is slow, and lowercase letters are super-quick. It includes a synced weight stream beneath the controls for the prepared example, with count-based spacing, half-count steps, and special-action markers. Practice controls and playback run together in the video tab so background-worker inactivity does not interrupt the practice connection. It includes Prev and Next buttons that move the selected range by one four-beat block, retaining its length and disabling at section boundaries. It also adds an embedded practice view for prepared YouTube videos, selectable four-beat loops, adjustable speed, and independent lead-in and lead-out controls. The extension icon continues to open the manual editor. This release also fixes settings being associated with the wrong video and improves practice layout, visibility, and exit behavior.
 
 ## Privacy practices — prepared answers
 
