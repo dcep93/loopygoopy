@@ -56,10 +56,10 @@
     } catch {
       return false;
     }
-    if (!Array.isArray(value.cues) || !value.cues.length || value.cues.length > 65) return false;
+    if (!Array.isArray(value.cues) || !value.cues.length || value.cues.length > 130) return false;
     let end = 0.5;
     return value.cues.every((cue) => {
-      if (!cue || !Number.isFinite(cue.beat) || !Number.isInteger(cue.beat * 2) || cue.beat < end || ![0.5, 1].includes(cue.duration) || cue.beat + cue.duration > 33 || !["R", "L", "r", "l", "-", "*"].includes(cue.symbol) || ["R", "L", "-"].includes(cue.symbol) && cue.duration !== 1 || ["r", "l"].includes(cue.symbol) && cue.duration !== 0.5) return false;
+      if (!cue || !Number.isFinite(cue.beat) || !Number.isInteger(cue.beat * 4) || cue.beat < end || ![0.25, 0.5, 1].includes(cue.duration) || cue.beat + cue.duration > 33 || !["R", "L", "r", "l", "-", "*"].includes(cue.symbol) || ["R", "L", "-"].includes(cue.symbol) && cue.duration !== 0.5 || ["r", "l"].includes(cue.symbol) && cue.duration !== 0.25) return false;
       end = cue.beat + cue.duration;
       return true;
     });
@@ -77,7 +77,7 @@
         bpm: 81,
         firstBeat: 12.64,
         totalBeats: 32,
-        revision: 2,
+        revision: 3,
         status: "published",
         footwork: {
           sourceUrl: "https://www.copperknob.co.uk/stepsheets/K3PHTPZ/3-tequila-floor/download/pdf",
@@ -85,32 +85,42 @@
             {
               beat: 0.5,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 1,
-              duration: 1,
+              duration: 0.5,
               symbol: "L"
             },
             {
+              beat: 1.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
               beat: 2,
-              duration: 1,
+              duration: 0.5,
               symbol: "R"
+            },
+            {
+              beat: 2.5,
+              duration: 0.5,
+              symbol: "-"
             },
             {
               beat: 3,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 3.5,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 4,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 4.5,
@@ -120,47 +130,52 @@
             {
               beat: 5,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 5.5,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 6,
-              duration: 1,
+              duration: 0.5,
               symbol: "R"
+            },
+            {
+              beat: 6.5,
+              duration: 0.5,
+              symbol: "-"
             },
             {
               beat: 7,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 7.5,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 8,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 8.5,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 9,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 9.5,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 10,
@@ -170,37 +185,42 @@
             {
               beat: 10.5,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 11,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 11.5,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 12,
-              duration: 1,
+              duration: 0.5,
               symbol: "R"
+            },
+            {
+              beat: 12.5,
+              duration: 0.5,
+              symbol: "-"
             },
             {
               beat: 13,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 13.5,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 14,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 14.5,
@@ -209,63 +229,78 @@
             },
             {
               beat: 15,
-              duration: 1,
+              duration: 0.5,
               symbol: "R"
             },
             {
+              beat: 15.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
               beat: 16,
-              duration: 1,
+              duration: 0.5,
               symbol: "L"
+            },
+            {
+              beat: 16.5,
+              duration: 0.5,
+              symbol: "-"
             },
             {
               beat: 17,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 17.5,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 18,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 18.5,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 19,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 19.5,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 20,
-              duration: 1,
+              duration: 0.5,
               symbol: "R"
+            },
+            {
+              beat: 20.5,
+              duration: 0.5,
+              symbol: "-"
             },
             {
               beat: 21,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 21.5,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 22,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 22.5,
@@ -290,22 +325,22 @@
             {
               beat: 24.5,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 25,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 25.5,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 26,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 26.5,
@@ -315,22 +350,22 @@
             {
               beat: 27,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 27.5,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 28,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 28.5,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 29,
@@ -340,7 +375,7 @@
             {
               beat: 29.5,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             },
             {
               beat: 30,
@@ -350,7 +385,7 @@
             {
               beat: 30.5,
               duration: 0.5,
-              symbol: "l"
+              symbol: "L"
             },
             {
               beat: 31,
@@ -370,7 +405,7 @@
             {
               beat: 32.5,
               duration: 0.5,
-              symbol: "r"
+              symbol: "R"
             }
           ]
         }
@@ -380,7 +415,7 @@
 
   // src/practice/catalog.ts
   var catalogUrl = "https://raw.githubusercontent.com/dcep93/loopygoopy/master/catalog.json";
-  var catalogKey = "practice-catalog-v2";
+  var catalogKey = "practice-catalog-v3";
   var refreshInterval = 60 * 60 * 1e3;
   var pending2;
   async function readCatalog(refresh) {

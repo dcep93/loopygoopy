@@ -2,7 +2,7 @@ import { Catalog, Definition, validCatalog } from './model';
 import bundled from './bundled-catalog.json';
 declare const chrome: any;
 export const catalogUrl = 'https://raw.githubusercontent.com/dcep93/loopygoopy/master/catalog.json';
-export const catalogKey = 'practice-catalog-v2';
+export const catalogKey = 'practice-catalog-v3';
 export const refreshInterval = 60 * 60 * 1000;
 type Result = { catalog?: Catalog; notice?: string };
 let pending: Promise<Result> | undefined;

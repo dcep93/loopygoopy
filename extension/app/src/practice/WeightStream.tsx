@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Footwork, WeightCue } from './model';
 
-export const pixelsPerBeat = 64;
+export const pixelsPerBeat = 128;
 export function weightAt(cues: WeightCue[], beat: number): 'R' | 'L' | undefined {
   let weight: 'R' | 'L' | undefined;
   for (const cue of cues) {
@@ -28,7 +28,7 @@ export default function WeightStream({ footwork, first, last, readBeat }: {
         if (previous >= 0) strip.current!.children[previous].removeAttribute('data-current');
         if (current >= 0) strip.current!.children[current].setAttribute('data-current', 'true');
         const weight = weightAt(footwork.cues, beat);
-        viewport.current!.setAttribute('aria-label', `Weight stream${current >= 0 ? `: ${footwork.cues[current].symbol}${weight ? `, ${weight === 'R' ? 'right' : 'left'} foot weighted` : ''}` : ''}. Uppercase: one count. Lowercase: half count. Dash: hold. Star: special action, retain weight.`);
+        viewport.current!.setAttribute('aria-label', `Weight stream${current >= 0 ? `: ${footwork.cues[current].symbol}${weight ? `, ${weight === 'R' ? 'right' : 'left'} foot weighted` : ''}` : ''}. Uppercase: quick, half a count. Lowercase: super-quick, quarter-count. Letter then dash: slow, one count. Star: special action, retain weight.`);
         previous = current;
       }
       frame = requestAnimationFrame(tick);

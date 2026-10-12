@@ -7,7 +7,7 @@ test('worker shutdown during startup falls back to bundled timing',async()=>{
 });
 test('bounded request timeout uses the last validated catalog',async()=>{
   jest.useFakeTimers();window.chrome.runtime.sendMessage.mockReturnValue(new Promise(()=>{}));
-  window.chrome.storage.local.get.mockResolvedValue({'practice-catalog-v2':{catalog:{schemaVersion:1,videos:[{...golden,revision:2}]}}});
+  window.chrome.storage.local.get.mockResolvedValue({'practice-catalog-v3':{catalog:{schemaVersion:1,videos:[{...golden,revision:2}]}}});
   const result=requestDefinition(golden.mediaId);jest.advanceTimersByTime(4500);expect((await result).definition?.revision).toBe(2);
 });
 test('a successful missing entry stays missing instead of resurrecting a removed catalog video',async()=>{
@@ -15,7 +15,7 @@ test('a successful missing entry stays missing instead of resurrecting a removed
 });
 test('rejects another video definition and ignores malformed cached catalog',async()=>{
   window.chrome.runtime.sendMessage.mockResolvedValue({ok:true,definition:{...golden,mediaId:'youtube:O_vU27GXPpk'}});
-  window.chrome.storage.local.get.mockResolvedValue({'practice-catalog-v2':{catalog:{schemaVersion:1,videos:[{...golden,bpm:-1}]}}});
+  window.chrome.storage.local.get.mockResolvedValue({'practice-catalog-v3':{catalog:{schemaVersion:1,videos:[{...golden,bpm:-1}]}}});
   expect((await requestDefinition(golden.mediaId)).definition).toEqual(golden);
 });
 test('synchronous context invalidation still uses bundled timing when storage is also unavailable',async()=>{

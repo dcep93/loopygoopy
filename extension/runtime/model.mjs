@@ -25,10 +25,10 @@ function validFootwork(value) {
   } catch {
     return false;
   }
-  if (!Array.isArray(value.cues) || !value.cues.length || value.cues.length > 65) return false;
+  if (!Array.isArray(value.cues) || !value.cues.length || value.cues.length > 130) return false;
   let end = 0.5;
   return value.cues.every((cue) => {
-    if (!cue || !Number.isFinite(cue.beat) || !Number.isInteger(cue.beat * 2) || cue.beat < end || ![0.5, 1].includes(cue.duration) || cue.beat + cue.duration > 33 || !["R", "L", "r", "l", "-", "*"].includes(cue.symbol) || ["R", "L", "-"].includes(cue.symbol) && cue.duration !== 1 || ["r", "l"].includes(cue.symbol) && cue.duration !== 0.5) return false;
+    if (!cue || !Number.isFinite(cue.beat) || !Number.isInteger(cue.beat * 4) || cue.beat < end || ![0.25, 0.5, 1].includes(cue.duration) || cue.beat + cue.duration > 33 || !["R", "L", "r", "l", "-", "*"].includes(cue.symbol) || ["R", "L", "-"].includes(cue.symbol) && cue.duration !== 0.5 || ["r", "l"].includes(cue.symbol) && cue.duration !== 0.25) return false;
     end = cue.beat + cue.duration;
     return true;
   });

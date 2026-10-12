@@ -1,7 +1,7 @@
 export type LeadStyle = 'track' | 'silent' | 'metronome';
 export type Lead = { beats: number; style: LeadStyle };
 export type Preferences = { first: number; last: number; speed: number; leadIn: Lead; leadOut: Lead };
-export type WeightCue = { beat: number; duration: .5 | 1; symbol: 'R' | 'L' | 'r' | 'l' | '-' | '*' };
+export type WeightCue = { beat: number; duration: .25 | .5 | 1; symbol: 'R' | 'L' | 'r' | 'l' | '-' | '*' };
 export type Footwork = { sourceUrl: string; cues: WeightCue[] };
 export type Definition = {
   schemaVersion: 1; mediaId: string; sourceUrl: string; title: string;
@@ -36,13 +36,13 @@ export function validCatalog(value: any): value is Catalog {
 export function validFootwork(value: any): value is Footwork {
   if (!value || typeof value.sourceUrl !== 'string') return false;
   try { if (new URL(value.sourceUrl).protocol !== 'https:') return false; } catch { return false; }
-  if (!Array.isArray(value.cues) || !value.cues.length || value.cues.length > 65) return false;
+  if (!Array.isArray(value.cues) || !value.cues.length || value.cues.length > 130) return false;
   let end = .5;
   return value.cues.every((cue: any) => {
-    if (!cue || !Number.isFinite(cue.beat) || !Number.isInteger(cue.beat * 2) || cue.beat < end ||
-      ![.5, 1].includes(cue.duration) || cue.beat + cue.duration > 33 || !['R', 'L', 'r', 'l', '-', '*'].includes(cue.symbol) ||
-      (['R', 'L', '-'].includes(cue.symbol) && cue.duration !== 1) ||
-      (['r', 'l'].includes(cue.symbol) && cue.duration !== .5)) return false;
+    if (!cue || !Number.isFinite(cue.beat) || !Number.isInteger(cue.beat * 4) || cue.beat < end ||
+      ![.25, .5, 1].includes(cue.duration) || cue.beat + cue.duration > 33 || !['R', 'L', 'r', 'l', '-', '*'].includes(cue.symbol) ||
+      (['R', 'L', '-'].includes(cue.symbol) && cue.duration !== .5) ||
+      (['r', 'l'].includes(cue.symbol) && cue.duration !== .25)) return false;
     end = cue.beat + cue.duration;
     return true;
   });
