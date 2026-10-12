@@ -73,6 +73,14 @@ interface Window {
   __loopyGoopyPagePlaybackBridgePromise?: Promise<boolean>;
 }
 
+window.addEventListener("loopy-practice-start", () => {
+  if (!_state) return;
+  _state.loopId = -1;
+  _state.media?.setOnPause(null);
+  void unlockYouTubePlaybackRate(1);
+  void setPitchShift(0);
+});
+
 function isYouTubePage() {
   return (
     window.location.host === "www.youtube.com" ||

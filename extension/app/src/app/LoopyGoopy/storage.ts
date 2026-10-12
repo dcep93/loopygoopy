@@ -1,5 +1,6 @@
 import { CountInStyle, Field, type Config, type ConfigSansBookmarks, type MediaMetadata } from "./shared";
 import { debugLog, debugWarn } from "./debug";
+import { readRecord, writeRecord } from "../../practice/recordStore";
 
 const version = "v0.0.2";
 const storageKeyPrefix = "loopy-goopy:";
@@ -95,7 +96,7 @@ export function save(config: Config) {
   const normalizedConfig = normalizeConfig(config);
   const serialized = JSON.stringify({ version, media: mediaMetadata, config: normalizedConfig });
   try {
-    window.localStorage.setItem(getLocalStorageKey(), serialized);
+    void writeRecord(getLocalStorageKey(), serialized).catch((error) => warnStorage("save failed", { error: errorToMessage(error) }));
     logStorage("save ok", {
       storageKey,
       localStorageKey: getLocalStorageKey(),
@@ -112,7 +113,7 @@ export function save(config: Config) {
   }
 }
 
-export function load(): Promise<Config> {
+export async function load(): Promise<Config> {
   if (storageKey === undefined) {
     warnStorage("load skipped: storage key is undefined");
     return Promise.resolve(normalizeConfig({}));
@@ -121,7 +122,7 @@ export function load(): Promise<Config> {
     warnStorage("load skipped: localStorage is unavailable", { storageKey });
     return Promise.resolve(normalizeConfig({}));
   }
-  const rawValue = readLocalStorageValue();
+  const rawValue = await readRecord(getLocalStorageKey());
   logStorage("load raw", {
     storageKey,
     localStorageKey: getLocalStorageKey(),
@@ -194,23 +195,10 @@ function parseStoredEntry(rawValue: string | null) {
 
 function hasLocalStorage() {
   try {
-    return typeof window.localStorage !== "undefined";
+    return Boolean(window.chrome?.storage?.local) || typeof window.localStorage !== "undefined";
   } catch (error) {
     warnStorage("localStorage access failed", { error: errorToMessage(error) });
     return false;
-  }
-}
-
-function readLocalStorageValue() {
-  try {
-    return window.localStorage.getItem(getLocalStorageKey());
-  } catch (error) {
-    warnStorage("read failed", {
-      storageKey,
-      localStorageKey: getLocalStorageKey(),
-      error: errorToMessage(error),
-    });
-    return null;
   }
 }
 

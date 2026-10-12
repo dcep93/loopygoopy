@@ -43,6 +43,14 @@ const DRIVE_ID_RE = /^[A-Za-z0-9_-]{20,}$/;
 const DRIVE_ID_IN_TEXT_RE = /[A-Za-z0-9_-]{20,}/g;
 const YOUTUBE_IFRAME_SELECTOR = 'iframe[src*="youtube.googleapis.com/embed"], iframe[src*="youtube.com/embed"], iframe[src*="youtube-nocookie.com/embed"]';
 var _state;
+window.addEventListener("loopy-practice-start", () => {
+    if (!_state)
+        return;
+    _state.loopId = -1;
+    _state.media?.setOnPause(null);
+    void unlockYouTubePlaybackRate(1);
+    void setPitchShift(0);
+});
 function isYouTubePage() {
     return (window.location.host === "www.youtube.com" ||
         window.location.host === "youtube.googleapis.com" ||

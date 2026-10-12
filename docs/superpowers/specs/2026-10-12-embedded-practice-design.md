@@ -1,6 +1,6 @@
 # Embedded practice mode
 
-Status: proposed complete design for review. The user has confirmed frozen silent/metronome leads and click-or-drag range selection. This document does not authorize implementation by itself.
+Status: approved with `yesi`; local implementation built. Installed-Chrome verification and Firebase deployment remain pending. See `docs/practice-publishing.md` for current setup and verification gates.
 
 ## Outcome and scope
 
@@ -58,7 +58,7 @@ Extract reusable controls from the current popup. The embedded panel and popup r
 
 The content script controls the player and reports phase, media time, buffering, and playback status. Extension messaging binds each view to its actual tab and video, validates the sender/session, and rejects stale or mismatched commands. Remove reliance on a single remembered background tab when routing shared controls. Navigation invalidates the old session before loading another video's settings.
 
-Use one extension-owned persistent store for both surfaces. `chrome.storage.local` is the proposed store because the background controller can access it directly. Port the current v0.0.2 records once from extension localStorage through the extension UI, verify writes before marking the port complete, and retain existing data until verification succeeds. This is a one-time transfer, not an ongoing fallback. Existing IDs, source metadata, bookmarks, and manual configs remain intact. Guided preferences occupy a separate field/namespace so curated timing does not overwrite personal presets, including Ozzy's.
+Use one extension-owned persistent store for both surfaces. `chrome.storage.local` is the proposed store because the background controller can access it directly. Port the current v0.0.2 records once from extension localStorage through a packaged offscreen extension document (avoiding embedded-frame storage partitioning), verify writes before marking the port complete, and retain existing data until verification succeeds. This is a one-time transfer, not an ongoing fallback. Existing IDs, source metadata, bookmarks, and manual configs remain intact. Guided preferences occupy a separate field/namespace so curated timing does not overwrite personal presets, including Ozzy's.
 
 Multiple tabs have separate playback sessions even when they show the same video. Saved preferences are per video; an edit in one tab must not seek or restart another tab's active session. Popup edits affect its bound tab and are reflected in that tab's embedded panel immediately. Serialize persistence and guard asynchronous initialization against stale responses.
 
@@ -89,7 +89,7 @@ Meaningful verification covers:
 - Exact preservation of the existing migrated configs through the storage transfer, including Ozzy's original presets.
 - Missing/invalid catalog entries, cached offline use, revisions, and unauthorized draft access/writes.
 
-Regenerate the shipped content script with `tsc`, rebuild the popup, run targeted tests, and verify the end-to-end experience in Chrome. No application code has been changed by this design document.
+Regenerate the shipped content script with `tsc`, rebuild the popup, run targeted tests, and verify the end-to-end experience in Chrome. Automated coverage and build results are recorded with the implementation; installed-browser checks remain a separate delivery gate.
 
 ## References
 

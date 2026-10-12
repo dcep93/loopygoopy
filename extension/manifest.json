@@ -1,14 +1,14 @@
 {
   "name": "Loopy Goopy",
-  "description": "Musician practice tool that finds audio/video tags and allows you to loop or control speed.",
-  "version": "4.0.0",
+  "description": "Practice any part of a video with clear beat counts, repeat loops, and adjustable speed.",
+  "version": "5.0.0",
   "icons": {
     "16": "loopy_goopy_full.png",
     "48": "loopy_goopy_full.png",
     "128": "loopy_goopy_128.png"
   },
   "background": {
-    "service_worker": "app/src/app/LoopyGoopy/background.js"
+    "service_worker": "runtime/background.js"
   },
   "content_scripts": [
     {
@@ -32,6 +32,15 @@
       "js": [
         "app/src/app/LoopyGoopy/contentScript.js"
       ]
+    },
+    {
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "runtime/practice.js"
+      ],
+      "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
@@ -46,11 +55,30 @@
         "https://www.instagram.com/*",
         "file:///*"
       ]
+    },
+    {
+      "resources": [
+        "app/build/index.html",
+        "app/build/static/js/*",
+        "app/build/static/css/*",
+        "app/build/static/media/*"
+      ],
+      "matches": [
+        "https://www.youtube.com/*"
+      ]
     }
   ],
   "action": {
     "default_popup": "app/build/index.html",
     "default_icon": "loopy_goopy_full.png"
   },
-  "manifest_version": 3
+  "manifest_version": 3,
+  "permissions": [
+    "storage",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "https://firestore.googleapis.com/*"
+  ],
+  "minimum_chrome_version": "120"
 }

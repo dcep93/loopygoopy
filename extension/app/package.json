@@ -22,10 +22,11 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "PUBLIC_URL=/app/build/ react-scripts build",
+    "build": "npm run build:runtime && PUBLIC_URL=/app/build/ react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "runonsave": "bash ./runonsave.sh"
+    "runonsave": "bash ./runonsave.sh",
+    "build:runtime": "node scripts/build-runtime.mjs"
   },
   "eslintConfig": {
     "extends": [
@@ -46,6 +47,7 @@
     ]
   },
   "devDependencies": {
-    "@types/lodash": "^4.17.16"
+    "@types/lodash": "^4.17.16",
+    "esbuild": "^0.28.2"
   }
 }

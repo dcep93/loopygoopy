@@ -4,14 +4,14 @@ import "./index.css";
 import reportWebVitals from "./reportWebVitals";
 
 import "bootstrap/dist/css/bootstrap.min.css";
-import Main from "./app/Main";
+import PracticeApp from "./practice/PracticeApp";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <Main />
+    <PracticeApp />
   </React.StrictMode>
 );
 

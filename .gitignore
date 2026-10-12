@@ -1,2 +1,6 @@
 extension.zip
 
+
+# Local Firebase emulator logs
+*-debug.log
+.firebase/

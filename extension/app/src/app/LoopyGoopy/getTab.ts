@@ -11,6 +11,12 @@ type InitResponse = {
 };
 
 var _tab: TabState;
+function queryBoundTab(callback: (tabs: { id?: number }[]) => void) {
+  const session = new URLSearchParams(window.location.search).get("session");
+  if (session) {
+    window.chrome.runtime.sendMessage({ type: "practice-context", token: session }, (tab: { id?: number } | null) => callback(tab ? [tab] : []));
+  } else window.chrome.tabs.query({ currentWindow: true, active: true }, callback);
+}
 export default function getTab(options: { suppressAlert?: boolean } = {}): Promise<typeof _tab> {
   if (window.chrome?.tabs === undefined) {
     _tab = { mediaId: `url:${window.location.href}`, sourceUrl: window.location.href, title: document.title };
@@ -20,8 +26,7 @@ export default function getTab(options: { suppressAlert?: boolean } = {}): Promi
       _tab !== undefined
         ? null
         : new Promise<TabState>((resolve, reject) => {
-            window.chrome.tabs.query(
-              { currentWindow: true, active: true },
+            queryBoundTab(
               (tabs: { id?: number }[]) => {
                 const tabId = tabs[0]?.id;
                 if (tabId === undefined) {

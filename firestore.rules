@@ -1,0 +1,12 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /practiceVideos/{id} {
+      allow read: if resource.data.status == 'published' && resource.data.schemaVersion == 1;
+      // Publishing is via the owner console or an IAM-authorized publishing script.
+      // Learner clients, including signed-in Firebase clients, cannot write.
+      allow write: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
