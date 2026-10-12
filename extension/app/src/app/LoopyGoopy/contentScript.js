@@ -403,15 +403,15 @@ function init() {
         if (_state.media) {
             return {
                 success: true,
-                mediaId: getMediaId(_state.media),
+                ...requireMediaMetadata(getMediaMetadata(_state.media)),
                 currentTime: _state.media.getCurrentTime(),
             };
         }
         if (_state.iframe) {
-            const mediaId = getIframeMediaId(_state.iframe);
+            const metadata = requireMediaMetadata(getIframeMediaMetadata(_state.iframe));
             return sendFrameRequest(_state.iframe, MessageType.init, {}).then((frameResponse) => ({
                 success: true,
-                mediaId,
+                ...metadata,
                 currentTime: frameResponse?.currentTime,
             }));
         }
@@ -419,7 +419,7 @@ function init() {
             success: false,
             alert: "Loopy Goopy could not find playable audio/video on this page yet.",
         };
-    });
+    }).catch((error) => ({ success: false, alert: errorToMessage(error) }));
 }
 function ensureState(options = {}) {
     if (!_state) {
@@ -505,7 +505,6 @@ function createNativeMediaTarget(element) {
             element.onpause = handler;
         },
         getCurrentTime: () => element.currentTime,
-        getMediaFingerprint: () => `${getMediaElementSource(element)}-${getStableDuration(element.duration)}`,
     };
 }
 function getMediaElementSource(element) {
@@ -520,7 +519,7 @@ function getMediaElementSource(element) {
 function getStablePageMediaSource() {
     try {
         const url = new URL(window.location.href);
-        if (url.hostname.endsWith("youtube.com")) {
+        if (url.hostname === "youtube.com" || url.hostname.endsWith(".youtube.com")) {
             const videoId = url.searchParams.get("v");
             if (videoId)
                 return `${url.origin}/watch?v=${videoId}`;
@@ -543,9 +542,6 @@ function getStablePageMediaSource() {
         return window.location.href || window.location.host;
     }
 }
-function getStableDuration(duration) {
-    return Number.isFinite(duration) ? duration.toFixed(3) : "unknown-duration";
-}
 function findYouTubeIframe() {
     if (window.self !== window.top)
         return undefined;
@@ -563,27 +559,77 @@ function iframeElementScore(iframe, index) {
     const rect = iframe.getBoundingClientRect();
     return rect.width * rect.height * 1000 + index;
 }
-function getMediaId(media) {
-    const driveFolderId = getDriveFolderId();
-    if (driveFolderId) {
-        const driveFileId = findDriveFileId(driveFolderId, media.root);
-        if (driveFileId) {
-            return `drive-folder:${driveFolderId}:file:${driveFileId}`;
-        }
-        return `drive-folder:${driveFolderId}:media:${media.getMediaFingerprint()}`;
+function resolveMediaMetadata(pageUrl, mediaSource, title, driveFileId) {
+    const page = new URL(pageUrl);
+    const host = page.hostname.toLowerCase();
+    const isHost = (domain) => host === domain || host.endsWith(`.${domain}`);
+    const result = (mediaId, sourceUrl) => ({ mediaId, sourceUrl, title });
+    if (isHost("youtube.com") || isHost("youtube-nocookie.com") || host === "youtube.googleapis.com" || host === "youtu.be") {
+        const id = host === "youtu.be"
+            ? page.pathname.split("/")[1]
+            : page.searchParams.get("v") || page.pathname.match(/^\/(?:shorts|embed|live)\/([^/]+)/)?.[1];
+        if (!id || !/^[A-Za-z0-9_-]{11}$/.test(id))
+            return undefined;
+        return result(`youtube:${id}`, `https://www.youtube.com/watch?v=${id}`);
     }
-    return media.getMediaFingerprint();
+    if (isHost("instagram.com")) {
+        const id = page.pathname.match(/\/(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)(?:\/|$)/)?.[1];
+        if (!id)
+            return undefined;
+        return result(`instagram:${id}`, `https://www.instagram.com/p/${id}/`);
+    }
+    if (host === "drive.google.com") {
+        const id = driveFileId || page.pathname.match(/\/file\/d\/([^/]+)/)?.[1] || page.searchParams.get("id");
+        if (!id || !DRIVE_ID_RE.test(id))
+            return undefined;
+        return result(`drive:${id}`, `https://drive.google.com/file/d/${id}/view`);
+    }
+    const source = mediaSource && !mediaSource.startsWith("blob:")
+        ? new URL(mediaSource, pageUrl) : page;
+    if (source.protocol === "file:") {
+        source.hash = "";
+        source.search = "";
+        return result(`file:${source.href}`, source.href);
+    }
+    if (!/^https?:$/.test(source.protocol))
+        return undefined;
+    source.hash = "";
+    return result(`url:${source.href}`, page.href);
+}
+function getMediaTitle() {
+    return document.querySelector("ytd-watch-metadata h1")?.textContent?.trim() ||
+        document.title.replace(/^(?:[\d.]+ BPM - )?[\d.]+% - /, "").trim();
+}
+function getMediaMetadata(media) {
+    let pageUrl = window.location.href;
+    if (window.location.hostname === "www.instagram.com" &&
+        !/\/(?:p|reel|reels|tv)\//.test(window.location.pathname)) {
+        // On a feed, only use a permalink belonging to this video's article/dialog.
+        const article = media.root.closest('article, [role="dialog"]');
+        const permalink = article?.querySelector('a[href*="/reel/"], a[href*="/p/"], a[href*="/tv/"]');
+        if (permalink)
+            pageUrl = permalink.href;
+    }
+    const folder = getDriveFolderId();
+    return resolveMediaMetadata(pageUrl, getMediaElementSource(media.root), getMediaTitle(), folder ? findDriveFileId(folder, media.root) : undefined);
+}
+function getIframeMediaMetadata(iframe) {
+    const folder = getDriveFolderId();
+    if (folder) {
+        return resolveMediaMetadata(window.location.href, "", getMediaTitle(), findDriveFileId(folder, iframe));
+    }
+    return resolveMediaMetadata(iframe.src, "", iframe.title || getMediaTitle());
+}
+function requireMediaMetadata(metadata) {
+    if (!metadata)
+        throw new Error("Open this video's own page so Loopy Goopy can identify and save it.");
+    return metadata;
+}
+function getMediaId(media) {
+    return getMediaMetadata(media)?.mediaId;
 }
 function getIframeMediaId(iframe) {
-    const driveFolderId = getDriveFolderId();
-    if (driveFolderId) {
-        const driveFileId = findDriveFileId(driveFolderId, iframe);
-        if (driveFileId) {
-            return `drive-folder:${driveFolderId}:file:${driveFileId}`;
-        }
-        return `drive-folder:${driveFolderId}:iframe:${iframe.id || iframe.src}`;
-    }
-    return iframe.src || iframe.title || `${initialTitle || document.title}:iframe`;
+    return getIframeMediaMetadata(iframe)?.mediaId;
 }
 function logTargetRefresh(reason, previousMedia, nextMedia, previousIframe, nextIframe) {
     console.info(LOG_PREFIX, "target refresh", {

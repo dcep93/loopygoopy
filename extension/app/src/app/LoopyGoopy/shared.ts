@@ -36,3 +36,9 @@ export type Config = ConfigSansBookmarks & {
   bookmarks: Bookmark[];
   selected_bookmark: string;
 };
+
+export type MediaMetadata = {
+  id: string;
+  sourceUrl: string;
+  title: string;
+};

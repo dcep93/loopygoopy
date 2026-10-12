@@ -154,6 +154,7 @@ describe("contentScript media rediscovery", () => {
 
   it("returns the newly loaded video after the old video is removed", async () => {
     const firstVideo = makeVideo(10, 1.25);
+    firstVideo.src = "https://example.com/first.mp4";
     await loadContentScript();
 
     const firstResponse = await sendRuntimeMessage({
@@ -162,7 +163,7 @@ describe("contentScript media rediscovery", () => {
     });
 
     firstVideo.remove();
-    makeVideo(20, 4.5);
+    makeVideo(20, 4.5).src = "https://example.com/second.mp4";
 
     const secondResponse = await sendRuntimeMessage({
       mType: MessageType.init,
@@ -240,7 +241,7 @@ describe("contentScript media rediscovery", () => {
     });
 
     firstVideo.remove();
-    const secondVideo = makeVideo(252.421, 4.5);
+    const secondVideo = makeVideo(253, 4.5);
     secondVideo.src = "blob:https://www.youtube.com/second-blob-id";
 
     const secondResponse = await sendRuntimeMessage({
@@ -248,8 +249,10 @@ describe("contentScript media rediscovery", () => {
       payload: {},
     });
 
-    expect(firstResponse.mediaId).toBe("http://localhost/watch?v=video-123&t=12s-252.421");
+    expect(firstResponse.mediaId).toBe("url:http://localhost/watch?v=video-123&t=12s");
     expect(secondResponse.mediaId).toBe(firstResponse.mediaId);
+    expect(secondResponse.sourceUrl).toBe("http://localhost/watch?v=video-123&t=12s");
+    expect(secondResponse.title).toBe("Practice");
   });
 
   it("starts playback against the newly loaded video after the old video is removed", async () => {
@@ -495,7 +498,7 @@ describe("contentScript media rediscovery", () => {
   });
 
   it("switches to the visible current video when the old video remains connected", async () => {
-    makeVideo(10, 1.25, 0);
+    makeVideo(10, 1.25, 0).src = "https://example.com/first.mp4";
     await loadContentScript();
 
     const firstResponse = await sendRuntimeMessage({
@@ -503,7 +506,7 @@ describe("contentScript media rediscovery", () => {
       payload: {},
     });
 
-    makeVideo(20, 4.5, 640);
+    makeVideo(20, 4.5, 640).src = "https://example.com/second.mp4";
 
     const secondResponse = await sendRuntimeMessage({
       mType: MessageType.init,

@@ -22,7 +22,7 @@ describe("Main bookmark controls", () => {
     consoleInfoMock = jest.spyOn(console, "info").mockImplementation(() => undefined);
     consoleWarnMock = jest.spyOn(console, "warn").mockImplementation(() => undefined);
     (getTab as jest.MockedFunction<typeof getTab>).mockResolvedValue({
-      mediaId: "media-123",
+      mediaId: "media-123", sourceUrl: "https://example.com/video", title: "Practice",
     });
     setStorageKey(undefined as unknown as string);
     setConfig({ bookmarks: [], selected_bookmark: "" });
@@ -67,7 +67,8 @@ describe("Main bookmark controls", () => {
     window.localStorage.setItem(
       localStorageKey,
       JSON.stringify({
-        version: "v0.0.1",
+        version: "v0.0.2",
+        media: { id: "media-123", sourceUrl: "https://example.com/video", title: "Practice" },
         config: makeConfig(configSansBookmarks, bookmarks, selectedBookmark),
       })
     );
@@ -136,7 +137,7 @@ describe("Main bookmark controls", () => {
 
   it("defaults a falsey start time to the video's current time when opening", async () => {
     (getTab as jest.MockedFunction<typeof getTab>).mockResolvedValueOnce({
-      mediaId: "media-123",
+      mediaId: "media-123", sourceUrl: "https://example.com/video", title: "Practice",
       currentTime: 42.346,
     });
     primeStoredConfig({
@@ -153,7 +154,7 @@ describe("Main bookmark controls", () => {
 
   it("keeps a saved start time of zero when opening", async () => {
     (getTab as jest.MockedFunction<typeof getTab>).mockResolvedValueOnce({
-      mediaId: "media-123",
+      mediaId: "media-123", sourceUrl: "https://example.com/video", title: "Practice",
       currentTime: 42.346,
     });
     primeStoredConfig({
@@ -243,12 +244,13 @@ describe("Main bookmark controls", () => {
   });
 
   it("keeps each video's settings and bookmarks separate across popup opens", async () => {
-    const goldenMediaId = "https://www.youtube.com/watch?v=xzeGxm72GOo";
-    const otherMediaId = "https://www.youtube.com/watch?v=O_vU27GXPpk";
+    const goldenMediaId = "youtube:xzeGxm72GOo";
+    const otherMediaId = "youtube:O_vU27GXPpk";
     const otherStorageKey = `loopy-goopy:${otherMediaId}`;
     const goldenStorageKey = `loopy-goopy:${goldenMediaId}`;
     const otherConfig = JSON.stringify({
-      version: "v0.0.1",
+      version: "v0.0.2",
+        media: { id: otherMediaId, sourceUrl: "https://www.youtube.com/watch?v=O_vU27GXPpk", title: "Ozzy" },
       config: makeConfig(
         { [Field.original_BPM]: "98", [Field.start_time]: "5.5" },
         [{ bookmark_name: "other video preset", config: { [Field.start_time]: "5.5" } }],
@@ -258,7 +260,7 @@ describe("Main bookmark controls", () => {
     window.localStorage.setItem(otherStorageKey, otherConfig);
     window.localStorage.setItem(sharedStorageKey, otherConfig);
     (getTab as jest.MockedFunction<typeof getTab>).mockResolvedValue({
-      mediaId: goldenMediaId,
+      mediaId: goldenMediaId, sourceUrl: "https://www.youtube.com/watch?v=xzeGxm72GOo", title: "Practice",
       currentTime: 42.346,
     });
 
@@ -276,7 +278,7 @@ describe("Main bookmark controls", () => {
 
     view.unmount();
     (getTab as jest.MockedFunction<typeof getTab>).mockResolvedValue({
-      mediaId: otherMediaId,
+      mediaId: otherMediaId, sourceUrl: "https://www.youtube.com/watch?v=O_vU27GXPpk", title: "Ozzy",
       currentTime: 90,
     });
     render(<Main />);
@@ -354,7 +356,7 @@ describe("Main bookmark controls", () => {
   it("seeks to a selected bookmark start time when it changes", async () => {
     (getTab as jest.MockedFunction<typeof getTab>).mockResolvedValue({
       id: 123,
-      mediaId: "media-123",
+      mediaId: "media-123", sourceUrl: "https://example.com/video", title: "Practice",
     });
     primeStoredConfig(
       {
@@ -386,7 +388,7 @@ describe("Main bookmark controls", () => {
   it("seeks to a selected bookmark start time even when it matches the current config", async () => {
     (getTab as jest.MockedFunction<typeof getTab>).mockResolvedValue({
       id: 123,
-      mediaId: "media-123",
+      mediaId: "media-123", sourceUrl: "https://example.com/video", title: "Practice",
     });
     primeStoredConfig(
       {

@@ -1,17 +1,19 @@
 import { MessageType } from "./shared";
 
-type TabState = { id?: number; mediaId?: string; currentTime?: number };
+type TabState = { id?: number; mediaId?: string; currentTime?: number; sourceUrl?: string; title?: string };
 type InitResponse = {
   success?: boolean;
   mediaId?: string;
   currentTime?: number;
+  sourceUrl?: string;
+  title?: string;
   alert?: string;
 };
 
 var _tab: TabState;
 export default function getTab(options: { suppressAlert?: boolean } = {}): Promise<typeof _tab> {
   if (window.chrome?.tabs === undefined) {
-    _tab = { mediaId: "localhost" };
+    _tab = { mediaId: `url:${window.location.href}`, sourceUrl: window.location.href, title: document.title };
   }
   return Promise.resolve()
     .then(() =>
@@ -33,16 +35,15 @@ export default function getTab(options: { suppressAlert?: boolean } = {}): Promi
                     if (response === undefined) {
                       // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                       window.chrome.runtime.lastError;
-                      window.chrome.runtime.sendMessage(
-                        null,
-                        (bkResponse: typeof _tab) =>
-                          bkResponse === null || bkResponse === undefined
-                            ? reject("Loopy Goopy could not find an active media tab.")
-                            : resolve(bkResponse)
-                      );
+                      reject("Loopy Goopy could not read media from this tab yet. Reload this page and try again.");
                     } else if (response === null) {
                       reject("Loopy Goopy could not read media from this tab yet.");
                     } else if (response.success) {
+                      if (!response.sourceUrl || !response.mediaId ||
+                          !/^(youtube|instagram|drive|file|url):/.test(response.mediaId)) {
+                        reject("Loopy Goopy needs this page reloaded to identify the video with the updated extension.");
+                        return;
+                      }
                       Promise.resolve({ id: tabId, ...response }).then(
                         (__tab) =>
                           Promise.resolve()

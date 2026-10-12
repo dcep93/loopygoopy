@@ -33,14 +33,19 @@ export default function Main() {
     getTab()
       .then((tab) => {
         setDebugTabId(tab?.id);
-        const tabStorageKey = tab?.mediaId || "Main.tab.mediaId.empty";
+        const tabStorageKey = tab?.mediaId;
+        if (!tabStorageKey) throw new Error("Loopy Goopy could not identify this video.");
         logPopup("tab resolved", {
           mediaId: tab?.mediaId,
           tabStorageKey,
           currentTime: tab?.currentTime,
         });
         return Promise.resolve()
-          .then(() => setStorageKey(tabStorageKey))
+          .then(() => setStorageKey(tabStorageKey, {
+            id: tabStorageKey,
+            sourceUrl: tab?.sourceUrl || "",
+            title: tab?.title || "",
+          }))
           .then(loadConfig)
           .then(() => {
             logPopup("config loaded", describeConfigForLog(getConfig()));

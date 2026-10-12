@@ -1,13 +1,15 @@
-import { CountInStyle, Field, type Config, type ConfigSansBookmarks } from "./shared";
+import { CountInStyle, Field, type Config, type ConfigSansBookmarks, type MediaMetadata } from "./shared";
 import { debugLog, debugWarn } from "./debug";
 
-const version = "v0.0.1";
+const version = "v0.0.2";
 const storageKeyPrefix = "loopy-goopy:";
 const LOG_SOURCE = "storage";
 
 export var storageKey: string;
-export function setStorageKey(_storageKey: string) {
+let mediaMetadata: MediaMetadata | undefined;
+export function setStorageKey(_storageKey: string, metadata?: MediaMetadata) {
   storageKey = _storageKey;
+  mediaMetadata = metadata;
   logStorage("setStorageKey", {
     storageKey,
     localStorageKey: getLocalStorageKey(),
@@ -82,12 +84,16 @@ export function save(config: Config) {
     warnStorage("save skipped: storage key is undefined");
     return;
   }
+  if (!mediaMetadata || mediaMetadata.id !== storageKey || !mediaMetadata.sourceUrl) {
+    warnStorage("save skipped: media identity or source URL is missing", { storageKey });
+    return;
+  }
   if (!hasLocalStorage()) {
     warnStorage("save skipped: localStorage is unavailable", { storageKey });
     return;
   }
   const normalizedConfig = normalizeConfig(config);
-  const serialized = JSON.stringify({ version, config: normalizedConfig });
+  const serialized = JSON.stringify({ version, media: mediaMetadata, config: normalizedConfig });
   try {
     window.localStorage.setItem(getLocalStorageKey(), serialized);
     logStorage("save ok", {
@@ -122,7 +128,20 @@ export function load(): Promise<Config> {
     valueLength: rawValue?.length ?? 0,
     hasValue: rawValue !== null,
   });
-  return loadFromRawValue(rawValue, getLocalStorageKey());
+  return loadFromRawValue(rawValue, getLocalStorageKey()).then((config) => {
+    // Refresh source metadata without dropping a stored title or changing settings.
+    const entry = parseStoredEntry(rawValue);
+    if (entry?.version === version && entry.media?.id === storageKey && mediaMetadata) {
+      mediaMetadata = {
+        ...entry.media,
+        ...mediaMetadata,
+        sourceUrl: mediaMetadata.sourceUrl || entry.media.sourceUrl,
+        title: mediaMetadata.title || entry.media.title,
+      };
+      save(config);
+    }
+    return config;
+  });
 }
 
 function loadFromRawValue(
@@ -138,7 +157,7 @@ function loadFromRawValue(
     return Promise.resolve(normalizeConfig({}));
   }
   const storedEntry = parseStoredEntry(rawValue);
-  if (storedEntry?.version !== version) {
+  if (storedEntry?.version !== version || storedEntry.media?.id !== storageKey) {
     warnStorage("load version mismatch", {
       storageKey,
       loadedFromStorageKey,
@@ -157,8 +176,6 @@ function loadFromRawValue(
 }
 
 function getLocalStorageKey() {
-  // The former last-config entry has no media identity. Leave it intact, but
-  // never apply it to an arbitrary video or overwrite it with another video's data.
   return `${storageKeyPrefix}${storageKey}`;
 }
 
@@ -167,7 +184,7 @@ function parseStoredEntry(rawValue: string | null) {
   try {
     const loaded = JSON.parse(rawValue);
     return loaded && typeof loaded === "object"
-      ? (loaded as { version?: string; config?: unknown })
+      ? (loaded as { version?: string; media?: MediaMetadata; config?: unknown })
       : undefined;
   } catch (error) {
     warnStorage("parse failed", { error: errorToMessage(error) });
