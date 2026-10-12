@@ -88,7 +88,7 @@ export default function PracticeApp() {
   const change = (patch: Partial<Preferences>) => { if (p) send('preferences', { prefs: { ...p, ...patch } }); };
   const phase = playback.phase === 'lead-in' ? 'Get ready' : playback.phase === 'lead-out' ? 'Reset' : playback.phase === 'buffering' ? 'Buffering' : playback.phase === 'seeking' ? 'Getting ready' : playback.running ? 'Practicing' : 'Ready to practice';
   return <main className={`practice-panel ${embedded ? 'embedded' : 'popup'}`}>
-    <header><a className="brand" href="https://loopygoopy.web.app" target="_blank" rel="noreferrer">loopy goopy<span> ↗</span></a>
+    <header><a className="brand" href="https://github.com/dcep93/loopygoopy#practice" target="_blank" rel="noreferrer">loopy goopy<span> ↗</span></a>
       {embedded && <button className="text-button" onClick={() => send('exit')}>Exit practice mode</button>}</header>
     {snapshot.loading ? <div className="empty"><h1>Preparing your practice…</h1></div> : snapshot.error ?
       <div className="empty" role="alert"><h1>Let’s reconnect</h1><p>{snapshot.error}</p><button onClick={() => send('retry')}>Retry</button></div> : !d || !p ?

@@ -24,8 +24,8 @@ export function interval(d: Definition, p: Preferences) {
   const beatSeconds = 60 / d.bpm;
   return { start: d.firstBeat + (p.first - 1) * beatSeconds, end: d.firstBeat + p.last * beatSeconds, beatSeconds };
 }
-export function decodeDocument(doc: any): any {
-  if (!doc?.fields) return undefined;
-  return Object.fromEntries(Object.entries(doc.fields).map(([k, v]: [string, any]) => [k,
-    v.stringValue ?? (v.integerValue !== undefined ? Number(v.integerValue) : v.doubleValue)]));
+export type Catalog = { schemaVersion: 1; videos: Definition[] };
+export function validCatalog(value: any): value is Catalog {
+  return Boolean(value && value.schemaVersion === 1 && Array.isArray(value.videos) && value.videos.length <= 1000 &&
+    value.videos.every((video: any) => validDefinition(video)) && new Set(value.videos.map((video: Definition) => video.mediaId)).size === value.videos.length);
 }

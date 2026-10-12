@@ -46,46 +46,64 @@
     const lead = (l) => l && Number.isInteger(l.beats) && l.beats >= 0 && l.beats <= 32 && ["track", "silent", "metronome"].includes(l.style);
     return Boolean(v && Number.isInteger(v.first) && Number.isInteger(v.last) && v.first >= 1 && v.last <= 32 && v.first <= v.last && (v.first - 1) % 4 === 0 && v.last % 4 === 0 && Number.isFinite(v.speed) && v.speed >= 0.25 && v.speed <= 1.5 && lead(v.leadIn) && lead(v.leadOut));
   }
-  function decodeDocument(doc) {
-    if (!doc?.fields) return void 0;
-    return Object.fromEntries(Object.entries(doc.fields).map(([k, v]) => [
-      k,
-      v.stringValue ?? (v.integerValue !== void 0 ? Number(v.integerValue) : v.doubleValue)
-    ]));
+  function validCatalog(value) {
+    return Boolean(value && value.schemaVersion === 1 && Array.isArray(value.videos) && value.videos.length <= 1e3 && value.videos.every((video) => validDefinition(video)) && new Set(value.videos.map((video) => video.mediaId)).size === value.videos.length);
   }
 
-  // src/practice/golden.json
-  var golden_default = {
+  // src/practice/bundled-catalog.json
+  var bundled_catalog_default = {
     schemaVersion: 1,
-    mediaId: "youtube:xzeGxm72GOo",
-    sourceUrl: "https://www.youtube.com/watch?v=xzeGxm72GOo",
-    title: "3 Tequila Floor",
-    bpm: 81,
-    firstBeat: 12.64,
-    totalBeats: 32,
-    revision: 1,
-    status: "published"
+    videos: [
+      {
+        schemaVersion: 1,
+        mediaId: "youtube:xzeGxm72GOo",
+        sourceUrl: "https://www.youtube.com/watch?v=xzeGxm72GOo",
+        title: "3 Tequila Floor",
+        bpm: 81,
+        firstBeat: 12.64,
+        totalBeats: 32,
+        revision: 1,
+        status: "published"
+      }
+    ]
   };
 
   // src/practice/catalog.ts
-  var projectId = "loopygoopy";
-  async function loadDefinition(id) {
-    const key = `practice-catalog:${id}`;
-    const saved = (await chrome.storage.local.get(key))[key];
-    const fallback = validDefinition(saved, id) ? saved : validDefinition(golden_default, id) ? golden_default : void 0;
+  var catalogUrl = "https://raw.githubusercontent.com/dcep93/loopygoopy/master/catalog.json";
+  var catalogKey = "practice-catalog-v1";
+  var refreshInterval = 60 * 60 * 1e3;
+  var pending2;
+  async function readCatalog(refresh) {
+    const saved = (await chrome.storage.local.get(catalogKey))[catalogKey];
+    const cached = validCatalog(saved?.catalog) ? saved.catalog : void 0;
+    const age = Date.now() - saved?.fetchedAt;
+    if (!refresh && cached && Number.isFinite(age) && age >= 0 && age < refreshInterval) return { catalog: cached };
+    const fallback = cached || (validCatalog(bundled_catalog_default) ? bundled_catalog_default : void 0);
     const abort = new AbortController(), timer = setTimeout(() => abort.abort(), 4e3);
     try {
-      const response = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/practiceVideos/${encodeURIComponent(id)}`, { signal: abort.signal });
-      if (response.status === 404) return fallback ? { definition: fallback, notice: "Using the saved practice guide." } : {};
+      const response = await fetch(catalogUrl, { signal: abort.signal, credentials: "omit", referrerPolicy: "no-referrer", cache: "no-cache" });
       if (!response.ok) throw Error("Catalog unavailable");
-      const definition = decodeDocument(await response.json());
-      if (!validDefinition(definition, id)) throw Error("Invalid practice guide");
-      await chrome.storage.local.set({ [key]: definition });
-      return { definition };
+      const catalog = await response.json();
+      if (!validCatalog(catalog)) throw Error("Invalid practice catalog");
+      try {
+        await chrome.storage.local.set({ [catalogKey]: { catalog, fetchedAt: Date.now() } });
+      } catch {
+        return { catalog, notice: "Practice guides loaded, but could not be cached for offline use." };
+      }
+      return { catalog };
     } catch {
-      return fallback ? { definition: fallback, notice: "Using the saved practice guide." } : { notice: "Could not load a practice guide. Retry when connected." };
+      return { catalog: fallback, notice: fallback ? "Using the saved practice catalog." : "Could not load practice guides. Retry when connected." };
     } finally {
       clearTimeout(timer);
+    }
+  }
+  async function loadDefinition(id, refresh = false) {
+    const request = pending2 || (pending2 = readCatalog(refresh));
+    try {
+      const result = await request;
+      return { definition: result.catalog?.videos.find((video) => video.mediaId === id), notice: result.notice };
+    } finally {
+      if (pending2 === request) pending2 = void 0;
     }
   }
 
@@ -104,9 +122,9 @@
       if (h === host) send(port, { type: "snapshot", ...host.snapshot });
     });
   }
-  async function load(host) {
+  async function load(host, refresh = false) {
     const id = host.id;
-    const [catalog, saved] = await Promise.all([loadDefinition(id), chrome.storage.local.get(`practice-prefs:${id}`)]);
+    const [catalog, saved] = await Promise.all([loadDefinition(id, refresh), chrome.storage.local.get(`practice-prefs:${id}`)]);
     if (hosts.get(host.tabId) !== host) return;
     const p = saved[`practice-prefs:${id}`];
     host.snapshot = { ...catalog, mediaId: id, prefs: validPreferences(p) ? p : structuredClone(defaults), playback: { ...paused, beat: validPreferences(p) ? p.first : defaults.first }, loading: false };
@@ -193,7 +211,7 @@
             send(port, { type: "save-error" });
           }
         } else if (["play", "pause", "exit", "manual"].includes(message.type)) send(host.port, { type: message.type });
-        else if (message.type === "retry" && !host.snapshot.playback?.running) await load(host);
+        else if (message.type === "retry" && !host.snapshot.playback?.running) await load(host, true);
         else if (message.type === "height" && Number.isFinite(message.height)) send(host.port, { type: "height", height: Math.max(250, Math.min(1800, message.height)) });
       });
       port.onDisconnect.addListener(() => views.delete(port));

@@ -78,7 +78,7 @@
     "offscreen"
   ],
   "host_permissions": [
-    "https://firestore.googleapis.com/*"
+    "https://raw.githubusercontent.com/*"
   ],
   "minimum_chrome_version": "120"
 }

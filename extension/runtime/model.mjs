@@ -15,19 +15,15 @@ function interval(d, p) {
   const beatSeconds = 60 / d.bpm;
   return { start: d.firstBeat + (p.first - 1) * beatSeconds, end: d.firstBeat + p.last * beatSeconds, beatSeconds };
 }
-function decodeDocument(doc) {
-  if (!doc?.fields) return void 0;
-  return Object.fromEntries(Object.entries(doc.fields).map(([k, v]) => [
-    k,
-    v.stringValue ?? (v.integerValue !== void 0 ? Number(v.integerValue) : v.doubleValue)
-  ]));
+function validCatalog(value) {
+  return Boolean(value && value.schemaVersion === 1 && Array.isArray(value.videos) && value.videos.length <= 1e3 && value.videos.every((video) => validDefinition(video)) && new Set(value.videos.map((video) => video.mediaId)).size === value.videos.length);
 }
 export {
-  decodeDocument,
   defaults,
   interval,
   paused,
   range,
+  validCatalog,
   validDefinition,
   validPreferences
 };

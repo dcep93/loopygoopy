@@ -8,9 +8,9 @@ const views = new Map<any, Host>();
 const writes = new Map<string, Promise<void>>();
 const send = (port: any, value: any) => { try { port.postMessage(value); } catch {} };
 function broadcast(host: Host) { views.forEach((h, port) => { if (h === host) send(port, { type: 'snapshot', ...host.snapshot }); }); }
-async function load(host: Host) {
+async function load(host: Host, refresh = false) {
   const id = host.id;
-  const [catalog, saved] = await Promise.all([loadDefinition(id), chrome.storage.local.get(`practice-prefs:${id}`)]);
+  const [catalog, saved] = await Promise.all([loadDefinition(id, refresh), chrome.storage.local.get(`practice-prefs:${id}`)]);
   if (hosts.get(host.tabId) !== host) return;
   const p = saved[`practice-prefs:${id}`];
   host.snapshot = { ...catalog, mediaId: id, prefs: validPreferences(p) ? p : structuredClone(defaults), playback: { ...paused, beat: validPreferences(p) ? p.first : defaults.first }, loading: false };
@@ -58,7 +58,7 @@ chrome.runtime.onConnect.addListener((port: any) => {
         send(host.port, { type: 'preferences', prefs: message.prefs }); broadcast(host);
         try { await persist(host.id, message.prefs); } catch { send(port, { type: 'save-error' }); }
       } else if (['play', 'pause', 'exit', 'manual'].includes(message.type)) send(host.port, { type: message.type });
-      else if (message.type === 'retry' && !host.snapshot.playback?.running) await load(host);
+      else if (message.type === 'retry' && !host.snapshot.playback?.running) await load(host, true);
       else if (message.type === 'height' && Number.isFinite(message.height)) send(host.port, { type: 'height', height: Math.max(250, Math.min(1800, message.height)) });
     });
     port.onDisconnect.addListener(() => views.delete(port));

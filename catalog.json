@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "videos": [
+    {
+      "schemaVersion": 1,
+      "mediaId": "youtube:xzeGxm72GOo",
+      "sourceUrl": "https://www.youtube.com/watch?v=xzeGxm72GOo",
+      "title": "3 Tequila Floor",
+      "bpm": 81,
+      "firstBeat": 12.64,
+      "totalBeats": 32,
+      "revision": 1,
+      "status": "published"
+    }
+  ]
+}

@@ -28,9 +28,9 @@ Existing video settings, bookmark names, and bookmark configurations are copied 
 
 ## Publishing prepared videos
 
-The library in `site/` is intended for `loopygoopy.web.app`; Firestore stores published timing definitions so adding videos does not require an extension update. See [the publishing guide](docs/practice-publishing.md) for setup, calibration, and publishing.
+Prepared timings live in [`catalog.json`](catalog.json), served directly by [raw.githubusercontent.com](https://raw.githubusercontent.com/dcep93/loopygoopy/master/catalog.json). The extension downloads the whole file, caches it for an hour, and matches video IDs locally. It uses saved or bundled definitions if the request fails.
 
-Deployment is not complete: the Firebase project must be verified after CLI sign-in. The bundled example works without a deployed catalog.
+To add a prepared video, edit and validate the catalog, then commit and push. No database, website, deployment, or service login is required. GitHub caching and the extension refresh interval mean changes may take time to appear. See [the publishing guide](docs/practice-publishing.md).
 
 ## Development checks
 
@@ -41,16 +41,8 @@ CI=true npm test -- --watchAll=false --runInBand
 npm run build
 ```
 
-The build recompiles the existing TypeScript content script, bundles the practice content script/service worker/migration document, builds the popup, and copies the golden definition to the site. Generated runtime files are committed; the React build is local and ignored.
+The build validates the public catalog and copies it into the extension as an offline fallback. It also recompiles the existing TypeScript content script, bundles the practice runtime, and builds the popup. Generated runtime files are committed; the React build is local and ignored.
 
-Firestore rules can be tested without production access. Start the emulator from the repo root with Java 21+ installed:
+For catalog-only edits after an initial build, run `node scripts/validate-catalog.mjs` from the repository root, then commit and push `catalog.json`. No extension release is needed to publish additional timing records.
 
-```sh
-npx firebase-tools emulators:start --only firestore --project demo-loopygoopy
-```
-
-Then, in another terminal:
-
-```sh
-FIRESTORE_EMULATOR_HOST=127.0.0.1:8189 node scripts/test-firestore.mjs
-```
+The updated extension still needs installed-Chrome verification before a Chrome Web Store release. Catalog publication and extension publication are separate.
