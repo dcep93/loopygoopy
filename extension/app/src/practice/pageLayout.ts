@@ -26,5 +26,6 @@ html.loopy-practice :is(#player-container-outer, #player-container-inner, #playe
   max-width: none !important; padding: 0 !important; margin: 0 !important;
 }
 html.loopy-practice #movie_player { width: 100% !important; height: 100% !important; background: transparent !important; }
+html.loopy-practice #movie_player .html5-video-container { width: 100% !important; height: 100% !important; }
 html.loopy-practice #movie_player video { object-fit: contain !important; width: 100% !important; height: 100% !important; left: 0 !important; top: 0 !important; }
 `;
