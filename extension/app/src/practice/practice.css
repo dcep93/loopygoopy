@@ -61,7 +61,7 @@ body:has(.practice-panel) { background: transparent; }
 .practice-panel .practice-settings { display: grid; grid-template-columns: auto auto auto; gap: 1rem; align-items: center; justify-content: space-between; }
 .practice-panel :is(.speed, .lead-row) { display: flex; align-items: center; gap: .5rem; white-space: nowrap; min-width: 0; }
 .practice-panel .speed output { min-width: 4ch; text-align: center; font-size: .8rem; font-variant-numeric: tabular-nums; }
-.practice-panel .lead-row legend, .practice-panel .duration { font-size: .75rem; color: var(--ww-text-muted); }
+.practice-panel .speed > span, .practice-panel .lead-row legend, .practice-panel .duration { font-size: .75rem; color: var(--ww-text-muted); }
 .practice-panel .segments { display: flex; gap: .2rem; }
 .practice-panel .segments button { font-size: .75rem; padding: .375rem .5rem; border-radius: .5rem; }
 .practice-panel .lead-row { border: 0; margin: 0; padding: 0; }

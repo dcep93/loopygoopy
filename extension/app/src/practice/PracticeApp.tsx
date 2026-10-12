@@ -132,7 +132,7 @@ export default function PracticeApp() {
       <div className="empty"><h1>This video isn’t prepared yet</h1><p>{snapshot.notice || 'You can still use the manual loop controls.'}</p><button onClick={() => send('retry')}>Retry</button><button onClick={() => { send('manual'); setManual(true); }}>Manual controls</button></div> : <>
       <RangeButtons first={p.first} last={p.last} onChange={change} />
       <div className="practice-settings">
-        <div className="speed segments" role="group" aria-label="Playback speed"><button aria-label="Slower" disabled={p.speed <= .25} onClick={() => change({ speed: Math.max(.25, +(p.speed - .05).toFixed(2)) })}>−</button><output aria-label="Current speed" aria-live="polite">{Math.round(p.speed * 100)}%</output><button aria-label="Faster" disabled={p.speed >= 1.5} onClick={() => change({ speed: Math.min(1.5, +(p.speed + .05).toFixed(2)) })}>+</button></div>
+        <div className="speed segments" role="group" aria-label="Playback speed"><span>Speed</span><button aria-label="Slower" disabled={p.speed <= .25} onClick={() => change({ speed: Math.max(.25, +(p.speed - .05).toFixed(2)) })}>−</button><output aria-label="Current speed" aria-live="polite">{Math.round(p.speed * 100)}%</output><button aria-label="Faster" disabled={p.speed >= 1.5} onClick={() => change({ speed: Math.min(1.5, +(p.speed + .05).toFixed(2)) })}>+</button></div>
         <LeadControls label="Lead-in" value={p.leadIn} onChange={leadIn => change({ leadIn })} />
         <LeadControls label="Lead-out" value={p.leadOut} onChange={leadOut => change({ leadOut })} />
       </div>
