@@ -35,7 +35,7 @@ describe('practice URL opt-in', () => {
   const plainUrl = golden.sourceUrl;
   const panel = () => document.querySelector('#loopy-practice-panel');
   const entryLink = () => document.querySelector<HTMLAnchorElement>('#loopy-practice-entry a');
-  const addPlayer = () => { document.body.innerHTML = '<div id="primary-inner"><div id="movie_player"><video></video></div></div>'; };
+  const addPlayer = () => { document.body.innerHTML = '<ytd-masthead><div id="center"><yt-searchbox></yt-searchbox></div></ytd-masthead><div id="primary-inner"><div id="movie_player"><video></video></div></div>'; };
   const navigate = (url: string) => {
     pageLocation.href = url;
     document.dispatchEvent(new Event('yt-navigate-finish'));
@@ -136,8 +136,9 @@ describe('practice URL opt-in', () => {
     start(plainUrl);
     expect(entryLink()).toBeNull();
     receive({ type: 'configure', definition: golden, prefs: defaults });
-    expect(entryLink()).toHaveTextContent('Enter practice mode');
-    expect(document.querySelector('#primary-inner')?.firstElementChild?.id).toBe('loopy-practice-entry');
+    expect(entryLink()?.textContent).toBe('loopy goopy');
+    expect(document.querySelector('ytd-masthead #center')?.firstElementChild?.id).toBe('loopy-practice-entry');
+    expect(document.querySelector('#loopy-practice-entry')?.nextElementSibling?.tagName).toBe('YT-SEARCHBOX');
     jest.advanceTimersByTime(1000);
     expect(panel()).toBeNull();
     expect(replaceState).not.toHaveBeenCalled();
@@ -199,6 +200,39 @@ describe('practice URL opt-in', () => {
     entryLink()!.click();
     expect(panel()).toBeNull(); expect(entryLink()).toBeNull();
     expect(new URL(pageLocation.href).searchParams.has('loopygoopy')).toBe(false);
+  });
+  test('the entry waits for the masthead and remains before a recreated search box', () => {
+    start(plainUrl);
+    document.querySelector('ytd-masthead')!.remove();
+    receive({ type: 'configure', definition: golden, prefs: defaults });
+    expect(entryLink()).toBeNull();
+    document.body.insertAdjacentHTML('afterbegin', '<ytd-masthead><div id="center"><yt-searchbox></yt-searchbox></div></ytd-masthead>');
+    jest.advanceTimersByTime(500);
+    expect(entryLink()).not.toBeNull();
+    const center = document.querySelector('ytd-masthead #center')!;
+    center.prepend(center.querySelector('yt-searchbox')!);
+    jest.advanceTimersByTime(500);
+    expect(center.firstElementChild?.id).toBe('loopy-practice-entry');
+  });
+  test('video dimming follows active lead phases immediately and clears on exit', () => {
+    start(`${plainUrl}&loopygoopy`);
+    receive({ type: 'configure', definition: golden, prefs: defaults });
+    const constructor = require('./engine').PracticeEngine as jest.Mock;
+    const publish = constructor.mock.calls[constructor.mock.calls.length - 1][3];
+    for (const phase of ['lead-in', 'lead-out']) {
+      publish({ phase, running: true });
+      expect(document.documentElement).toHaveClass('loopy-practice-lead');
+      publish({ phase: 'practice', running: true });
+      expect(document.documentElement).not.toHaveClass('loopy-practice-lead');
+    }
+    publish({ phase: 'lead-in', running: true });
+    publish({ phase: 'paused', running: false });
+    expect(document.documentElement).not.toHaveClass('loopy-practice-lead');
+    publish({ phase: 'lead-out', running: true });
+    receive({ type: 'exit' });
+    expect(document.documentElement).not.toHaveClass('loopy-practice-lead');
+    publish({ phase: 'lead-in', running: true });
+    expect(document.documentElement).not.toHaveClass('loopy-practice-lead');
   });
   test('modified clicks retain native link behavior', () => {
     start(plainUrl);

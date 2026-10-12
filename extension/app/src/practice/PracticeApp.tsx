@@ -116,11 +116,12 @@ export default function PracticeApp() {
   const { definition: d, prefs: p } = snapshot, playback = snapshot.playback || paused;
   const change = (patch: Partial<Preferences>) => { if (p) send('preferences', { prefs: { ...p, ...patch } }); };
   const phase = playback.phase === 'lead-in' ? 'Get ready' : playback.phase === 'lead-out' ? 'Reset' : playback.phase === 'buffering' ? 'Buffering' : playback.phase === 'seeking' ? 'Getting ready' : '';
+  const brand = <a className="brand" href="https://github.com/dcep93/loopygoopy#practice" target="_blank" rel="noreferrer">loopy goopy</a>;
   return <main className="practice-panel embedded">
-    <header className="practice-header"><a className="brand" href="https://github.com/dcep93/loopygoopy#practice" target="_blank" rel="noreferrer">loopy goopy</a>
+    <header className="practice-header">{(!d || !p) && brand}
       {d && p && <>
         <div className="practice-title"><h1>{d.title}</h1></div>
-        <div className="transport"><div className={`counter phase-${playback.phase}`}><span className="count">{['lead-in', 'lead-out'].includes(playback.phase) ? playback.remaining : playback.beat}</span>{phase && <span className="phase">{phase}{['lead-in', 'lead-out'].includes(playback.phase) && <small>beats remaining</small>}</span>}</div>
+        <div className="transport">{brand}<div className={`counter phase-${playback.phase}`}><span className="count">{['lead-in', 'lead-out'].includes(playback.phase) ? playback.remaining : playback.beat}</span>{phase && <span className="phase">{phase}{['lead-in', 'lead-out'].includes(playback.phase) && <small>beats remaining</small>}</span>}</div>
           <button className="play" onClick={() => send(playback.running ? 'pause' : 'play')}>{playback.running ? 'Ⅱ Pause' : '▶ Play'}</button>
         </div>
       </>}
@@ -135,7 +136,6 @@ export default function PracticeApp() {
         <LeadControls label="Lead-in" value={p.leadIn} onChange={leadIn => change({ leadIn })} />
         <LeadControls label="Lead-out" value={p.leadOut} onChange={leadOut => change({ leadOut })} />
       </div>
-      <footer><span>Repeats until you pause{playback.cycle > 0 ? ` · Repeat ${playback.cycle}` : ''}</span><details><summary>Advanced</summary><p>Prepared tempo: {d.bpm} BPM · First beat: {d.firstBeat}s</p><p>{snapshot.notice || 'Practice guide loaded.'}</p><button onClick={() => { send('manual'); setManual(true); }}>Open manual controls</button></details></footer>
       {playback.error && <p className="error" role="alert">{playback.error}</p>}
     </>}{saveError && <p className="error" role="alert">{saveError}</p>}
   </main>;

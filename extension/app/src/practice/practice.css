@@ -39,7 +39,7 @@ body:has(.practice-panel) { background: transparent; }
 }
 .practice-panel button { cursor: pointer; white-space: nowrap; }
 .practice-panel button:hover { border-color: var(--ww-accent-amber); }
-.practice-panel :is(button, input, summary):focus-visible { outline: 2px solid var(--ww-title-pink); outline-offset: 2px; }
+.practice-panel :is(button, input, a):focus-visible { outline: 2px solid var(--ww-title-pink); outline-offset: 2px; }
 .practice-panel button:disabled { opacity: .4; cursor: default; }
 .practice-panel .practice-header { display: flex; align-items: center; gap: 1rem; min-width: 0; }
 .practice-panel .brand { font: 400 1.65rem/.95 var(--app-title-font); letter-spacing: -.06em; color: var(--ww-title-pink); white-space: nowrap; text-decoration: none; }
@@ -69,10 +69,6 @@ body:has(.practice-panel) { background: transparent; }
 .practice-panel .duration { display: flex; align-items: center; gap: .5rem; }
 .practice-panel .duration input { width: 2.75rem; font-size: .8rem; padding: .35rem .3rem; }
 .practice-panel .lead-row button { text-transform: capitalize; }
-.practice-panel footer { display: flex; justify-content: flex-end; align-items: baseline; gap: .5rem; font-size: .6875rem; color: var(--ww-text-muted); }
-.practice-panel details { text-align: right; }
-.practice-panel summary { cursor: pointer; }
-.practice-panel details p { margin: .5rem 0; }
 .practice-panel .empty { padding: 1rem 0; }
 .practice-panel .empty h1 { font-size: 1.2rem; margin-bottom: .5rem; }
 .practice-panel .empty button { margin: .5rem .5rem 0 0; }
@@ -95,5 +91,4 @@ body:has(.practice-panel) { background: transparent; }
   .practice-panel :is(.speed, .lead-row) { justify-content: space-between; }
   .practice-panel .beat-blocks { gap: .2rem; }
   .practice-panel .beat-blocks button { font-size: .75rem; }
-  .practice-panel footer { flex-wrap: wrap; }
 }

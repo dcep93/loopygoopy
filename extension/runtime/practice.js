@@ -252,6 +252,7 @@ html.loopy-practice :is(#player-container-outer, #player-container-inner, #playe
 html.loopy-practice #movie_player { width: 100% !important; height: 100% !important; background: transparent !important; }
 html.loopy-practice #movie_player .html5-video-container { width: 100% !important; height: 100% !important; }
 html.loopy-practice #movie_player video { object-fit: contain !important; width: 100% !important; height: 100% !important; left: 0 !important; top: 0 !important; }
+html.loopy-practice.loopy-practice-lead #movie_player video { opacity: .8 !important; }
 `;
 
   // src/practice/entryLink.ts
@@ -260,16 +261,14 @@ html.loopy-practice #movie_player video { object-fit: contain !important; width:
     entry.id = "loopy-practice-entry";
     const style = document.createElement("style");
     style.textContent = `
-    #loopy-practice-entry { position: relative; z-index: 1; margin: 0 0 10px; font: 14px/1.4 Arial, sans-serif; }
-    #loopy-practice-entry a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid #655241; border-radius: 9px; background: #241c18; color: #f5e9dc; text-decoration: none; }
-    #loopy-practice-entry a:hover { background: #382c23; text-decoration: underline; }
+    #loopy-practice-entry { position: relative; flex: none; margin: 0 8px 0 0; }
+    #loopy-practice-entry a { display: block; padding: 8px 0; font: 400 20px/1.2 "Comic Sans MS", "Comic Sans", cursive; letter-spacing: -1px; white-space: nowrap; color: #ff7bc3; text-decoration: none; }
+    #loopy-practice-entry a:hover { text-decoration: underline; }
     #loopy-practice-entry a:focus-visible { outline: 2px solid #ff7bc3; outline-offset: 3px; }
-    #loopy-practice-entry span { color: #ff7bc3; }
+    ytd-masthead #center:has(> #loopy-practice-entry) > :is(yt-searchbox, ytd-searchbox) { margin-left: 0 !important; min-width: 0; }
   `;
     const link = document.createElement("a");
-    const brand = document.createElement("span");
-    brand.textContent = "loopy goopy";
-    link.append(brand, document.createTextNode(" \xB7 Enter practice mode"));
+    link.textContent = "loopy goopy";
     link.addEventListener("click", (event) => {
       if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
@@ -285,8 +284,8 @@ html.loopy-practice #movie_player video { object-fit: contain !important; width:
       entry?.remove();
       entry = void 0;
     }, updateEntry2 = function() {
-      const parent = document.querySelector("#primary-inner");
-      if (disposed || practiceRequested || !token || !parent || !parent.querySelector("#movie_player video") || !validDefinition(configuration?.definition, videoId)) {
+      const parent = document.querySelector("ytd-masthead #center");
+      if (disposed || practiceRequested || !token || !parent || !document.querySelector("#movie_player video") || !validDefinition(configuration?.definition, videoId)) {
         removeEntry2();
         return;
       }
@@ -311,14 +310,14 @@ html.loopy-practice #movie_player video { object-fit: contain !important; width:
       });
       url.searchParams.set("loopygoopy", "");
       entry.querySelector("a").href = url.href;
-      if (entry.parentElement !== parent) parent.prepend(entry);
+      if (parent.firstElementChild !== entry) parent.prepend(entry);
     }, restore2 = function() {
       const wasPractice = document.documentElement.classList.contains("loopy-practice");
       frame?.remove();
       style?.remove();
       frame = void 0;
       style = void 0;
-      document.documentElement.classList.remove("loopy-practice");
+      document.documentElement.classList.remove("loopy-practice", "loopy-practice-lead");
       document.documentElement.style.removeProperty("--loopy-controls-height");
       if (wasPractice && !disposed) requestAnimationFrame(() => {
         if (!disposed && !document.documentElement.classList.contains("loopy-practice")) {
@@ -362,6 +361,7 @@ html.loopy-practice #movie_player video { object-fit: contain !important; width:
       engine?.dispose();
       observedVideo = media;
       engine = new PracticeEngine(media, configuration.definition, configuration.prefs, (playback) => {
+        document.documentElement.classList.toggle("loopy-practice-lead", practiceRequested && playback.running && (playback.phase === "lead-in" || playback.phase === "lead-out"));
         const now = performance.now();
         if (now - lastReport > 80 || !playback.running || playback.phase === "error") {
           post({ type: "playback", playback });

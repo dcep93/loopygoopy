@@ -12,8 +12,8 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
   const post = (message: any) => { try { port?.postMessage(message); } catch {} };
   function removeEntry() { entry?.remove(); entry = undefined; }
   function updateEntry() {
-    const parent = document.querySelector('#primary-inner');
-    if (disposed || practiceRequested || !token || !parent || !parent.querySelector('#movie_player video') ||
+    const parent = document.querySelector('ytd-masthead #center');
+    if (disposed || practiceRequested || !token || !parent || !document.querySelector('#movie_player video') ||
         !validDefinition(configuration?.definition, videoId)) { removeEntry(); return; }
     const url = new URL(location.href);
     if (url.pathname !== '/watch' || `youtube:${url.searchParams.get('v')}` !== videoId) { removeEntry(); return; }
@@ -29,12 +29,12 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
     });
     url.searchParams.set('loopygoopy', '');
     entry.querySelector('a')!.href = url.href;
-    if (entry.parentElement !== parent) parent.prepend(entry);
+    if (parent.firstElementChild !== entry) parent.prepend(entry);
   }
   function restore() {
     const wasPractice = document.documentElement.classList.contains('loopy-practice');
     frame?.remove(); style?.remove(); frame = undefined; style = undefined;
-    document.documentElement.classList.remove('loopy-practice');
+    document.documentElement.classList.remove('loopy-practice', 'loopy-practice-lead');
     document.documentElement.style.removeProperty('--loopy-controls-height');
     if (wasPractice && !disposed) requestAnimationFrame(() => {
       // YouTube caches inline video dimensions/offsets. Removing our CSS alone
@@ -61,6 +61,8 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
     if (engine && observedVideo === media) return;
     engine?.dispose(); observedVideo = media;
     engine = new PracticeEngine(media, configuration.definition, configuration.prefs, playback => {
+      document.documentElement.classList.toggle('loopy-practice-lead', practiceRequested && playback.running &&
+        (playback.phase === 'lead-in' || playback.phase === 'lead-out'));
       // Bound outbound updates while keeping playback scheduling independent of UI.
       const now = performance.now();
       if (now - lastReport > 80 || !playback.running || playback.phase === 'error') { post({ type: 'playback', playback }); lastReport = now; }
