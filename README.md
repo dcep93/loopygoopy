@@ -14,7 +14,9 @@ The [Chrome Web Store listing](https://chrome.google.com/webstore/detail/loopy-g
 
 ## Practice
 
-Open [the prepared example](https://www.youtube.com/watch?v=xzeGxm72GOo&loopygoopy). The `loopygoopy` query flag places the controls below the existing YouTube video and hides surrounding page content. Exit practice mode restores the page.
+Open [the prepared example](https://www.youtube.com/watch?v=xzeGxm72GOo&loopygoopy). The `loopygoopy` query flag places compact controls above the existing YouTube video and hides surrounding page content. Exit practice mode restores the page.
+
+The embedded controls use the multisport theme and newapp title font. The full video fits the space remaining below the controls without cropping. Resizing the window or opening Advanced adjusts that space; exceptionally short windows can scroll to keep everything accessible.
 
 The extension captures the flag before YouTube loads and retains it if YouTube cleans up the URL for that same video. `#loopygoopy` also opts in. Exiting clears both markers; navigating to another video requires a fresh opt-in.
 

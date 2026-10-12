@@ -92,6 +92,22 @@ describe('practice URL opt-in', () => {
     expect(controller.pause).not.toHaveBeenCalled();
     expect(new URL(pageLocation.href).searchParams.get('t')).toBe('20');
   });
+  test('controls precede the player, resize in both directions and clear sizing on exit', () => {
+    start(`${plainUrl}&loopygoopy`);
+    const parent = document.querySelector('#primary-inner')!;
+    expect(parent.firstElementChild).toBe(panel());
+    const media = parent.querySelector('video');
+    receive({ type: 'height', height: 320 });
+    expect(document.documentElement.style.getPropertyValue('--loopy-controls-height')).toBe('320px');
+    receive({ type: 'height', height: 180 });
+    expect((panel() as HTMLElement).style.height).toBe('180px');
+    expect(document.documentElement.style.getPropertyValue('--loopy-controls-height')).toBe('180px');
+    receive({ type: 'height', height: NaN });
+    expect(document.documentElement.style.getPropertyValue('--loopy-controls-height')).toBe('180px');
+    receive({ type: 'exit' });
+    expect(document.documentElement.style.getPropertyValue('--loopy-controls-height')).toBe('');
+    expect(parent.querySelector('video')).toBe(media);
+  });
   test('a normal visit stays normal even when the video is prepared', () => {
     start(plainUrl);
     jest.advanceTimersByTime(1000);

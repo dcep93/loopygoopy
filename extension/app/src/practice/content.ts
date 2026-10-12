@@ -1,4 +1,5 @@
 import { PracticeEngine } from './engine';
+import { practicePageCSS } from './pageLayout';
 import { validDefinition, validPreferences } from './model';
 declare const chrome: any;
 
@@ -7,7 +8,7 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
   let frame: HTMLIFrameElement | undefined, style: HTMLStyleElement | undefined, observedVideo: HTMLVideoElement | undefined;
   let configuration: any, disposed = false, lastReport = 0, practiceRequested = false;
   const post = (message: any) => { try { port?.postMessage(message); } catch {} };
-  function restore() { frame?.remove(); style?.remove(); frame = undefined; style = undefined; document.documentElement?.classList.remove('loopy-practice'); }
+  function restore() { frame?.remove(); style?.remove(); frame = undefined; style = undefined; document.documentElement?.classList.remove('loopy-practice'); document.documentElement?.style.removeProperty('--loopy-controls-height'); }
   function teardown() { engine?.dispose(); engine = undefined; observedVideo = undefined; configuration = undefined; restore(); token = ''; }
   function exit(manual = false) {
     practiceRequested = false;
@@ -35,11 +36,11 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
     if (!parent || !document.head || !document.querySelector('#movie_player video')) return;
     observedVideo?.pause(); document.querySelector<HTMLVideoElement>('#movie_player video')?.pause();
     style = document.createElement('style');
-    style.textContent = `html.loopy-practice{background:#101619!important}html.loopy-practice ytd-masthead,html.loopy-practice #secondary,html.loopy-practice #below,html.loopy-practice #comments,html.loopy-practice ytd-miniplayer,html.loopy-practice ytd-guide-renderer{display:none!important}html.loopy-practice ytd-page-manager{margin:0!important}html.loopy-practice ytd-watch-flexy{--ytd-watch-flexy-masthead-height:0px;--ytd-watch-flexy-max-player-width:1040px}html.loopy-practice #columns{padding:20px!important;max-width:1120px!important;margin:auto!important}html.loopy-practice #primary{padding:0!important;margin:0!important;max-width:100%!important;width:100%!important}html.loopy-practice #primary-inner{width:100%!important}html.loopy-practice #player-container-outer{max-height:58vh!important}html.loopy-practice #player-container-inner{padding-top:56.25%!important}#loopy-practice-panel{display:block;width:100%;height:460px;border:0;border-radius:0 0 20px 20px;color-scheme:dark}`;
+    style.textContent = practicePageCSS;
     document.head.appendChild(style); document.documentElement.classList.add('loopy-practice');
     frame = document.createElement('iframe'); frame.id = 'loopy-practice-panel'; frame.title = 'Loopy Goopy practice controls';
     frame.src = chrome.runtime.getURL(`app/build/index.html?practice=1&session=${token}`);
-    parent.appendChild(frame);
+    parent.prepend(frame);
   }
   function connect() {
     if (disposed || !videoId) return;
@@ -61,7 +62,10 @@ if (window === window.top && location.hostname === 'www.youtube.com') {
         if (m.type === 'pause') engine?.pause();
         if (m.type === 'exit') exit();
         if (m.type === 'manual') exit(true);
-        if (m.type === 'height' && frame) frame.style.height = `${m.height}px`;
+        if (m.type === 'height' && frame && Number.isFinite(m.height) && m.height > 0) {
+          frame.style.height = `${m.height}px`;
+          if (practiceRequested) document.documentElement.style.setProperty('--loopy-controls-height', `${m.height}px`);
+        }
       });
       currentPort.onDisconnect.addListener(() => { if (port !== currentPort) return; engine?.pause(); if (!disposed && videoId) setTimeout(connect, 750); });
       post({ type: 'hello', mediaId: videoId, url: location.href });

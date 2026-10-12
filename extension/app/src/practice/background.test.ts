@@ -25,6 +25,12 @@ test('two tabs share saved preferences but commands and live sessions remain bou
   expect(local.set).toHaveBeenCalledWith({[`practice-prefs:${golden.mediaId}`]:{...defaults,first:17,last:24}});
   one.postMessage.mockClear();popup.receive({type:'play',mediaId:'youtube:O_vU27GXPpk'});expect(one.postMessage).not.toHaveBeenCalled();
   popup.receive({type:'play',mediaId:golden.mediaId});expect(one.postMessage).toHaveBeenCalledWith({type:'play'});
+  one.postMessage.mockClear();
+  embedded.receive({type:'height',mediaId:golden.mediaId,height:181.2});
+  expect(one.postMessage).toHaveBeenCalledWith({type:'height',height:182});
+  one.postMessage.mockClear();
+  embedded.receive({type:'height',mediaId:golden.mediaId,height:NaN});
+  expect(one.postMessage).not.toHaveBeenCalled();
   const wrong=port('loopy-practice-view',{url:'chrome-extension://test/app/build/index.html?practice=1',tab:{id:2}});connect(wrong);wrong.receive({type:'attach',token:'token-1'});expect(wrong.postMessage).toHaveBeenCalledWith({type:'unavailable'});
   delete window.chrome;
 });

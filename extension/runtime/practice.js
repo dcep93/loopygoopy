@@ -222,6 +222,35 @@
     }
   };
 
+  // src/practice/pageLayout.ts
+  var practicePageCSS = `
+html.loopy-practice {
+  --loopy-controls-height: 224px;
+  --loopy-video-height: max(192px, calc(100dvh - var(--loopy-controls-height) - 34px));
+  background: #0c0907 !important;
+}
+html.loopy-practice body {
+  background: radial-gradient(circle at top left, rgba(255,123,195,.12), transparent 24%),
+    radial-gradient(circle at top right, rgba(201,156,107,.14), transparent 32%),
+    linear-gradient(180deg, #1a1411, #0c0907) !important;
+}
+html.loopy-practice :is(ytd-masthead, #secondary, #below, #comments, ytd-miniplayer, ytd-guide-renderer) { display: none !important; }
+html.loopy-practice ytd-app { background: transparent !important; }
+html.loopy-practice ytd-page-manager { margin: 0 !important; }
+html.loopy-practice ytd-watch-flexy { --ytd-watch-flexy-masthead-height: 0px; }
+html.loopy-practice #columns { padding: 12px !important; max-width: none !important; margin: 0 !important; display: block !important; }
+html.loopy-practice #primary { padding: 0 !important; margin: 0 !important; max-width: none !important; width: 100% !important; }
+html.loopy-practice #primary-inner { display: flex !important; flex-direction: column !important; gap: 10px; width: 100% !important; }
+html.loopy-practice #loopy-practice-panel { order: -1; display: block; flex: none; width: 100%; max-width: 1248px; height: var(--loopy-controls-height); margin: 0 auto; border: 0; border-radius: 16px; color-scheme: dark; }
+html.loopy-practice #player { flex: none !important; width: 100% !important; height: var(--loopy-video-height) !important; margin: 0 !important; }
+html.loopy-practice :is(#player-container-outer, #player-container-inner, #player-container, ytd-player, #container.ytd-player) {
+  width: 100% !important; height: 100% !important; min-height: 0 !important; max-height: none !important;
+  max-width: none !important; padding: 0 !important; margin: 0 !important;
+}
+html.loopy-practice #movie_player { width: 100% !important; height: 100% !important; background: transparent !important; }
+html.loopy-practice #movie_player video { object-fit: contain !important; width: 100% !important; height: 100% !important; left: 0 !important; top: 0 !important; }
+`;
+
   // src/practice/content.ts
   if (window === window.top && location.hostname === "www.youtube.com") {
     let restore2 = function() {
@@ -230,6 +259,7 @@
       frame = void 0;
       style = void 0;
       document.documentElement?.classList.remove("loopy-practice");
+      document.documentElement?.style.removeProperty("--loopy-controls-height");
     }, teardown2 = function() {
       engine?.dispose();
       engine = void 0;
@@ -278,14 +308,14 @@
       observedVideo?.pause();
       document.querySelector("#movie_player video")?.pause();
       style = document.createElement("style");
-      style.textContent = `html.loopy-practice{background:#101619!important}html.loopy-practice ytd-masthead,html.loopy-practice #secondary,html.loopy-practice #below,html.loopy-practice #comments,html.loopy-practice ytd-miniplayer,html.loopy-practice ytd-guide-renderer{display:none!important}html.loopy-practice ytd-page-manager{margin:0!important}html.loopy-practice ytd-watch-flexy{--ytd-watch-flexy-masthead-height:0px;--ytd-watch-flexy-max-player-width:1040px}html.loopy-practice #columns{padding:20px!important;max-width:1120px!important;margin:auto!important}html.loopy-practice #primary{padding:0!important;margin:0!important;max-width:100%!important;width:100%!important}html.loopy-practice #primary-inner{width:100%!important}html.loopy-practice #player-container-outer{max-height:58vh!important}html.loopy-practice #player-container-inner{padding-top:56.25%!important}#loopy-practice-panel{display:block;width:100%;height:460px;border:0;border-radius:0 0 20px 20px;color-scheme:dark}`;
+      style.textContent = practicePageCSS;
       document.head.appendChild(style);
       document.documentElement.classList.add("loopy-practice");
       frame = document.createElement("iframe");
       frame.id = "loopy-practice-panel";
       frame.title = "Loopy Goopy practice controls";
       frame.src = chrome.runtime.getURL(`app/build/index.html?practice=1&session=${token}`);
-      parent.appendChild(frame);
+      parent.prepend(frame);
     }, connect2 = function() {
       if (disposed || !videoId) return;
       try {
@@ -320,7 +350,10 @@
           if (m.type === "pause") engine?.pause();
           if (m.type === "exit") exit2();
           if (m.type === "manual") exit2(true);
-          if (m.type === "height" && frame) frame.style.height = `${m.height}px`;
+          if (m.type === "height" && frame && Number.isFinite(m.height) && m.height > 0) {
+            frame.style.height = `${m.height}px`;
+            if (practiceRequested) document.documentElement.style.setProperty("--loopy-controls-height", `${m.height}px`);
+          }
         });
         currentPort.onDisconnect.addListener(() => {
           if (port !== currentPort) return;

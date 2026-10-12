@@ -59,7 +59,7 @@ chrome.runtime.onConnect.addListener((port: any) => {
         try { await persist(host.id, message.prefs); } catch { send(port, { type: 'save-error' }); }
       } else if (['play', 'pause', 'exit', 'manual'].includes(message.type)) send(host.port, { type: message.type });
       else if (message.type === 'retry' && !host.snapshot.playback?.running) await load(host, true);
-      else if (message.type === 'height' && Number.isFinite(message.height)) send(host.port, { type: 'height', height: Math.max(250, Math.min(1800, message.height)) });
+      else if (message.type === 'height' && Number.isFinite(message.height)) send(host.port, { type: 'height', height: Math.max(1, Math.min(1800, Math.ceil(message.height))) });
     });
     port.onDisconnect.addListener(() => views.delete(port));
   }

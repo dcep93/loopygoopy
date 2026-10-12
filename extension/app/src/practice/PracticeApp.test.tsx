@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import PracticeApp from './PracticeApp';
 import { transferRecords } from './recordStore';
 import golden from './golden.json';
@@ -35,6 +35,18 @@ test('only the explicitly embedded frame renders prepared practice controls', as
   expect(await screen.findByRole('button',{name:'▶ Play'})).toBeInTheDocument();
   expect(screen.queryByText('Original popup controls')).not.toBeInTheDocument();
   expect(port.postMessage).toHaveBeenCalledWith({type:'attach',token:'frame-token'});
+});
+test('compact controls retain playback, speed and independent lead settings', async () => {
+  window.history.replaceState({}, '', '/?practice=1&session=frame-token');
+  const port=setupConnection(); render(<PracticeApp/>);
+  fireEvent.click(await screen.findByRole('button',{name:'▶ Play'}));
+  expect(port.postMessage).toHaveBeenLastCalledWith({type:'play',mediaId:golden.mediaId});
+  fireEvent.click(screen.getByRole('button',{name:'0.5×'}));
+  expect(port.postMessage).toHaveBeenLastCalledWith({type:'preferences',mediaId:golden.mediaId,prefs:{...defaults,speed:.5}});
+  fireEvent.change(screen.getByRole('spinbutton',{name:'Lead-in beats'}),{target:{value:'4'}});
+  expect(port.postMessage).toHaveBeenLastCalledWith({type:'preferences',mediaId:golden.mediaId,prefs:{...defaults,leadIn:{...defaults.leadIn,beats:4}}});
+  fireEvent.click(within(screen.getByRole('group',{name:'Lead-out sound'})).getByRole('button',{name:'metronome'}));
+  expect(port.postMessage).toHaveBeenLastCalledWith({type:'preferences',mediaId:golden.mediaId,prefs:{...defaults,leadOut:{...defaults.leadOut,style:'metronome'}}});
 });
 test('Retry reruns failed storage initialization before opening the original popup', async () => {
   (transferRecords as jest.Mock).mockReset().mockRejectedValueOnce(Error('Could not verify saved settings. Original records are intact.')).mockResolvedValue(undefined);

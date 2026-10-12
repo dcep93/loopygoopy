@@ -82,8 +82,12 @@ export default function PracticeApp() {
   }, [embedded, token, connectionAttempt]);
   useEffect(() => {
     if (!embedded) return;
-    const observer = new ResizeObserver(() => send('height', { height: document.getElementById('root')?.scrollHeight || 460 }));
-    observer.observe(document.getElementById('root')!); return () => observer.disconnect();
+    const root = document.getElementById('root');
+    if (!root) return;
+    const reportHeight = () => send('height', { height: Math.ceil(root.getBoundingClientRect().height) });
+    const observer = new ResizeObserver(reportHeight);
+    observer.observe(root); reportHeight();
+    return () => observer.disconnect();
     // The bound session ID changes only when the iframe is replaced.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [embedded, snapshot.mediaId, manual]);
@@ -102,20 +106,25 @@ export default function PracticeApp() {
   const change = (patch: Partial<Preferences>) => { if (p) send('preferences', { prefs: { ...p, ...patch } }); };
   const phase = playback.phase === 'lead-in' ? 'Get ready' : playback.phase === 'lead-out' ? 'Reset' : playback.phase === 'buffering' ? 'Buffering' : playback.phase === 'seeking' ? 'Getting ready' : playback.running ? 'Practicing' : 'Ready to practice';
   return <main className="practice-panel embedded">
-    <header><a className="brand" href="https://github.com/dcep93/loopygoopy#practice" target="_blank" rel="noreferrer">loopy goopy<span> ↗</span></a>
-      {embedded && <button className="text-button" onClick={() => send('exit')}>Exit practice mode</button>}</header>
+    <header className="practice-header"><a className="brand" href="https://github.com/dcep93/loopygoopy#practice" target="_blank" rel="noreferrer">loopy goopy</a>
+      {d && p && <>
+        <div className="practice-title"><h1>{d.title}</h1><p className="selection" aria-live="polite">Beats {p.first}–{p.last} of {d.totalBeats}</p></div>
+        <div className="transport"><div className={`counter phase-${playback.phase}`}><span className="count">{['lead-in', 'lead-out'].includes(playback.phase) ? playback.remaining : playback.beat}</span><span className="phase">{phase}{['lead-in', 'lead-out'].includes(playback.phase) && <small>beats remaining</small>}</span></div>
+          <button className="play" onClick={() => send(playback.running ? 'pause' : 'play')}>{playback.running ? 'Ⅱ Pause' : '▶ Play'}</button>
+        </div>
+      </>}
+      <button className="text-button exit" onClick={() => send('exit')}>Exit practice mode</button>
+    </header>
     {snapshot.loading ? <div className="empty"><h1>Preparing your practice…</h1></div> : snapshot.error ?
       <div className="empty" role="alert"><h1>Let’s reconnect</h1><p>{snapshot.error}</p><button onClick={retry}>Retry</button></div> : !d || !p ?
       <div className="empty"><h1>This video isn’t prepared yet</h1><p>{snapshot.notice || 'You can still use the manual loop controls.'}</p><button onClick={() => send('retry')}>Retry</button><button onClick={() => { send('manual'); setManual(true); }}>Manual controls</button></div> : <>
-      <div className="practice-heading"><div><p className="eyebrow">{d.title}</p><h1>One part at a time.</h1></div><p className="selection" aria-live="polite">Beats <strong>{p.first}–{p.last}</strong><span> of {d.totalBeats}</span></p></div>
       <RangeButtons first={p.first} last={p.last} onChange={change} />
-      <p className="hint">Click a block. Drag to practice more.</p>
-      <div className="transport"><div className={`counter phase-${playback.phase}`}><span className="count">{['lead-in', 'lead-out'].includes(playback.phase) ? playback.remaining : playback.beat}</span><div><strong>{phase}</strong><span>{['lead-in', 'lead-out'].includes(playback.phase) ? 'beats remaining' : `of ${d.totalBeats} beats`}</span></div></div>
-        <button className="play" onClick={() => send(playback.running ? 'pause' : 'play')}>{playback.running ? 'Ⅱ Pause' : '▶ Play'}</button>
-        <div className="speed"><span>Playback speed</span><div className="segments"><button aria-label="Slower" disabled={p.speed <= .25} onClick={() => change({ speed: Math.max(.25, +(p.speed - .05).toFixed(2)) })}>−</button>{[.5, .75, 1].map(speed => <button key={speed} aria-pressed={p.speed === speed} onClick={() => change({ speed })}>{speed}×</button>)}<button aria-label="Faster" disabled={p.speed >= 1.5} onClick={() => change({ speed: Math.min(1.5, +(p.speed + .05).toFixed(2)) })}>+</button></div><small>{Math.round(p.speed * 100)}%</small></div>
+      <div className="practice-settings">
+        <div className="speed"><span>Speed</span><div className="segments" role="group" aria-label="Playback speed"><button aria-label="Slower" disabled={p.speed <= .25} onClick={() => change({ speed: Math.max(.25, +(p.speed - .05).toFixed(2)) })}>−</button>{[.5, .75, 1].map(speed => <button key={speed} aria-pressed={p.speed === speed} onClick={() => change({ speed })}>{speed}×</button>)}<button aria-label="Faster" disabled={p.speed >= 1.5} onClick={() => change({ speed: Math.min(1.5, +(p.speed + .05).toFixed(2)) })}>+</button></div><small>{Math.round(p.speed * 100)}%</small></div>
+        <LeadControls label="Lead-in" value={p.leadIn} onChange={leadIn => change({ leadIn })} />
+        <LeadControls label="Lead-out" value={p.leadOut} onChange={leadOut => change({ leadOut })} />
       </div>
-      <div className="leads"><LeadControls label="Lead-in" value={p.leadIn} onChange={leadIn => change({ leadIn })} /><LeadControls label="Lead-out" value={p.leadOut} onChange={leadOut => change({ leadOut })} /></div>
-      <footer><span>Repeats until you pause{playback.cycle > 0 ? ` · Repeat ${playback.cycle}` : ''}</span><details><summary>Advanced</summary><p>Prepared tempo: {d.bpm} BPM · First beat: {d.firstBeat}s</p><p>{snapshot.notice || 'Practice guide loaded.'}</p><button onClick={() => { send('manual'); setManual(true); }}>Open manual controls</button></details></footer>
+      <footer><span className="hint">Click a block · Drag across blocks to select a range</span><span>Repeats until you pause{playback.cycle > 0 ? ` · Repeat ${playback.cycle}` : ''}</span><details><summary>Advanced</summary><p>Prepared tempo: {d.bpm} BPM · First beat: {d.firstBeat}s</p><p>{snapshot.notice || 'Practice guide loaded.'}</p><button onClick={() => { send('manual'); setManual(true); }}>Open manual controls</button></details></footer>
       {playback.error && <p className="error" role="alert">{playback.error}</p>}
     </>}{saveError && <p className="error" role="alert">{saveError}</p>}
   </main>;
