@@ -3,7 +3,6 @@ import { debugLog, debugWarn } from "./debug";
 
 const version = "v0.0.1";
 const storageKeyPrefix = "loopy-goopy:";
-const configStorageKey = `${storageKeyPrefix}last-config`;
 const LOG_SOURCE = "storage";
 
 export var storageKey: string;
@@ -12,7 +11,6 @@ export function setStorageKey(_storageKey: string) {
   logStorage("setStorageKey", {
     storageKey,
     localStorageKey: getLocalStorageKey(),
-    legacyMediaStorageKey: getLegacyMediaStorageKey(),
   });
 }
 
@@ -124,32 +122,17 @@ export function load(): Promise<Config> {
     valueLength: rawValue?.length ?? 0,
     hasValue: rawValue !== null,
   });
-  if (rawValue === null) {
-    logStorage("load missing entry; trying legacy media key", {
-      storageKey,
-      localStorageKey: getLocalStorageKey(),
-      legacyMediaStorageKey: getLegacyMediaStorageKey(),
-      expectedVersion: version,
-    });
-    return loadFromRawValue(
-      readLegacyMediaStorageValue(),
-      getLegacyMediaStorageKey(),
-      "legacy-media"
-    );
-  }
-  return loadFromRawValue(rawValue, getLocalStorageKey(), "config");
+  return loadFromRawValue(rawValue, getLocalStorageKey());
 }
 
 function loadFromRawValue(
   rawValue: string | null,
-  loadedFromStorageKey: string,
-  source: "config" | "legacy-media"
+  loadedFromStorageKey: string
 ): Promise<Config> {
   if (rawValue === null) {
     logStorage("load missing entry", {
       storageKey,
       loadedFromStorageKey,
-      source,
       expectedVersion: version,
     });
     return Promise.resolve(normalizeConfig({}));
@@ -159,7 +142,6 @@ function loadFromRawValue(
     warnStorage("load version mismatch", {
       storageKey,
       loadedFromStorageKey,
-      source,
       expectedVersion: version,
       actualVersion: storedEntry?.version,
     });
@@ -169,17 +151,14 @@ function loadFromRawValue(
   logStorage("load ok", {
     storageKey,
     loadedFromStorageKey,
-    source,
     config: describeConfig(normalizedConfig),
   });
   return Promise.resolve(normalizedConfig);
 }
 
 function getLocalStorageKey() {
-  return configStorageKey;
-}
-
-function getLegacyMediaStorageKey() {
+  // The former last-config entry has no media identity. Leave it intact, but
+  // never apply it to an arbitrary video or overwrite it with another video's data.
   return `${storageKeyPrefix}${storageKey}`;
 }
 
@@ -212,19 +191,6 @@ function readLocalStorageValue() {
     warnStorage("read failed", {
       storageKey,
       localStorageKey: getLocalStorageKey(),
-      error: errorToMessage(error),
-    });
-    return null;
-  }
-}
-
-function readLegacyMediaStorageValue() {
-  try {
-    return window.localStorage.getItem(getLegacyMediaStorageKey());
-  } catch (error) {
-    warnStorage("read legacy media key failed", {
-      storageKey,
-      legacyMediaStorageKey: getLegacyMediaStorageKey(),
       error: errorToMessage(error),
     });
     return null;

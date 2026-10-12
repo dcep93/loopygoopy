@@ -14,8 +14,8 @@ describe("Main bookmark controls", () => {
   let consoleLogMock: jest.SpyInstance;
   let consoleInfoMock: jest.SpyInstance;
   let consoleWarnMock: jest.SpyInstance;
-  const localStorageKey = "loopy-goopy:last-config";
-  const legacyMediaStorageKey = "loopy-goopy:media-123";
+  const localStorageKey = "loopy-goopy:media-123";
+  const sharedStorageKey = "loopy-goopy:last-config";
 
   beforeEach(() => {
     consoleLogMock = jest.spyOn(console, "log").mockImplementation(() => undefined);
@@ -66,20 +66,6 @@ describe("Main bookmark controls", () => {
   ) {
     window.localStorage.setItem(
       localStorageKey,
-      JSON.stringify({
-        version: "v0.0.1",
-        config: makeConfig(configSansBookmarks, bookmarks, selectedBookmark),
-      })
-    );
-  }
-
-  function primeLegacyMediaConfig(
-    configSansBookmarks: Record<string, string> = {},
-    bookmarks: Array<{ bookmark_name: string; config: Record<string, string> }> = [],
-    selectedBookmark = ""
-  ) {
-    window.localStorage.setItem(
-      legacyMediaStorageKey,
       JSON.stringify({
         version: "v0.0.1",
         config: makeConfig(configSansBookmarks, bookmarks, selectedBookmark),
@@ -181,7 +167,7 @@ describe("Main bookmark controls", () => {
     expect(getStoredConfig()[Field.start_time]).toBe("0");
   });
 
-  it("saves edited fields to one localStorage key without pressing save bookmark", async () => {
+  it("saves edited fields to the current media key without pressing save bookmark", async () => {
     primeStoredConfig({
       [Field.original_BPM]: "120",
       [Field.beats_per_loop]: "4",
@@ -194,7 +180,7 @@ describe("Main bookmark controls", () => {
 
     expect(getStoredConfig()[Field.start_time]).toBe("12.5");
     expect(getStoredConfig()[Field.end_time]).toBe("14.50");
-    expect(window.localStorage.getItem(legacyMediaStorageKey)).toBeNull();
+    expect(window.localStorage.getItem(sharedStorageKey)).toBeNull();
     expect(window.localStorage.length).toBe(1);
     expect(window.localStorage.key(0)).toBe(localStorageKey);
     expect(promptMock).not.toHaveBeenCalled();
@@ -229,7 +215,7 @@ describe("Main bookmark controls", () => {
     expect(getFieldElement(Field.end_time)).toHaveValue("10.00");
   });
 
-  it("loads the canonical saved config for any media", async () => {
+  it("loads the saved config for the current media", async () => {
     primeStoredConfig({
       [Field.original_BPM]: "98",
       [Field.start_time]: "5.5",
@@ -241,17 +227,65 @@ describe("Main bookmark controls", () => {
     expect(getFieldElement(Field.start_time)).toHaveValue("5.5");
   });
 
-  it("can read an old media-specific entry without writing back to it", async () => {
-    primeLegacyMediaConfig({
+  it("can read an existing media-specific entry without modifying it on open", async () => {
+    primeStoredConfig({
       [Field.original_BPM]: "97",
       [Field.start_time]: "4.5",
     });
 
+    const saved = window.localStorage.getItem(localStorageKey);
     await renderMain();
 
     expect(getFieldElement(Field.original_BPM)).toHaveValue("97");
     expect(getFieldElement(Field.start_time)).toHaveValue("4.5");
-    expect(window.localStorage.getItem(localStorageKey)).toBeNull();
+    expect(window.localStorage.getItem(localStorageKey)).toBe(saved);
+    expect(window.localStorage.getItem(sharedStorageKey)).toBeNull();
+  });
+
+  it("keeps each video's settings and bookmarks separate across popup opens", async () => {
+    const goldenMediaId = "https://www.youtube.com/watch?v=xzeGxm72GOo";
+    const otherMediaId = "https://www.youtube.com/watch?v=O_vU27GXPpk";
+    const otherStorageKey = `loopy-goopy:${otherMediaId}`;
+    const goldenStorageKey = `loopy-goopy:${goldenMediaId}`;
+    const otherConfig = JSON.stringify({
+      version: "v0.0.1",
+      config: makeConfig(
+        { [Field.original_BPM]: "98", [Field.start_time]: "5.5" },
+        [{ bookmark_name: "other video preset", config: { [Field.start_time]: "5.5" } }],
+        "0"
+      ),
+    });
+    window.localStorage.setItem(otherStorageKey, otherConfig);
+    window.localStorage.setItem(sharedStorageKey, otherConfig);
+    (getTab as jest.MockedFunction<typeof getTab>).mockResolvedValue({
+      mediaId: goldenMediaId,
+      currentTime: 42.346,
+    });
+
+    const view = render(<Main />);
+    await screen.findByText(goldenMediaId);
+
+    expect(getFieldElement(Field.start_time)).toHaveValue("42.35");
+    expect(getFieldElement(Field.original_BPM)).toHaveValue("");
+    expect(screen.queryByRole("option", { name: "other video preset" })).not.toBeInTheDocument();
+    expect(JSON.parse(window.localStorage.getItem(goldenStorageKey)!).config.bookmarks).toEqual([]);
+    fireEvent.change(getFieldElement(Field.start_time), { target: { value: "12.5" } });
+    expect(JSON.parse(window.localStorage.getItem(goldenStorageKey)!).config[Field.start_time]).toBe("12.5");
+    expect(window.localStorage.getItem(otherStorageKey)).toBe(otherConfig);
+    expect(window.localStorage.getItem(sharedStorageKey)).toBe(otherConfig);
+
+    view.unmount();
+    (getTab as jest.MockedFunction<typeof getTab>).mockResolvedValue({
+      mediaId: otherMediaId,
+      currentTime: 90,
+    });
+    render(<Main />);
+    await screen.findByText(otherMediaId);
+
+    expect(getFieldElement(Field.start_time)).toHaveValue("5.5");
+    expect(getFieldElement(Field.original_BPM)).toHaveValue("98");
+    expect(screen.getByRole("combobox", { name: "bookmark" })).toHaveValue("0");
+    expect(screen.getByRole("option", { name: "other video preset" })).toBeInTheDocument();
   });
 
   it("restores the selected bookmark when reopening the popup", async () => {
