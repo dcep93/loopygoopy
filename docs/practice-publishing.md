@@ -14,12 +14,18 @@ GitHub's own caching can also delay updates. No cache-busting video IDs or perso
 
 1. Add an entry to the `videos` array in `catalog.json`. The envelope uses `schemaVersion: 1`. Each entry needs a unique `youtube:<video-id>`, canonical watch URL, title, positive BPM, beat-1 time in seconds, exactly 32 beats, `status: "published"`, and a positive integer revision.
 2. Verify the numbered counts against the actual footage at normal and reduced speed. Confirm all four-beat boundaries and the section end; check 1–4, 1–12, 17–24, and 29–32, all lead styles, and repeated cycles. Increment the entry's revision for timing corrections.
-3. From the repository root, run `node scripts/validate-catalog.mjs`. On a fresh checkout, first run the extension build to generate the shared validator.
-4. Commit and push `catalog.json` to master. The raw URL then serves the updated data once GitHub's cache refreshes. No deployment command or extension review is needed for catalog data changes.
+3. From the repository root, run `node scripts/validate-catalog.mjs`. This validates the catalog and refreshes the generated Practice catalog links in `README.md`. On a fresh checkout, first run the extension build to generate the shared validator.
+4. Commit and push `catalog.json` and the refreshed `README.md` to master. The raw URL then serves the updated data once GitHub's cache refreshes. No deployment command or extension review is needed for catalog data changes.
 
 Everything in the public repository and its history is public. Keep drafts, unverified entries, credentials, and personal configs out of it; `status: "draft"` is not a privacy mechanism and the validator rejects drafts. A single malformed entry or duplicate ID rejects the catalog rather than partially replacing a valid cache.
 
 The extension build copies the validated source catalog into `extension/app/src/practice/bundled-catalog.json`; edit the root file, not that generated fallback. `golden.json` in the practice test directory remains the calibration fixture.
+
+## Public list of practice links
+
+Share [the README catalog](https://github.com/dcep93/loopygoopy#practice-catalog). Its links use each entry's title and source URL with `&loopygoopy` added, so the installed extension opens practice mode. GitHub renders the list without a separate website.
+
+`node scripts/validate-catalog.mjs` regenerates only the section between the README's `practice-catalog` comments, preserving the rest of the file. The extension build runs this same command. Edit `catalog.json`, not the generated list. Passing an alternative JSON filename to the validation command only validates that file and does not update the README.
 
 ## Golden example
 

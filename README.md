@@ -2,6 +2,16 @@
 
 Practice a video one part at a time, with repeat loops, clear beat counts, and adjustable speed.
 
+## Practice catalog
+
+Install [Loopy Goopy](https://chromewebstore.google.com/detail/loopy-goopy/addfplpnjjbiockjmfegacimgkcmfefn), then choose a video to open it in practice mode.
+
+<!-- practice-catalog:start -->
+
+- [3 Tequila Floor](https://www.youtube.com/watch?v=xzeGxm72GOo&loopygoopy)
+
+<!-- practice-catalog:end -->
+
 ## Installation
 
 The embedded practice mode is currently in the unpacked development extension. Chrome 120 or newer is required.
@@ -52,7 +62,7 @@ npm run build
 
 The build validates the public catalog and copies it into the extension as an offline fallback. It also recompiles the existing TypeScript content script, bundles the practice runtime, and builds the popup. Generated runtime files are committed; the React build is local and ignored.
 
-For catalog-only edits after an initial build, run `node scripts/validate-catalog.mjs` from the repository root, then commit and push `catalog.json`. No extension release is needed to publish additional timing records.
+For catalog-only edits after an initial build, run `node scripts/validate-catalog.mjs` from the repository root, then commit and push `catalog.json` and the refreshed `README.md`. The command also regenerates the practice links above from catalog titles and URLs. No extension release is needed to publish additional timing records.
 
 The updated extension still needs installed-Chrome verification before a Chrome Web Store release. Catalog publication and extension publication are separate. The [store release guide](docs/chrome-web-store-release.md) includes packaging instructions, listing copy, permission explanations, and the upgrade limitation.
 
