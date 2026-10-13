@@ -12887,6 +12887,7 @@
     const viewport = (0, import_react.useRef)(null);
     (0, import_react.useEffect)(() => {
       let frame, previous = -2;
+      const cues = strip.current.querySelectorAll(".weight-cue");
       strip.current.querySelectorAll("[data-current]").forEach((cue) => cue.removeAttribute("data-current"));
       const tick = () => {
         const position = readBeat?.() ?? first;
@@ -12894,10 +12895,10 @@
         strip.current.style.transform = `translate3d(${-beat * pixelsPerBeat}px, 0, 0)`;
         const current = footwork.cues.findIndex((c) => beat >= c.beat && beat < c.beat + c.duration);
         if (current !== previous) {
-          if (previous >= 0) strip.current.children[previous].removeAttribute("data-current");
-          if (current >= 0) strip.current.children[current].setAttribute("data-current", "true");
+          if (previous >= 0) cues[previous].removeAttribute("data-current");
+          if (current >= 0) cues[current].setAttribute("data-current", "true");
           const weight = weightAt(footwork.cues, beat);
-          viewport.current.setAttribute("aria-label", `Weight stream${current >= 0 ? `: ${footwork.cues[current].symbol}${weight ? `, ${weight === "R" ? "right" : "left"} foot weighted` : ""}` : ""}. Uppercase: quick, half a count. Lowercase: super-quick, quarter-count. Letter then dash: slow, one count. Star: special action, retain weight.`);
+          viewport.current.setAttribute("aria-label", `Weight stream${current >= 0 ? `: ${footwork.cues[current].symbol}${weight ? `, ${weight === "R" ? "right" : "left"} foot weighted` : ""}` : ""}. Uppercase: quick, half a count. Lowercase: super-quick, quarter-count. Letter then dash: slow, one count. Star: special action, retain weight. Ticks mark measures; pink ticks start four-measure groups.`);
           previous = current;
         }
         frame = requestAnimationFrame(tick);
@@ -12907,17 +12908,32 @@
     }, [footwork, first, readBeat]);
     return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "weight-stream", ref: viewport, role: "img", "aria-label": "Weight stream", children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "weight-now", "aria-hidden": "true" }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "weight-strip", ref: strip, "aria-hidden": "true", children: footwork.cues.map((cue) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-        "span",
-        {
-          className: "weight-cue",
-          "data-selected": cue.beat >= first && cue.beat < last + 1,
-          style: { left: cue.beat * pixelsPerBeat },
-          title: `Count ${cue.beat}: ${cue.symbol}`,
-          children: cue.symbol
-        },
-        cue.beat
-      )) })
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "weight-strip", ref: strip, "aria-hidden": "true", children: [
+        footwork.cues.map((cue) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+          "span",
+          {
+            className: "weight-cue",
+            "data-selected": cue.beat >= first && cue.beat < last + 1,
+            style: { left: cue.beat * pixelsPerBeat },
+            title: `Count ${cue.beat}: ${cue.symbol}`,
+            children: cue.symbol
+          },
+          cue.beat
+        )),
+        Array.from({ length: 8 }, (_, i) => {
+          const beat = 1 + i * 4;
+          return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+            "span",
+            {
+              className: "weight-measure-tick",
+              "data-measure-start": beat,
+              "data-four-measure-start": i % 4 === 0,
+              style: { left: beat * pixelsPerBeat }
+            },
+            `measure-${beat}`
+          );
+        })
+      ] })
     ] });
   }
 
@@ -13199,6 +13215,9 @@ body:has(.practice-panel) { background: transparent; }
 .practice-panel .weight-cue[data-current=true] { color: var(--ww-title-pink); opacity: 1; }
 .practice-panel .weight-now { position: absolute; left: 50%; top: .2rem; bottom: .2rem; width: 1.8rem; transform: translateX(-50%); border-radius: .35rem; background: rgba(255, 123, 195, .08); border: 1px solid rgba(255, 123, 195, .3); }
 .practice-panel .weight-now::before { content: ''; position: absolute; top: -.1rem; left: 50%; transform: translateX(-50%); border: .2rem solid transparent; border-top-color: var(--ww-title-pink); }
+
+.practice-panel .weight-measure-tick { position: absolute; bottom: .125rem; width: 2px; height: .375rem; transform: translateX(-50%); border-radius: 1px; background: var(--ww-accent-amber); opacity: .55; pointer-events: none; }
+.practice-panel .weight-measure-tick[data-four-measure-start=true] { background: var(--ww-title-pink); opacity: .7; }
 `;
 
   // src/practice/mountControls.tsx

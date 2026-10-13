@@ -18,6 +18,7 @@ export default function WeightStream({ footwork, first, last, readBeat }: {
   const viewport = useRef<HTMLDivElement>(null);
   useEffect(() => {
     let frame: number, previous = -2;
+    const cues = strip.current!.querySelectorAll('.weight-cue');
     strip.current!.querySelectorAll('[data-current]').forEach(cue => cue.removeAttribute('data-current'));
     const tick = () => {
       const position = readBeat?.() ?? first;
@@ -25,10 +26,10 @@ export default function WeightStream({ footwork, first, last, readBeat }: {
       strip.current!.style.transform = `translate3d(${-beat * pixelsPerBeat}px, 0, 0)`;
       const current = footwork.cues.findIndex(c => beat >= c.beat && beat < c.beat + c.duration);
       if (current !== previous) {
-        if (previous >= 0) strip.current!.children[previous].removeAttribute('data-current');
-        if (current >= 0) strip.current!.children[current].setAttribute('data-current', 'true');
+        if (previous >= 0) cues[previous].removeAttribute('data-current');
+        if (current >= 0) cues[current].setAttribute('data-current', 'true');
         const weight = weightAt(footwork.cues, beat);
-        viewport.current!.setAttribute('aria-label', `Weight stream${current >= 0 ? `: ${footwork.cues[current].symbol}${weight ? `, ${weight === 'R' ? 'right' : 'left'} foot weighted` : ''}` : ''}. Uppercase: quick, half a count. Lowercase: super-quick, quarter-count. Letter then dash: slow, one count. Star: special action, retain weight.`);
+        viewport.current!.setAttribute('aria-label', `Weight stream${current >= 0 ? `: ${footwork.cues[current].symbol}${weight ? `, ${weight === 'R' ? 'right' : 'left'} foot weighted` : ''}` : ''}. Uppercase: quick, half a count. Lowercase: super-quick, quarter-count. Letter then dash: slow, one count. Star: special action, retain weight. Ticks mark measures; pink ticks start four-measure groups.`);
         previous = current;
       }
       frame = requestAnimationFrame(tick);
@@ -42,6 +43,11 @@ export default function WeightStream({ footwork, first, last, readBeat }: {
       {footwork.cues.map(cue => <span key={cue.beat} className="weight-cue"
         data-selected={cue.beat >= first && cue.beat < last + 1}
         style={{ left: cue.beat * pixelsPerBeat }} title={`Count ${cue.beat}: ${cue.symbol}`}>{cue.symbol}</span>)}
+      {Array.from({ length: 8 }, (_, i) => {
+        const beat = 1 + i * 4;
+        return <span key={`measure-${beat}`} className="weight-measure-tick" data-measure-start={beat}
+          data-four-measure-start={i % 4 === 0} style={{ left: beat * pixelsPerBeat }} />;
+      })}
     </div>
   </div>;
 }

@@ -1,7 +1,7 @@
 {
   "name": "Loopy Goopy",
   "description": "Practice any part of a video with clear beat counts, repeat loops, and adjustable speed.",
-  "version": "5.0.6",
+  "version": "5.0.7",
   "icons": {
     "16": "loopy_goopy_full.png",
     "48": "loopy_goopy_full.png",
