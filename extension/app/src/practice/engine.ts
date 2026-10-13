@@ -82,10 +82,10 @@ export class PracticeEngine {
       await Promise.race([this.audio.resume(), new Promise((_, reject) => { timeout = setTimeout(() => reject(Error('Audio blocked')), 2000); })]);
     } finally { clearTimeout(timeout); }
   }
-  private click(accent: boolean, peak = .12) {
+  private click(accent: boolean, peak = .12, frequency = accent ? 1000 : 760) {
     const context = this.audio; if (!context || context.state !== 'running') return;
     const oscillator = context.createOscillator(), gain = context.createGain(), at = context.currentTime;
-    oscillator.frequency.value = accent ? 1000 : 760;
+    oscillator.frequency.value = frequency;
     gain.gain.setValueAtTime(.0001, at); gain.gain.exponentialRampToValueAtTime(peak, at + .004);
     gain.gain.exponentialRampToValueAtTime(.0001, at + .055);
     oscillator.connect(gain); gain.connect(context.destination);
@@ -128,7 +128,7 @@ export class PracticeEngine {
         let latest: number | undefined;
         while (nextWeight < weightTimes.length && weightTimes[nextWeight] <= time + .001) latest = weightTimes[nextWeight++];
         // Discard missed cues rather than playing a burst after a seek/stall.
-        if (this.weightClicksEnabled() && !buffering && !jumped && latest !== undefined && time - latest <= .08 * this.prefs.speed) this.click(false, .48);
+        if (this.weightClicksEnabled() && !buffering && !jumped && latest !== undefined && time - latest <= .08 * this.prefs.speed) this.click(false, .8, 1500);
       }
       // Seek positions are rounded by the media element. Allow 1 ms at beat
       // boundaries and never show more than the configured lead duration.

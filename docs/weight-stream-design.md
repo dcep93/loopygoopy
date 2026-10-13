@@ -12,4 +12,4 @@ Measure starts have subtle amber ticks at counts 1, 5, 9, 13, 17, 21, 25 and 29.
 
 The Weight clicks checkbox follows Lead-out and defaults to enabled. Its optional per-video preference treats an absent value as enabled, preserving older saved preferences. Each R/L/r/l cue clicks when it changes the previous weighted foot; the first known foot also clicks, including the pickup. Dash, star and repeated cues for the same foot are silent. Clicks follow actual media time during practice and track leads. Frozen leads keep their independently selected sound. Missed clicks are discarded after seeks or long stalls. Toggling only this preference changes sound immediately without restarting or seeking the loop. Guides without footwork disable the checkbox.
 
-Weight clicks use a peak gain of 0.48, approximately 12 dB above the original 0.12. Lead metronome clicks retain their original 0.12 peak. The short envelope and cue timing stay unchanged.
+Weight clicks use a peak gain of 0.8 and a frequency of 1500 Hz for a louder, higher-pitched cue. Lead metronome clicks retain their original 0.12 peak. The short envelope and cue timing stay unchanged.

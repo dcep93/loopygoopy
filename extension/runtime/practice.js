@@ -12310,11 +12310,11 @@
         clearTimeout(timeout);
       }
     }
-    click(accent, peak = 0.12) {
+    click(accent, peak = 0.12, frequency = accent ? 1e3 : 760) {
       const context = this.audio;
       if (!context || context.state !== "running") return;
       const oscillator = context.createOscillator(), gain = context.createGain(), at = context.currentTime;
-      oscillator.frequency.value = accent ? 1e3 : 760;
+      oscillator.frequency.value = frequency;
       gain.gain.setValueAtTime(1e-4, at);
       gain.gain.exponentialRampToValueAtTime(peak, at + 4e-3);
       gain.gain.exponentialRampToValueAtTime(1e-4, at + 0.055);
@@ -12374,7 +12374,7 @@
         if (!buffering || jumped) {
           let latest;
           while (nextWeight < weightTimes.length && weightTimes[nextWeight] <= time + 1e-3) latest = weightTimes[nextWeight++];
-          if (this.weightClicksEnabled() && !buffering && !jumped && latest !== void 0 && time - latest <= 0.08 * this.prefs.speed) this.click(false, 0.48);
+          if (this.weightClicksEnabled() && !buffering && !jumped && latest !== void 0 && time - latest <= 0.08 * this.prefs.speed) this.click(false, 0.8, 1500);
         }
         const remaining = phase === "practice" ? 0 : Math.max(1, Math.min(
           phase === "lead-in" ? this.prefs.leadIn.beats : this.prefs.leadOut.beats,
