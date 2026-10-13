@@ -12944,7 +12944,7 @@
           if (previous >= 0) cues[previous].removeAttribute("data-current");
           if (current >= 0) cues[current].setAttribute("data-current", "true");
           const weight = weightAt(footwork.cues, beat);
-          viewport.current.setAttribute("aria-label", `Weight stream${current >= 0 ? `: ${footwork.cues[current].symbol}${weight ? `, ${weight === "R" ? "right" : "left"} foot weighted` : ""}` : ""}. Uppercase: quick, half a count. Lowercase: super-quick, quarter-count. Letter then dash: slow, one count. Star: special action, retain weight. Ticks mark measures; pink ticks start four-measure groups.`);
+          viewport.current.setAttribute("aria-label", `Weight stream${current >= 0 ? `: ${footwork.cues[current].symbol}${weight ? `, ${weight === "R" ? "right" : "left"} foot weighted` : ""}` : ""}. Uppercase: quick, half a count. Lowercase: super-quick, quarter-count. Letter then dash: slow, one count. Star: special action, retain weight. Ticks mark every count; pink ticks mark counts 1, 5, 9 and every fourth count after that.`);
           previous = current;
         }
         frame = requestAnimationFrame(tick);
@@ -12966,17 +12966,17 @@
           },
           cue.beat
         )),
-        Array.from({ length: 8 }, (_, i) => {
-          const beat = 1 + i * 4;
+        Array.from({ length: 32 }, (_, i) => {
+          const beat = 1 + i;
           return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
             "span",
             {
-              className: "weight-measure-tick",
-              "data-measure-start": beat,
-              "data-four-measure-start": i % 4 === 0,
+              className: "weight-count-tick",
+              "data-count": beat,
+              "data-group-start": i % 4 === 0,
               style: { left: beat * pixelsPerBeat }
             },
-            `measure-${beat}`
+            `count-${beat}`
           );
         })
       ] })
@@ -13274,8 +13274,8 @@ body:has(.practice-panel) { background: transparent; }
 .practice-panel .weight-now { position: absolute; left: 50%; top: .2rem; bottom: .2rem; width: 1.8rem; transform: translateX(-50%); border-radius: .35rem; background: rgba(255, 123, 195, .08); border: 1px solid rgba(255, 123, 195, .3); }
 .practice-panel .weight-now::before { content: ''; position: absolute; top: -.1rem; left: 50%; transform: translateX(-50%); border: .2rem solid transparent; border-top-color: var(--ww-title-pink); }
 
-.practice-panel .weight-measure-tick { position: absolute; bottom: .125rem; width: 2px; height: .375rem; transform: translateX(-50%); border-radius: 1px; background: var(--ww-accent-amber); opacity: .55; pointer-events: none; }
-.practice-panel .weight-measure-tick[data-four-measure-start=true] { background: var(--ww-title-pink); opacity: .7; }
+.practice-panel .weight-count-tick { position: absolute; bottom: .125rem; width: 2px; height: .375rem; transform: translateX(-50%); border-radius: 1px; background: var(--ww-accent-amber); opacity: .55; pointer-events: none; }
+.practice-panel .weight-count-tick[data-group-start=true] { background: var(--ww-title-pink); opacity: .7; }
 
 .practice-panel .weight-clicks { display: flex; align-items: center; gap: .35rem; white-space: nowrap; font-size: .75rem; color: var(--ww-text-muted); cursor: pointer; }
 .practice-panel .weight-clicks input { accent-color: var(--ww-accent-amber); width: .9rem; height: .9rem; margin: 0; padding: 0; cursor: pointer; }

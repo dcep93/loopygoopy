@@ -101,8 +101,8 @@ body:has(.practice-panel) { background: transparent; }
 .practice-panel .weight-now { position: absolute; left: 50%; top: .2rem; bottom: .2rem; width: 1.8rem; transform: translateX(-50%); border-radius: .35rem; background: rgba(255, 123, 195, .08); border: 1px solid rgba(255, 123, 195, .3); }
 .practice-panel .weight-now::before { content: ''; position: absolute; top: -.1rem; left: 50%; transform: translateX(-50%); border: .2rem solid transparent; border-top-color: var(--ww-title-pink); }
 
-.practice-panel .weight-measure-tick { position: absolute; bottom: .125rem; width: 2px; height: .375rem; transform: translateX(-50%); border-radius: 1px; background: var(--ww-accent-amber); opacity: .55; pointer-events: none; }
-.practice-panel .weight-measure-tick[data-four-measure-start=true] { background: var(--ww-title-pink); opacity: .7; }
+.practice-panel .weight-count-tick { position: absolute; bottom: .125rem; width: 2px; height: .375rem; transform: translateX(-50%); border-radius: 1px; background: var(--ww-accent-amber); opacity: .55; pointer-events: none; }
+.practice-panel .weight-count-tick[data-group-start=true] { background: var(--ww-title-pink); opacity: .7; }
 
 .practice-panel .weight-clicks { display: flex; align-items: center; gap: .35rem; white-space: nowrap; font-size: .75rem; color: var(--ww-text-muted); cursor: pointer; }
 .practice-panel .weight-clicks input { accent-color: var(--ww-accent-amber); width: .9rem; height: .9rem; margin: 0; padding: 0; cursor: pointer; }
