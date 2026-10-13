@@ -21,6 +21,8 @@ manifest = json.loads((EXT / "manifest.json").read_text())
 files = {}
 
 def include(relative):
+    if Path(relative).name.lower() == "manifest.json" and relative != "manifest.json":
+        raise ValueError(f"Extra manifest in extension package: {relative}. Remove it from the popup build.")
     path = EXT / relative
     if not path.is_file() or path.is_symlink():
         raise ValueError(f"Missing or unsafe release file: {relative}")
@@ -73,6 +75,9 @@ with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED, compresslev
         entry.external_attr = 0o100644 << 16
         bundle.writestr(entry, content)
 with zipfile.ZipFile(archive) as bundle:
+    manifests = [name for name in bundle.namelist() if Path(name).name.lower() == "manifest.json"]
+    if manifests != ["manifest.json"]:
+        raise ValueError(f"Expected only the root extension manifest, found: {manifests}")
     if bundle.testzip() is not None:
         raise ValueError("ZIP integrity check failed")
     assert json.loads(bundle.read("manifest.json"))["version"] == manifest["version"]
