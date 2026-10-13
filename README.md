@@ -10,6 +10,10 @@ Install [Loopy Goopy](https://chromewebstore.google.com/detail/loopy-goopy/addfp
 
 - [3 Tequila Floor](https://www.youtube.com/watch?v=xzeGxm72GOo&loopygoopy)
 - [Adam Lambert — Shady](https://www.youtube.com/watch?v=LaYwiyrqGiA&loopygoopy)
+- [After Party — Rain On Me](https://www.youtube.com/watch?v=EwC9mL8MO60&loopygoopy)
+- [The Wolf](https://www.youtube.com/watch?v=NIZXQUwUBvs&loopygoopy)
+- [Country Girl Shake](https://www.youtube.com/watch?v=DFnUnN-56UU&loopygoopy)
+- [Cowgirl](https://www.youtube.com/watch?v=m0VecvBJHzg&loopygoopy)
 
 <!-- practice-catalog:end -->
 

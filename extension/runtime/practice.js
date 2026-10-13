@@ -13132,6 +13132,1350 @@
             }
           ]
         }
+      },
+      {
+        schemaVersion: 1,
+        mediaId: "youtube:EwC9mL8MO60",
+        sourceUrl: "https://www.youtube.com/watch?v=EwC9mL8MO60",
+        title: "After Party \u2014 Rain On Me",
+        bpm: 123,
+        firstBeat: 16.68,
+        totalBeats: 32,
+        revision: 1,
+        status: "published",
+        footwork: {
+          sourceUrl: "https://www.copperknob.co.uk/stepsheets/3J25PD4/after-party",
+          cues: [
+            {
+              beat: 1,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 1.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 2,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 2.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 3,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 3.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 4,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 4.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 5.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 6,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 6.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 7,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 7.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 8,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 8.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 9,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 9.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 10,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 10.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 11,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 11.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 12,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 12.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 13,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 13.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 14,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 14.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 15,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 15.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 16,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 16.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 17,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 17.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 18,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 18.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 19,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 19.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 20,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 20.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 21,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 21.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 22,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 22.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 23,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 23.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 24,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 24.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 25,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 25.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 26,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 26.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 27,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 27.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 28,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 28.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 29,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 29.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 30,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 30.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 31,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 31.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 32,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 32.5,
+              duration: 0.5,
+              symbol: "-"
+            }
+          ]
+        }
+      },
+      {
+        schemaVersion: 1,
+        mediaId: "youtube:NIZXQUwUBvs",
+        sourceUrl: "https://www.youtube.com/watch?v=NIZXQUwUBvs",
+        title: "The Wolf",
+        bpm: 100.93,
+        firstBeat: 13.7,
+        totalBeats: 32,
+        revision: 1,
+        status: "published",
+        footwork: {
+          sourceUrl: "https://www.copperknob.co.uk/stepsheets/93HFRDG/the-wolf",
+          cues: [
+            {
+              beat: 1,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 1.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 2,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 2.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 3,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 3.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 4,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 4.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 5.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 6,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 6.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 7,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 7.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 8,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 8.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 9,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 9.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 10,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 10.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 11,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 11.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 12,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 12.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 13,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 13.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 14,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 14.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 15,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 15.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 16,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 16.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 17,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 17.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 18,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 18.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 19,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 19.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 20,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 20.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 21,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 21.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 22,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 22.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 23,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 23.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 24,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 24.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 25,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 25.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 26,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 26.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 27,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 27.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 28,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 28.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 29,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 29.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 30,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 30.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 31,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 31.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 32,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 32.5,
+              duration: 0.5,
+              symbol: "*"
+            }
+          ]
+        }
+      },
+      {
+        schemaVersion: 1,
+        mediaId: "youtube:DFnUnN-56UU",
+        sourceUrl: "https://www.youtube.com/watch?v=DFnUnN-56UU",
+        title: "Country Girl Shake",
+        bpm: 106,
+        firstBeat: 17.6,
+        totalBeats: 32,
+        revision: 1,
+        status: "published",
+        footwork: {
+          sourceUrl: "https://www.copperknob.co.uk/stepsheets/RQ78MFX/country-girl-shake",
+          cues: [
+            {
+              beat: 1,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 1.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 2,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 2.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 3,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 3.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 4,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 4.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 5.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 6,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 6.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 7,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 7.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 8,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 8.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 9,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 9.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 10,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 10.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 11,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 11.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 12,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 12.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 13,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 13.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 14,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 14.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 15,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 15.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 16,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 16.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 17,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 17.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 18,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 18.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 19,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 19.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 20,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 20.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 21,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 21.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 22,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 22.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 23,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 23.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 24,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 24.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 25,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 25.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 26,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 26.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 27,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 27.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 28,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 28.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 29,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 29.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 30,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 30.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 31,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 31.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 32,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 32.5,
+              duration: 0.5,
+              symbol: "-"
+            }
+          ]
+        }
+      },
+      {
+        schemaVersion: 1,
+        mediaId: "youtube:m0VecvBJHzg",
+        sourceUrl: "https://www.youtube.com/watch?v=m0VecvBJHzg",
+        title: "Cowgirl",
+        bpm: 167.15,
+        firstBeat: 13.35,
+        totalBeats: 32,
+        revision: 1,
+        status: "published",
+        footwork: {
+          sourceUrl: "https://www.copperknob.co.uk/stepsheets/NK5CJH5/cowgirl",
+          cues: [
+            {
+              beat: 1,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 1.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 2,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 2.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 3,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 3.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 4,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 4.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 5.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 6,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 6.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 7,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 7.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 8,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 8.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 9,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 9.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 10,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 10.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 11,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 11.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 12,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 12.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 13,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 13.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 14,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 14.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 15,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 15.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 16,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 16.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 17,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 17.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 18,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 18.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 19,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 19.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 20,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 20.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 21,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 21.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 22,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 22.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 23,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 23.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 24,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 24.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 25,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 25.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 26,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 26.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 27,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 27.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 28,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 28.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 29,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 29.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 30,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 30.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 31,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 31.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 32,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 32.5,
+              duration: 0.5,
+              symbol: "-"
+            }
+          ]
+        }
       }
     ]
   };
