@@ -41,7 +41,7 @@ Four-count boundaries are 23.14, 25.54, 27.94, 30.34, 32.74, 35.14, 37.54, 39.94
 
 User-confirmed notation: simultaneous weight transfers and knee pops/hitches show the receiving foot (L at 4; R at 18). Special-only actions use stars, retaining L through 15&–16 and 30&–32. The extended hold after 20 uses dashes until the transfer at 21&. No additional weight clicks are invented for these holds or specials.
 
-Verification: all 36 contiguous four-count selections were checked against the 0.6-second count grid. A local browser fixture using the actual demo clip and production controls verified full-sequence playback, weight clicks, and repeated 17–24 playback at 90% speed. The existing 202 tests and both extension builds passed. This fixture verifies the data and playback together; it does not substitute for an installed-extension check on YouTube.
+Verification: all 36 contiguous four-count selections were checked against the 0.6-second count grid. A local browser fixture using the actual demo clip and production controls verified full-sequence playback, weight clicks, and repeated 17–24 playback at 90% speed. The existing 202 tests and both extension builds passed. After publication, the installed Chrome extension loaded Shady via Retry, started the track lead-in near 21.94 seconds, played the first eight-count loop, and paused cleanly. The page was left paused at count 1 with 1–8 selected.
 
 ## Extension release gate
 
