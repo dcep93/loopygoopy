@@ -181,3 +181,62 @@ test('turning weight clicks back off cancels an obsolete audio-enable failure',a
   await engine.update({...engine.prefs,weightClicks:false});reject(Error('Audio blocked'));await pending;
   expect(engine.state.running).toBe(true);expect(engine.state.error).toBeUndefined();
 });
+
+test('extending 9–12 to 9–16 at count 10 continues to the new end before leading out',async()=>{
+  setup({first:9,last:12,leadIn:{beats:0,style:'track'},leadOut:{beats:2,style:'silent'}});
+  void engine.play();await flush();await advance(600);
+  const position=media.currentTime, pause=jest.spyOn(media,'pause');
+  expect(engine.state.beat).toBe(10);
+  await engine.update({...engine.prefs,last:16});
+  expect(media.currentTime).toBe(position);expect(pause).not.toHaveBeenCalled();expect(media.play).toHaveBeenCalledTimes(1);
+  await advance(1500);expect(engine.state.phase).toBe('practice');expect(engine.state.cycle).toBe(1);
+  await advance(1950);expect(engine.state.phase).toBe('lead-out');expect(media.currentTime).toBeCloseTo(17.965);
+  await advance(1050);expect(engine.state.cycle).toBe(2);expect(engine.readBeat()).toBeGreaterThanOrEqual(9);expect(engine.readBeat()).toBeLessThan(10);
+});
+test.each([{first:5,last:12},{first:9,last:12}])('expanding left or trimming a range around count 10 preserves the picture: %j',async(range)=>{
+  setup({first:9,last:16,leadIn:{beats:0,style:'track'},leadOut:{beats:0,style:'track'}});
+  void engine.play();await flush();await advance(600);const position=media.currentTime;
+  await engine.update({...engine.prefs,...range});
+  expect(media.currentTime).toBe(position);expect(media.play).toHaveBeenCalledTimes(1);
+  await advance(1450);expect(engine.state.cycle).toBe(2);expect(engine.readBeat()).toBeGreaterThanOrEqual(range.first);expect(engine.readBeat()).toBeLessThan(range.first+1);
+});
+test('excluding the current count restarts at the new lead-in and cancels the old loop',async()=>{
+  setup({first:9,last:16,leadIn:{beats:2,style:'silent'},leadOut:{beats:0,style:'track'}});
+  void engine.play();await flush();await advance(1600);expect(engine.state.beat).toBe(10);
+  void engine.update({...engine.prefs,first:13});await flush();
+  expect(engine.state.phase).toBe('lead-in');expect(media.currentTime).toBe(16);expect(media.paused).toBe(true);
+  await advance(1050);expect(engine.state.phase).toBe('practice');expect(media.play).toHaveBeenCalledTimes(2);expect(engine.state.beat).toBe(13);
+});
+test('selection changes during buffering keep the active range and resume without seeking',async()=>{
+  setup({first:9,last:12,leadIn:{beats:0,style:'track'},leadOut:{beats:0,style:'track'}});
+  void engine.play();await flush();await advance(600);await advance(500,false);expect(engine.state.phase).toBe('buffering');
+  const position=media.currentTime;
+  await engine.update({...engine.prefs,last:16});expect(media.currentTime).toBe(position);
+  await advance(1600);expect(engine.state.phase).toBe('practice');expect(engine.state.cycle).toBe(1);expect(media.play).toHaveBeenCalledTimes(1);
+});
+test('paused selection changes retain a valid position and seek only when excluded',async()=>{
+  setup({first:9,last:12,leadIn:{beats:0,style:'track'}});
+  void engine.play();await flush();await advance(600);engine.pause();const position=media.currentTime;
+  await engine.update({...engine.prefs,first:5,last:16});expect(media.currentTime).toBe(position);expect(engine.state.beat).toBe(10);
+  await engine.update({...engine.prefs,first:13});expect(media.currentTime).toBe(16);expect(engine.state.beat).toBe(13);
+  expect(media.paused).toBe(true);expect(media.play).toHaveBeenCalledTimes(1);
+});
+test.each(['track','silent','metronome'] as const)('range edits preserve %s leads when their anchor stays put',async(style)=>{
+  setup({first:9,last:12,leadIn:{beats:2,style},leadOut:{beats:2,style}});
+  void engine.play();await flush();await advance(600);
+  let position=media.currentTime;
+  await engine.update({...engine.prefs,last:16});expect(media.currentTime).toBe(position);
+  await advance(500);expect(engine.state.phase).toBe('practice');
+  await advance(4100);expect(engine.state.phase).toBe('lead-out');position=media.currentTime;
+  await engine.update({...engine.prefs,first:5});expect(media.currentTime).toBe(position);
+  await advance(850);expect(engine.state.cycle).toBe(2);expect(engine.state.phase).toBe('lead-in');
+  expect(engine.state.beat).toBe(5);
+});
+test('extending a selection keeps future weight clicks and plays a boundary cue only once',async()=>{
+  const {clicks}=clickSetup({leadOut:{beats:1,style:'track'}});
+  void engine.play();await flush();await advance(600);
+  await engine.update({...engine.prefs,last:8});await advance(2100);
+  const expected=[10,11,11.125,11.25,11.75,12,12.25];
+  expect(clicks).toHaveLength(expected.length);clicks.forEach((value,i)=>expect(Math.abs(value-expected[i])).toBeLessThan(.03));
+  expect(media.play).toHaveBeenCalledTimes(1);expect(engine.state.cycle).toBe(1);
+});

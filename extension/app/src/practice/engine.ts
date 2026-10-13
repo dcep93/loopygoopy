@@ -12,6 +12,7 @@ export class PracticeEngine {
   private originalRate: number;
   private originalLoop: boolean;
   private controlled = false;
+  private activePhase?: 'lead-in' | 'practice' | 'lead-out';
   private weightClickTimes: number[];
   state: Playback = { ...paused };
   constructor(private media: HTMLVideoElement, readonly definition: Definition, public prefs: Preferences,
@@ -35,6 +36,7 @@ export class PracticeEngine {
   }
   pause() {
     this.generation++;
+    this.activePhase = undefined;
     clearTimeout(this.timer);
     this.cancelWait?.(); this.cancelWait = undefined;
     this.tones.forEach(t => { try { t.stop(); } catch {} }); this.tones.clear();
@@ -44,10 +46,20 @@ export class PracticeEngine {
   dispose() { if (this.controlled) { this.pause(); this.media.playbackRate = this.originalRate; this.media.loop = this.originalLoop; } void this.audio?.close(); }
   async update(p: Preferences) {
     if (!validPreferences(p)) throw Error('Invalid practice settings.');
-    const soundOnly = p.first === this.prefs.first && p.last === this.prefs.last && p.speed === this.prefs.speed &&
+    const sameTiming = p.speed === this.prefs.speed &&
       p.leadIn.beats === this.prefs.leadIn.beats && p.leadIn.style === this.prefs.leadIn.style &&
       p.leadOut.beats === this.prefs.leadOut.beats && p.leadOut.style === this.prefs.leadOut.style;
-    if (soundOnly) {
+    const sameRange = p.first === this.prefs.first && p.last === this.prefs.last;
+    const { start, end } = interval(this.definition, p);
+    const containsPosition = this.media.currentTime >= start - .001 && this.media.currentTime < end;
+    // A lead is anchored to its corresponding boundary; practice and paused
+    // positions can survive either boundary moving around the current picture.
+    const canKeepPosition = this.controlled && end <= this.media.duration && (this.state.running
+      ? this.activePhase === 'practice' ? containsPosition
+        : this.activePhase === 'lead-in' ? p.first === this.prefs.first
+        : this.activePhase === 'lead-out' && p.last === this.prefs.last
+      : containsPosition);
+    if (sameTiming && (sameRange || canKeepPosition)) {
       this.prefs = p;
       if (this.state.running && this.weightClicksEnabled()) {
         const g = this.generation;
@@ -94,6 +106,7 @@ export class PracticeEngine {
   }
   private async frozen(beats: number, phase: 'lead-in' | 'lead-out', sound: boolean, g: number) {
     if (!(beats > 0) || !this.alive(g)) return;
+    this.activePhase = phase;
     const ms = 60000 / this.definition.bpm / this.prefs.speed, start = this.now(); let clicked = -1;
     this.media.pause();
     while (this.alive(g)) {
@@ -107,26 +120,28 @@ export class PracticeEngine {
   }
   private async moving(from: number, to: number, phase: 'lead-in' | 'practice' | 'lead-out', g: number) {
     if (!this.alive(g) || to <= from) return;
+    this.activePhase = phase;
     this.emit({ phase: 'seeking' });
     await this.seek(from, g); if (!this.alive(g)) return;
     this.media.playbackRate = this.prefs.speed; this.media.loop = false;
     await this.media.play();
     if (!this.alive(g)) return;
-    // Each moving phase owns a cursor. The end is exclusive so a boundary cue
-    // clicks once in the next phase, and every repetition starts fresh.
-    const weightTimes = this.weightClickTimes.filter(time => time >= from - .001 && time < to - .001);
+    // Keep future cues available when the selection grows. The live end is
+    // exclusive so boundary cues belong to the next phase, without duplicates.
+    const weightTimes = this.weightClickTimes.filter(time => time >= from - .001);
     let nextWeight = 0;
     let previous = from, movedAt = this.now();
     while (this.alive(g)) {
       const time = this.media.currentTime;
-      if (time >= to - .012 || this.media.ended) break;
+      const end = phase === 'practice' ? interval(this.definition, this.prefs).end : to;
+      if (time >= end - .012 || this.media.ended) break;
       if (this.media.paused) { this.pause(); return; }
       const jumped = time < previous - .001 || time - previous > .25 * this.prefs.speed;
       if (time !== previous) { previous = time; movedAt = this.now(); }
       const buffering = this.media.readyState < 3 || this.media.seeking || this.now() - movedAt > 300;
       if (!buffering || jumped) {
         let latest: number | undefined;
-        while (nextWeight < weightTimes.length && weightTimes[nextWeight] <= time + .001) latest = weightTimes[nextWeight++];
+        while (nextWeight < weightTimes.length && weightTimes[nextWeight] < end - .001 && weightTimes[nextWeight] <= time + .001) latest = weightTimes[nextWeight++];
         // Discard missed cues rather than playing a burst after a seek/stall.
         if (this.weightClicksEnabled() && !buffering && !jumped && latest !== undefined && time - latest <= .08 * this.prefs.speed) this.click(false, .8, 1500);
       }

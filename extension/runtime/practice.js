@@ -12234,6 +12234,7 @@
     }
     pause() {
       this.generation++;
+      this.activePhase = void 0;
       clearTimeout(this.timer);
       this.cancelWait?.();
       this.cancelWait = void 0;
@@ -12257,8 +12258,12 @@
     }
     async update(p) {
       if (!validPreferences(p)) throw Error("Invalid practice settings.");
-      const soundOnly = p.first === this.prefs.first && p.last === this.prefs.last && p.speed === this.prefs.speed && p.leadIn.beats === this.prefs.leadIn.beats && p.leadIn.style === this.prefs.leadIn.style && p.leadOut.beats === this.prefs.leadOut.beats && p.leadOut.style === this.prefs.leadOut.style;
-      if (soundOnly) {
+      const sameTiming = p.speed === this.prefs.speed && p.leadIn.beats === this.prefs.leadIn.beats && p.leadIn.style === this.prefs.leadIn.style && p.leadOut.beats === this.prefs.leadOut.beats && p.leadOut.style === this.prefs.leadOut.style;
+      const sameRange = p.first === this.prefs.first && p.last === this.prefs.last;
+      const { start, end } = interval(this.definition, p);
+      const containsPosition = this.media.currentTime >= start - 1e-3 && this.media.currentTime < end;
+      const canKeepPosition = this.controlled && end <= this.media.duration && (this.state.running ? this.activePhase === "practice" ? containsPosition : this.activePhase === "lead-in" ? p.first === this.prefs.first : this.activePhase === "lead-out" && p.last === this.prefs.last : containsPosition);
+      if (sameTiming && (sameRange || canKeepPosition)) {
         this.prefs = p;
         if (this.state.running && this.weightClicksEnabled()) {
           const g2 = this.generation;
@@ -12331,6 +12336,7 @@
     }
     async frozen(beats, phase, sound, g) {
       if (!(beats > 0) || !this.alive(g)) return;
+      this.activePhase = phase;
       const ms = 6e4 / this.definition.bpm / this.prefs.speed, start = this.now();
       let clicked = -1;
       this.media.pause();
@@ -12348,6 +12354,7 @@
     }
     async moving(from, to, phase, g) {
       if (!this.alive(g) || to <= from) return;
+      this.activePhase = phase;
       this.emit({ phase: "seeking" });
       await this.seek(from, g);
       if (!this.alive(g)) return;
@@ -12355,12 +12362,13 @@
       this.media.loop = false;
       await this.media.play();
       if (!this.alive(g)) return;
-      const weightTimes = this.weightClickTimes.filter((time) => time >= from - 1e-3 && time < to - 1e-3);
+      const weightTimes = this.weightClickTimes.filter((time) => time >= from - 1e-3);
       let nextWeight = 0;
       let previous = from, movedAt = this.now();
       while (this.alive(g)) {
         const time = this.media.currentTime;
-        if (time >= to - 0.012 || this.media.ended) break;
+        const end = phase === "practice" ? interval(this.definition, this.prefs).end : to;
+        if (time >= end - 0.012 || this.media.ended) break;
         if (this.media.paused) {
           this.pause();
           return;
@@ -12373,7 +12381,7 @@
         const buffering = this.media.readyState < 3 || this.media.seeking || this.now() - movedAt > 300;
         if (!buffering || jumped) {
           let latest;
-          while (nextWeight < weightTimes.length && weightTimes[nextWeight] <= time + 1e-3) latest = weightTimes[nextWeight++];
+          while (nextWeight < weightTimes.length && weightTimes[nextWeight] < end - 1e-3 && weightTimes[nextWeight] <= time + 1e-3) latest = weightTimes[nextWeight++];
           if (this.weightClicksEnabled() && !buffering && !jumped && latest !== void 0 && time - latest <= 0.08 * this.prefs.speed) this.click(false, 0.8, 1500);
         }
         const remaining = phase === "practice" ? 0 : Math.max(1, Math.min(
