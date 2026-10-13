@@ -31,6 +31,18 @@ Share [the README catalog](https://github.com/dcep93/loopygoopy#practice-catalog
 
 The golden example uses 81 numbered beats/minute with beat 1 at approximately 12.64 seconds. Its 32-beat interval ends at 36.3437 seconds; beats 17–24 span 24.4919–30.4178 seconds. Timing was checked against the audio pulse and video frames around the first and final section boundaries. The [choreographers' count sheet](https://www.copperknob.co.uk/stepsheets/K3PHTPZ/3-tequila-floor/download/pdf) distinguishes numbered counts from subdivisions. The initial timing still needs an end-to-end playback check in the installed extension before treating it as final calibration.
 
+## Shady
+
+[Moonshine demo](https://www.youtube.com/watch?v=LaYwiyrqGiA) and [matching step sheet](https://www.copperknob.co.uk/stepsheets/MSJT937/shady/download/pdf), by Darren Bailey, Fred Whitehouse and Amy Glass. The video description identifies this choreography. The catalog covers the first main 32-count sequence, without later tags or restarts.
+
+Calibration on October 12, 2026: 100 BPM, count 1 at 23.14 seconds, exclusive end at 42.34 seconds. Audio-transient measurements across all 32 counts fit 99.994 BPM with a 23.1397-second origin (maximum residual about 11 ms). Frame checks at the numbered counts match the section turns and final turn into the first tag. These values follow the musical pulse; individual dancers can land slightly before or after it.
+
+Four-count boundaries are 23.14, 25.54, 27.94, 30.34, 32.74, 35.14, 37.54, 39.94 and 42.34 seconds. The first two lead-in counts span 21.94–23.14; there is no choreographed pickup to encode. Track lead-out after the full sequence shows the video's actual tag footage; the footwork stream describes only the selected main sequence.
+
+User-confirmed notation: simultaneous weight transfers and knee pops/hitches show the receiving foot (L at 4; R at 18). Special-only actions use stars, retaining L through 15&–16 and 30&–32. The extended hold after 20 uses dashes until the transfer at 21&. No additional weight clicks are invented for these holds or specials.
+
+Verification: all 36 contiguous four-count selections were checked against the 0.6-second count grid. A local browser fixture using the actual demo clip and production controls verified full-sequence playback, weight clicks, and repeated 17–24 playback at 90% speed. The existing 202 tests and both extension builds passed. This fixture verifies the data and playback together; it does not substitute for an installed-extension check on YouTube.
+
 ## Extension release gate
 
 After building, reload Loopy Goopy in Chrome's Extensions page and refresh the golden-example page. Browser automation cannot operate the extension-management page in this environment, so the reload requires the user.

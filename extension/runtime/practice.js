@@ -12796,6 +12796,342 @@
             }
           ]
         }
+      },
+      {
+        schemaVersion: 1,
+        mediaId: "youtube:LaYwiyrqGiA",
+        sourceUrl: "https://www.youtube.com/watch?v=LaYwiyrqGiA",
+        title: "Adam Lambert \u2014 Shady",
+        bpm: 100,
+        firstBeat: 23.14,
+        totalBeats: 32,
+        revision: 1,
+        status: "published",
+        footwork: {
+          sourceUrl: "https://www.copperknob.co.uk/stepsheets/MSJT937/shady/download/pdf",
+          cues: [
+            {
+              beat: 1,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 1.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 2,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 2.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 3,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 3.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 4,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 4.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 5.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 6,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 6.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 7,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 7.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 8,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 8.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 9,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 9.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 10,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 10.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 11,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 11.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 12,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 12.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 13,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 13.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 14,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 14.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 15,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 15.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 16,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 16.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 17,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 17.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 18,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 18.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 19,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 19.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 20,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 20.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 21,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 21.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 22,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 22.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 23,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 23.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 24,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 24.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 25,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 25.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 26,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 26.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 27,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 27.5,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 28,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 28.5,
+              duration: 0.5,
+              symbol: "-"
+            },
+            {
+              beat: 29,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 29.5,
+              duration: 0.5,
+              symbol: "R"
+            },
+            {
+              beat: 30,
+              duration: 0.5,
+              symbol: "L"
+            },
+            {
+              beat: 30.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 31,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 31.5,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 32,
+              duration: 0.5,
+              symbol: "*"
+            },
+            {
+              beat: 32.5,
+              duration: 0.5,
+              symbol: "*"
+            }
+          ]
+        }
       }
     ]
   };

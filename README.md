@@ -9,6 +9,7 @@ Install [Loopy Goopy](https://chromewebstore.google.com/detail/loopy-goopy/addfp
 <!-- practice-catalog:start -->
 
 - [3 Tequila Floor](https://www.youtube.com/watch?v=xzeGxm72GOo&loopygoopy)
+- [Adam Lambert — Shady](https://www.youtube.com/watch?v=LaYwiyrqGiA&loopygoopy)
 
 <!-- practice-catalog:end -->
 
