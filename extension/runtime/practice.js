@@ -12801,7 +12801,7 @@
         schemaVersion: 1,
         mediaId: "youtube:LaYwiyrqGiA",
         sourceUrl: "https://www.youtube.com/watch?v=LaYwiyrqGiA",
-        title: "Adam Lambert \u2014 Shady",
+        title: "Shady",
         bpm: 100,
         firstBeat: 23.14,
         totalBeats: 32,
