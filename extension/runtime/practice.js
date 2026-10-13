@@ -12148,15 +12148,28 @@
     }
   });
 
+  // src/practice/footwork.ts
+  function weightChangeBeats(cues) {
+    let previous;
+    const beats = [];
+    for (const cue of cues) {
+      if (!["R", "L", "r", "l"].includes(cue.symbol)) continue;
+      const foot = cue.symbol.toUpperCase();
+      if (foot !== previous) beats.push(cue.beat);
+      previous = foot;
+    }
+    return beats;
+  }
+
   // src/practice/model.ts
-  var defaults = { first: 1, last: 8, speed: 1, leadIn: { beats: 2, style: "track" }, leadOut: { beats: 2, style: "track" } };
+  var defaults = { first: 1, last: 8, speed: 1, weightClicks: true, leadIn: { beats: 2, style: "track" }, leadOut: { beats: 2, style: "track" } };
   var paused = { phase: "paused", running: false, beat: 1, remaining: 0, cycle: 0 };
   function validDefinition(v, id) {
     return Boolean(v && v.schemaVersion === 1 && /^youtube:[\w-]{11}$/.test(v.mediaId) && (!id || v.mediaId === id) && v.sourceUrl === `https://www.youtube.com/watch?v=${v.mediaId.slice(8)}` && typeof v.title === "string" && v.title.length > 0 && v.title.length < 200 && Number.isFinite(v.bpm) && v.bpm > 0 && v.bpm <= 400 && Number.isFinite(v.firstBeat) && v.firstBeat >= 0 && v.totalBeats === 32 && Number.isSafeInteger(v.revision) && v.revision > 0 && v.status === "published" && (v.footwork === void 0 || validFootwork(v.footwork)));
   }
   function validPreferences(v) {
     const lead = (l) => l && Number.isInteger(l.beats) && l.beats >= 0 && l.beats <= 32 && ["track", "silent", "metronome"].includes(l.style);
-    return Boolean(v && Number.isInteger(v.first) && Number.isInteger(v.last) && v.first >= 1 && v.last <= 32 && v.first <= v.last && (v.first - 1) % 4 === 0 && v.last % 4 === 0 && Number.isFinite(v.speed) && v.speed >= 0.25 && v.speed <= 1.5 && lead(v.leadIn) && lead(v.leadOut));
+    return Boolean(v && Number.isInteger(v.first) && Number.isInteger(v.last) && v.first >= 1 && v.last <= 32 && v.first <= v.last && (v.first - 1) % 4 === 0 && v.last % 4 === 0 && Number.isFinite(v.speed) && v.speed >= 0.25 && v.speed <= 1.5 && (v.weightClicks === void 0 || typeof v.weightClicks === "boolean") && lead(v.leadIn) && lead(v.leadOut));
   }
   function range(a, b) {
     return { first: Math.min(a, b) * 4 + 1, last: Math.max(a, b) * 4 + 4 };
@@ -12198,6 +12211,7 @@
       this.state = { ...paused };
       // The strip follows the same picture during track leads, frozen leads and seeks.
       this.readBeat = () => this.controlled && Number.isFinite(this.media.currentTime) ? 1 + (this.media.currentTime - this.definition.firstBeat) * this.definition.bpm / 60 : this.prefs.first;
+      this.weightClickTimes = weightChangeBeats(definition.footwork?.cues || []).map((beat) => definition.firstBeat + (beat - 1) * 60 / definition.bpm);
       this.originalRate = media.playbackRate;
       this.originalLoop = media.loop;
     }
@@ -12243,6 +12257,22 @@
     }
     async update(p) {
       if (!validPreferences(p)) throw Error("Invalid practice settings.");
+      const soundOnly = p.first === this.prefs.first && p.last === this.prefs.last && p.speed === this.prefs.speed && p.leadIn.beats === this.prefs.leadIn.beats && p.leadIn.style === this.prefs.leadIn.style && p.leadOut.beats === this.prefs.leadOut.beats && p.leadOut.style === this.prefs.leadOut.style;
+      if (soundOnly) {
+        this.prefs = p;
+        if (this.state.running && this.weightClicksEnabled()) {
+          const g2 = this.generation;
+          try {
+            await this.enableAudio();
+          } catch {
+            if (this.alive(g2) && this.prefs === p) {
+              this.pause();
+              this.emit({ phase: "error", error: "Could not enable metronome audio. Try Play again." });
+            }
+          }
+        }
+        return;
+      }
       this.controlled = true;
       const running = this.state.running;
       this.pause();
@@ -12264,6 +12294,20 @@
       while (this.alive(g) && (this.media.seeking || this.media.readyState < 2)) {
         if (this.now() > deadline) throw Error("The video is taking too long to seek. Try Play again.");
         await this.wait(25, g);
+      }
+    }
+    weightClicksEnabled() {
+      return this.prefs.weightClicks !== false && this.weightClickTimes.length > 0;
+    }
+    async enableAudio() {
+      let timeout;
+      try {
+        this.audio ||= new AudioContext();
+        await Promise.race([this.audio.resume(), new Promise((_, reject) => {
+          timeout = setTimeout(() => reject(Error("Audio blocked")), 2e3);
+        })]);
+      } finally {
+        clearTimeout(timeout);
       }
     }
     click(accent) {
@@ -12311,7 +12355,9 @@
       this.media.loop = false;
       await this.media.play();
       if (!this.alive(g)) return;
-      let previous = this.media.currentTime, movedAt = this.now();
+      const weightTimes = this.weightClickTimes.filter((time) => time >= from - 1e-3 && time < to - 1e-3);
+      let nextWeight = 0;
+      let previous = from, movedAt = this.now();
       while (this.alive(g)) {
         const time = this.media.currentTime;
         if (time >= to - 0.012 || this.media.ended) break;
@@ -12319,11 +12365,17 @@
           this.pause();
           return;
         }
+        const jumped = time < previous - 1e-3 || time - previous > 0.25 * this.prefs.speed;
         if (time !== previous) {
           previous = time;
           movedAt = this.now();
         }
         const buffering = this.media.readyState < 3 || this.media.seeking || this.now() - movedAt > 300;
+        if (!buffering || jumped) {
+          let latest;
+          while (nextWeight < weightTimes.length && weightTimes[nextWeight] <= time + 1e-3) latest = weightTimes[nextWeight++];
+          if (this.weightClicksEnabled() && !buffering && !jumped && latest !== void 0 && time - latest <= 0.08 * this.prefs.speed) this.click(false);
+        }
         const remaining = phase === "practice" ? 0 : Math.max(1, Math.min(
           phase === "lead-in" ? this.prefs.leadIn.beats : this.prefs.leadOut.beats,
           Math.ceil((to - time - 1e-3) * this.definition.bpm / 60)
@@ -12365,18 +12417,12 @@
         this.emit({ phase: "error", error: "The prepared section does not fit this video, or the video is still loading." });
         return;
       }
-      if ([this.prefs.leadIn.style, this.prefs.leadOut.style].includes("metronome")) {
-        let timeout;
+      if (this.weightClicksEnabled() || [this.prefs.leadIn.style, this.prefs.leadOut.style].includes("metronome")) {
         try {
-          this.audio ||= new AudioContext();
-          await Promise.race([this.audio.resume(), new Promise((_, reject) => {
-            timeout = setTimeout(() => reject(Error("Audio blocked")), 2e3);
-          })]);
+          await this.enableAudio();
         } catch {
-          if (this.alive(g)) this.emit({ phase: "error", error: "Click the video once to enable metronome audio, then try Play again." });
+          if (this.alive(g)) this.emit({ phase: "error", error: "Could not enable metronome audio. Try Play again." });
           return;
-        } finally {
-          clearTimeout(timeout);
         }
       }
       if (!this.alive(g)) return;
@@ -13103,7 +13149,19 @@
             /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("button", { "aria-label": "Faster", disabled: p.speed >= 1.5, onClick: () => change({ speed: Math.min(1.5, +(p.speed + 0.05).toFixed(2)) }), children: "+" })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(LeadControls, { label: "Lead-in", value: p.leadIn, onChange: (leadIn) => change({ leadIn }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(LeadControls, { label: "Lead-out", value: p.leadOut, onChange: (leadOut) => change({ leadOut }) })
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(LeadControls, { label: "Lead-out", value: p.leadOut, onChange: (leadOut) => change({ leadOut }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("label", { className: "weight-clicks", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+              "input",
+              {
+                type: "checkbox",
+                checked: p.weightClicks !== false,
+                disabled: !d.footwork,
+                onChange: (e) => change({ weightClicks: e.target.checked })
+              }
+            ),
+            " Weight clicks"
+          ] })
         ] }),
         d.footwork && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(WeightStream, { footwork: d.footwork, first: p.first, last: p.last, readBeat }),
         playback.error && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { className: "error", role: "alert", children: playback.error })
@@ -13173,7 +13231,7 @@ body:has(.practice-panel) { background: transparent; }
 .practice-panel .count { font-size: 1.55rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ww-title-pink); min-width: 1.5ch; text-align: center; }
 .practice-panel :is(.phase-lead-in, .phase-lead-out) .count { color: var(--ww-accent-amber); }
 .practice-panel .phase { font-size: .8rem; white-space: nowrap; }
-.practice-panel .practice-settings { display: grid; grid-template-columns: auto auto auto; gap: 1rem; align-items: center; justify-content: space-between; }
+.practice-panel .practice-settings { display: grid; grid-template-columns: auto auto auto auto; gap: 1rem; align-items: center; justify-content: space-between; }
 .practice-panel :is(.speed, .lead-row) { display: flex; align-items: center; gap: .5rem; white-space: nowrap; min-width: 0; }
 .practice-panel .speed output { min-width: 4ch; text-align: center; font-size: .8rem; font-variant-numeric: tabular-nums; }
 .practice-panel .speed > span, .practice-panel .lead-row legend, .practice-panel .duration { font-size: .75rem; color: var(--ww-text-muted); }
@@ -13192,7 +13250,7 @@ body:has(.practice-panel) { background: transparent; }
 @media (max-width: 68rem) {
   .practice-panel { gap: .5rem; }
   .practice-panel .practice-settings { grid-template-columns: auto auto; gap: .5rem; }
-  .practice-panel .speed { grid-column: 1 / -1; }
+  .practice-panel .speed { grid-column: auto; }
   .practice-panel .brand { font-size: 1.4rem; }
   .practice-panel .transport { gap: .4rem; }
   .practice-panel .phase { font-size: .7rem; }
@@ -13218,6 +13276,10 @@ body:has(.practice-panel) { background: transparent; }
 
 .practice-panel .weight-measure-tick { position: absolute; bottom: .125rem; width: 2px; height: .375rem; transform: translateX(-50%); border-radius: 1px; background: var(--ww-accent-amber); opacity: .55; pointer-events: none; }
 .practice-panel .weight-measure-tick[data-four-measure-start=true] { background: var(--ww-title-pink); opacity: .7; }
+
+.practice-panel .weight-clicks { display: flex; align-items: center; gap: .35rem; white-space: nowrap; font-size: .75rem; color: var(--ww-text-muted); cursor: pointer; }
+.practice-panel .weight-clicks input { accent-color: var(--ww-accent-amber); width: .9rem; height: .9rem; margin: 0; padding: 0; cursor: pointer; }
+.practice-panel .weight-clicks:has(input:disabled) { opacity: .5; cursor: default; }
 `;
 
   // src/practice/mountControls.tsx

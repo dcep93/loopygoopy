@@ -1,3 +1,4 @@
+import { installTestAudio } from './testAudio';
 import { PracticeEngine } from './engine';
 import { defaults, Definition, Preferences } from './model';
 import golden from './golden.json';
@@ -11,7 +12,7 @@ const setup = (patch:Partial<Preferences>={}) => {
   media={duration:100,currentTime:0,paused:true,readyState:4,seeking:false,ended:false,playbackRate:1,loop:false,pause(){this.paused=true;},play:jest.fn(async function(this:any){this.paused=false;})};
   engine=new PracticeEngine(media,definition,{...defaults,...patch},()=>{},()=>time);
 };
-beforeEach(()=>{jest.useFakeTimers();time=0;setup();});
+beforeEach(()=>{installTestAudio();jest.useFakeTimers();time=0;setup();});
 afterEach(()=>{engine.dispose();jest.useRealTimers();});
 test('silent frozen leads repeat every cycle and follow the playback speed',async()=>{
   setup({speed:.5,last:4,leadIn:{beats:2,style:'silent'},leadOut:{beats:2,style:'silent'}});
@@ -121,4 +122,62 @@ test('fractional stream follows track pickup and holds with frozen leads',async(
   await advance(750);expect(engine.readBeat()).toBeCloseTo(.5);
   engine.pause();await engine.update({...defaults,leadIn:{beats:2,style:'silent'}});
   void engine.play();await flush();const position=engine.readBeat();await advance(500);expect(engine.readBeat()).toBe(position);
+});
+const clickDefinition: Definition = { ...definition, footwork: { sourceUrl: golden.footwork.sourceUrl, cues: [
+  {beat:.5,duration:.5,symbol:'R'}, {beat:1,duration:.5,symbol:'L'}, {beat:1.5,duration:.5,symbol:'-'},
+  {beat:2,duration:.5,symbol:'L'}, {beat:2.5,duration:.5,symbol:'*'}, {beat:3,duration:.25,symbol:'r'},
+  {beat:3.25,duration:.25,symbol:'l'}, {beat:3.5,duration:.5,symbol:'R'}, {beat:4,duration:.5,symbol:'*'},
+  {beat:4.5,duration:.5,symbol:'L'}, {beat:5,duration:.5,symbol:'R'}, {beat:5.5,duration:.5,symbol:'L'},
+] } };
+function clickSetup(patch:Partial<Preferences>={}) {
+  const clicks:number[]=[];
+  const audio=installTestAudio(()=>clicks.push(media.currentTime));
+  engine=new PracticeEngine(media,clickDefinition,{...defaults,last:4,leadIn:{beats:0,style:'track'},leadOut:{beats:0,style:'track'},...patch},()=>{},()=>time);
+  return {clicks,...audio};
+}
+test.each([.5,1,1.5])('weight clicks follow pickup, transfers, track leads and repeats at %s speed',async(speed)=>{
+  const {clicks}=clickSetup({speed,weightClicks:undefined,leadIn:{beats:1,style:'track'},leadOut:{beats:1,style:'track'}});
+  expect(clicks).toEqual([]);void engine.play();await flush();await advance(2900/speed);
+  const expected=[9.75,10,11,11.125,11.25,11.75,12,12.25];
+  expect(clicks).toHaveLength(expected.length);
+  clicks.forEach((value,i)=>expect(Math.abs(value-expected[i])).toBeLessThan(.03*speed));
+  await advance(1000/speed);expect(engine.state.cycle).toBe(2);
+  expect(clicks).toHaveLength(10);expect(clicks[8]).toBeCloseTo(9.75,1);expect(clicks[9]).toBeCloseTo(10,1);
+});
+test('weight clicks stop during buffering, discard skipped transfers on seek and cancel with pause',async()=>{
+  const {clicks,tones}=clickSetup();void engine.play();await flush();expect(clicks).toHaveLength(1);
+  await advance(300);media.readyState=2;await advance(500,false);expect(clicks).toHaveLength(1);
+  media.readyState=4;await advance(720);expect(clicks).toHaveLength(2);
+  media.currentTime=11.7;await advance(20,false);expect(clicks).toHaveLength(2);
+  await advance(100);expect(clicks).toHaveLength(3);expect(clicks[2]).toBeCloseTo(11.75,1);
+  engine.pause();await advance(2000);expect(clicks).toHaveLength(3);expect(tones.every(t=>t.stop.mock.calls.length===2)).toBe(true);
+});
+test('live weight toggle preserves playback position and does not replay muted cues',async()=>{
+  const {clicks}=clickSetup();void engine.play();await flush();expect(clicks).toHaveLength(1);
+  const position=media.currentTime;
+  await engine.update({...engine.prefs,weightClicks:false});expect(media.currentTime).toBe(position);expect(media.paused).toBe(false);
+  await advance(1020);expect(clicks).toHaveLength(1);
+  await engine.update({...engine.prefs,weightClicks:true});await advance(120);expect(clicks).toHaveLength(2);expect(clicks[1]).toBeCloseTo(11.125,1);
+  expect(media.play).toHaveBeenCalledTimes(1);expect(engine.state.cycle).toBe(1);
+});
+test('unchecking weight clicks needs no audio context and frozen leads keep their own sound',async()=>{
+  const {clicks,tones}=clickSetup({weightClicks:false});void engine.play();await flush();await advance(1800);
+  expect(clicks).toHaveLength(0);expect(AudioContext).not.toHaveBeenCalled();engine.pause();
+  await engine.update({...engine.prefs,weightClicks:true,leadIn:{beats:2,style:'metronome'},leadOut:{beats:2,style:'silent'}});
+  void engine.play();await flush();expect(clicks).toHaveLength(1);expect(tones[0].frequency.value).toBe(1000);
+  await advance(600);expect(clicks).toHaveLength(2);expect(media.paused).toBe(true);
+  await advance(450);expect(engine.state.phase).toBe('practice');expect(clicks).toHaveLength(3);
+  await advance(2050);expect(engine.state.phase).toBe('lead-out');const count=clicks.length;
+  await advance(600);expect(clicks).toHaveLength(count);
+});
+test('a paused toggle neither starts audio nor seeks the video',async()=>{
+  clickSetup();media.currentTime=42;await engine.update({...engine.prefs,weightClicks:false});await engine.update({...engine.prefs,weightClicks:true});
+  expect(media.currentTime).toBe(42);expect(media.play).not.toHaveBeenCalled();expect(AudioContext).not.toHaveBeenCalled();
+});
+test('turning weight clicks back off cancels an obsolete audio-enable failure',async()=>{
+  const {context}=clickSetup({weightClicks:false});void engine.play();await flush();
+  let reject!:(error:Error)=>void;context.resume.mockImplementation(()=>new Promise<void>((_,fail)=>{reject=fail;}));
+  const pending=engine.update({...engine.prefs,weightClicks:true});
+  await engine.update({...engine.prefs,weightClicks:false});reject(Error('Audio blocked'));await pending;
+  expect(engine.state.running).toBe(true);expect(engine.state.error).toBeUndefined();
 });

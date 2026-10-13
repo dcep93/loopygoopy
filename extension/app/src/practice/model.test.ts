@@ -22,3 +22,9 @@ test('rejects broken ranges and unbounded scheduling settings', () => {
   expect(validPreferences(defaults)).toBe(true);
   for(const patch of [{first:2},{last:7},{first:17,last:8},{speed:0},{speed:Infinity},{leadIn:{beats:1.5,style:'silent'}},{leadOut:{beats:2,style:'noise'}}]) expect(validPreferences({...defaults,...patch})).toBe(false);
 });
+test('weight clicks default on while older preferences remain valid',()=>{
+  expect(defaults.weightClicks).toBe(true);
+  const {weightClicks,...old}=defaults;expect(validPreferences(old)).toBe(true);
+  expect(validPreferences({...old,weightClicks:false})).toBe(true);
+  expect(validPreferences({...old,weightClicks:'false'})).toBe(false);
+});

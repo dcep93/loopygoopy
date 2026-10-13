@@ -1,6 +1,6 @@
 export type LeadStyle = 'track' | 'silent' | 'metronome';
 export type Lead = { beats: number; style: LeadStyle };
-export type Preferences = { first: number; last: number; speed: number; leadIn: Lead; leadOut: Lead };
+export type Preferences = { first: number; last: number; speed: number; weightClicks?: boolean; leadIn: Lead; leadOut: Lead };
 export type WeightCue = { beat: number; duration: .25 | .5 | 1; symbol: 'R' | 'L' | 'r' | 'l' | '-' | '*' };
 export type Footwork = { sourceUrl: string; cues: WeightCue[] };
 export type Definition = {
@@ -9,7 +9,7 @@ export type Definition = {
   bpm: number; firstBeat: number; totalBeats: 32; revision: number; status: 'published';
 };
 export type Playback = { phase: 'paused' | 'seeking' | 'lead-in' | 'practice' | 'lead-out' | 'buffering' | 'error'; running: boolean; beat: number; remaining: number; cycle: number; error?: string };
-export const defaults: Preferences = { first: 1, last: 8, speed: 1, leadIn: { beats: 2, style: 'track' }, leadOut: { beats: 2, style: 'track' } };
+export const defaults: Preferences = { first: 1, last: 8, speed: 1, weightClicks: true, leadIn: { beats: 2, style: 'track' }, leadOut: { beats: 2, style: 'track' } };
 export const paused: Playback = { phase: 'paused', running: false, beat: 1, remaining: 0, cycle: 0 };
 export function validDefinition(v: any, id?: string): v is Definition {
   return Boolean(v && v.schemaVersion === 1 && /^youtube:[\w-]{11}$/.test(v.mediaId) && (!id || v.mediaId === id) &&
@@ -20,7 +20,7 @@ export function validDefinition(v: any, id?: string): v is Definition {
 export function validPreferences(v: any): v is Preferences {
   const lead = (l: any) => l && Number.isInteger(l.beats) && l.beats >= 0 && l.beats <= 32 && ['track', 'silent', 'metronome'].includes(l.style);
   return Boolean(v && Number.isInteger(v.first) && Number.isInteger(v.last) && v.first >= 1 && v.last <= 32 && v.first <= v.last &&
-    (v.first - 1) % 4 === 0 && v.last % 4 === 0 && Number.isFinite(v.speed) && v.speed >= .25 && v.speed <= 1.5 && lead(v.leadIn) && lead(v.leadOut));
+    (v.first - 1) % 4 === 0 && v.last % 4 === 0 && Number.isFinite(v.speed) && v.speed >= .25 && v.speed <= 1.5 && (v.weightClicks === undefined || typeof v.weightClicks === 'boolean') && lead(v.leadIn) && lead(v.leadOut));
 }
 export function range(a: number, b: number) { return { first: Math.min(a, b) * 4 + 1, last: Math.max(a, b) * 4 + 4 }; }
 export function interval(d: Definition, p: Preferences) {

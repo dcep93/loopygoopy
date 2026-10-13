@@ -1,6 +1,6 @@
 # Loopy Goopy privacy policy
 
-Effective October 12, 2026. Applies to Loopy Goopy versions 5.0.0 through 5.0.7.
+Effective October 12, 2026. Applies to Loopy Goopy versions 5.0.0 through 5.0.8.
 
 Loopy Goopy helps you practice parts of videos using loops, playback speed, and beat counts. It has no account system, analytics, advertising, Firebase service, or developer-operated data server.
 

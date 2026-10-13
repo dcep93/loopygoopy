@@ -1,3 +1,4 @@
+import { installTestAudio } from './testAudio';
 import { PracticeSession } from './session';
 import { defaults } from './model';
 import golden from './golden.json';
@@ -6,7 +7,7 @@ const sessions:PracticeSession[]=[];
 let db:Record<string,any>;
 const make=()=>{const s=new PracticeSession(golden.mediaId);sessions.push(s);return s;};
 const media=()=>({duration:100,currentTime:0,paused:true,readyState:4,seeking:false,ended:false,playbackRate:1,loop:false,pause(){this.paused=true;},play:jest.fn(async function(this:any){this.paused=false;})} as any);
-beforeEach(()=>{
+beforeEach(()=>{installTestAudio();
   jest.useFakeTimers();db={};
   window.chrome={runtime:{sendMessage:jest.fn(async()=>({ok:true,definition:golden})),connect:jest.fn(()=>{throw Error('No ports allowed');})},storage:{local:{get:jest.fn(async(key:string)=>({[key]:db[key]})),set:jest.fn(async(values:any)=>{Object.assign(db,values);})}}};
 });
@@ -56,4 +57,8 @@ test('catalog retry preserves unsaved session preferences and does not reload du
 test('storage read failure still loads defaults and allows practice',async()=>{
   window.chrome.storage.local.get.mockRejectedValue(Error('Storage unavailable'));const session=make();await session.load();session.attachMedia(media());session.play();await flush();
   expect(session.snapshot.prefs).toEqual(defaults);expect(session.snapshot.playback?.running).toBe(true);expect(session.snapshot.saveError).toBeDefined();
+});
+test('a disabled weight metronome is saved and survives a new tab session',async()=>{
+  const one=make();await one.load();one.change({...defaults,weightClicks:false});await flush();
+  const two=make();await two.load();expect(two.snapshot.prefs?.weightClicks).toBe(false);
 });

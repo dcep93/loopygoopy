@@ -40,3 +40,11 @@ test.each([[1,4,true,false],[29,32,false,true],[1,32,true,true]])('disables shif
   expect((prev as HTMLButtonElement).disabled).toBe(prevDisabled);expect((next as HTMLButtonElement).disabled).toBe(nextDisabled);
   if(prevDisabled)fireEvent.click(prev);if(nextDisabled)fireEvent.click(next);expect(actions.change).not.toHaveBeenCalled();
 });
+test('Weight clicks defaults on for older saved preferences and can be switched off',()=>{
+  const {weightClicks,...older}=defaults;
+  const actions=setup(older);
+  const checkbox=screen.getByRole('checkbox',{name:'Weight clicks'});expect(checkbox).toBeChecked();
+  const leadOut=screen.getByRole('group',{name:'Lead-out'});
+  expect(leadOut.nextElementSibling).toContainElement(checkbox);
+  fireEvent.click(checkbox);expect(checkbox).not.toBeChecked();expect(actions.change).toHaveBeenLastCalledWith({...older,weightClicks:false});
+});

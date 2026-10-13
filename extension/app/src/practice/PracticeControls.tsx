@@ -83,6 +83,8 @@ export default function PracticeControls({ snapshot, actions, readBeat }: { snap
         <div className="speed segments" role="group" aria-label="Playback speed"><span>Speed</span><button aria-label="Slower" disabled={p.speed <= .25} onClick={() => change({ speed: Math.max(.25, +(p.speed - .05).toFixed(2)) })}>−</button><output aria-label="Current speed" aria-live="polite">{Math.round(p.speed * 100)}%</output><button aria-label="Faster" disabled={p.speed >= 1.5} onClick={() => change({ speed: Math.min(1.5, +(p.speed + .05).toFixed(2)) })}>+</button></div>
         <LeadControls label="Lead-in" value={p.leadIn} onChange={leadIn => change({ leadIn })} />
         <LeadControls label="Lead-out" value={p.leadOut} onChange={leadOut => change({ leadOut })} />
+        <label className="weight-clicks"><input type="checkbox" checked={p.weightClicks !== false} disabled={!d.footwork}
+          onChange={e => change({ weightClicks: e.target.checked })} /> Weight clicks</label>
       </div>
       {d.footwork && <WeightStream footwork={d.footwork} first={p.first} last={p.last} readBeat={readBeat} />}
       {playback.error && <p className="error" role="alert">{playback.error}</p>}

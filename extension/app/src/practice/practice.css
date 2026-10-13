@@ -58,7 +58,7 @@ body:has(.practice-panel) { background: transparent; }
 .practice-panel .count { font-size: 1.55rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ww-title-pink); min-width: 1.5ch; text-align: center; }
 .practice-panel :is(.phase-lead-in, .phase-lead-out) .count { color: var(--ww-accent-amber); }
 .practice-panel .phase { font-size: .8rem; white-space: nowrap; }
-.practice-panel .practice-settings { display: grid; grid-template-columns: auto auto auto; gap: 1rem; align-items: center; justify-content: space-between; }
+.practice-panel .practice-settings { display: grid; grid-template-columns: auto auto auto auto; gap: 1rem; align-items: center; justify-content: space-between; }
 .practice-panel :is(.speed, .lead-row) { display: flex; align-items: center; gap: .5rem; white-space: nowrap; min-width: 0; }
 .practice-panel .speed output { min-width: 4ch; text-align: center; font-size: .8rem; font-variant-numeric: tabular-nums; }
 .practice-panel .speed > span, .practice-panel .lead-row legend, .practice-panel .duration { font-size: .75rem; color: var(--ww-text-muted); }
@@ -77,7 +77,7 @@ body:has(.practice-panel) { background: transparent; }
 @media (max-width: 68rem) {
   .practice-panel { gap: .5rem; }
   .practice-panel .practice-settings { grid-template-columns: auto auto; gap: .5rem; }
-  .practice-panel .speed { grid-column: 1 / -1; }
+  .practice-panel .speed { grid-column: auto; }
   .practice-panel .brand { font-size: 1.4rem; }
   .practice-panel .transport { gap: .4rem; }
   .practice-panel .phase { font-size: .7rem; }
@@ -103,3 +103,7 @@ body:has(.practice-panel) { background: transparent; }
 
 .practice-panel .weight-measure-tick { position: absolute; bottom: .125rem; width: 2px; height: .375rem; transform: translateX(-50%); border-radius: 1px; background: var(--ww-accent-amber); opacity: .55; pointer-events: none; }
 .practice-panel .weight-measure-tick[data-four-measure-start=true] { background: var(--ww-title-pink); opacity: .7; }
+
+.practice-panel .weight-clicks { display: flex; align-items: center; gap: .35rem; white-space: nowrap; font-size: .75rem; color: var(--ww-text-muted); cursor: pointer; }
+.practice-panel .weight-clicks input { accent-color: var(--ww-accent-amber); width: .9rem; height: .9rem; margin: 0; padding: 0; cursor: pointer; }
+.practice-panel .weight-clicks:has(input:disabled) { opacity: .5; cursor: default; }

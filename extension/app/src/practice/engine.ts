@@ -1,3 +1,4 @@
+import { weightChangeBeats } from './footwork';
 import { Definition, Preferences, Playback, Lead, interval, paused, validPreferences } from './model';
 
 // Media time owns moving phases; a monotonic clock owns frozen phases. Every
@@ -11,9 +12,11 @@ export class PracticeEngine {
   private originalRate: number;
   private originalLoop: boolean;
   private controlled = false;
+  private weightClickTimes: number[];
   state: Playback = { ...paused };
   constructor(private media: HTMLVideoElement, readonly definition: Definition, public prefs: Preferences,
     private publish: (state: Playback) => void, private now = () => performance.now()) {
+    this.weightClickTimes = weightChangeBeats(definition.footwork?.cues || []).map(beat => definition.firstBeat + (beat - 1) * 60 / definition.bpm);
     this.originalRate = media.playbackRate;
     this.originalLoop = media.loop;
   }
@@ -41,6 +44,18 @@ export class PracticeEngine {
   dispose() { if (this.controlled) { this.pause(); this.media.playbackRate = this.originalRate; this.media.loop = this.originalLoop; } void this.audio?.close(); }
   async update(p: Preferences) {
     if (!validPreferences(p)) throw Error('Invalid practice settings.');
+    const soundOnly = p.first === this.prefs.first && p.last === this.prefs.last && p.speed === this.prefs.speed &&
+      p.leadIn.beats === this.prefs.leadIn.beats && p.leadIn.style === this.prefs.leadIn.style &&
+      p.leadOut.beats === this.prefs.leadOut.beats && p.leadOut.style === this.prefs.leadOut.style;
+    if (soundOnly) {
+      this.prefs = p;
+      if (this.state.running && this.weightClicksEnabled()) {
+        const g = this.generation;
+        try { await this.enableAudio(); }
+        catch { if (this.alive(g) && this.prefs === p) { this.pause(); this.emit({ phase: 'error', error: 'Could not enable metronome audio. Try Play again.' }); } }
+      }
+      return;
+    }
     this.controlled = true;
     const running = this.state.running;
     this.pause(); this.prefs = p;
@@ -58,6 +73,14 @@ export class PracticeEngine {
       if (this.now() > deadline) throw Error('The video is taking too long to seek. Try Play again.');
       await this.wait(25, g);
     }
+  }
+  private weightClicksEnabled() { return this.prefs.weightClicks !== false && this.weightClickTimes.length > 0; }
+  private async enableAudio() {
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      this.audio ||= new AudioContext();
+      await Promise.race([this.audio.resume(), new Promise((_, reject) => { timeout = setTimeout(() => reject(Error('Audio blocked')), 2000); })]);
+    } finally { clearTimeout(timeout); }
   }
   private click(accent: boolean) {
     const context = this.audio; if (!context || context.state !== 'running') return;
@@ -89,13 +112,24 @@ export class PracticeEngine {
     this.media.playbackRate = this.prefs.speed; this.media.loop = false;
     await this.media.play();
     if (!this.alive(g)) return;
-    let previous = this.media.currentTime, movedAt = this.now();
+    // Each moving phase owns a cursor. The end is exclusive so a boundary cue
+    // clicks once in the next phase, and every repetition starts fresh.
+    const weightTimes = this.weightClickTimes.filter(time => time >= from - .001 && time < to - .001);
+    let nextWeight = 0;
+    let previous = from, movedAt = this.now();
     while (this.alive(g)) {
       const time = this.media.currentTime;
       if (time >= to - .012 || this.media.ended) break;
       if (this.media.paused) { this.pause(); return; }
+      const jumped = time < previous - .001 || time - previous > .25 * this.prefs.speed;
       if (time !== previous) { previous = time; movedAt = this.now(); }
       const buffering = this.media.readyState < 3 || this.media.seeking || this.now() - movedAt > 300;
+      if (!buffering || jumped) {
+        let latest: number | undefined;
+        while (nextWeight < weightTimes.length && weightTimes[nextWeight] <= time + .001) latest = weightTimes[nextWeight++];
+        // Discard missed cues rather than playing a burst after a seek/stall.
+        if (this.weightClicksEnabled() && !buffering && !jumped && latest !== undefined && time - latest <= .08 * this.prefs.speed) this.click(false);
+      }
       // Seek positions are rounded by the media element. Allow 1 ms at beat
       // boundaries and never show more than the configured lead duration.
       const remaining = phase === 'practice' ? 0 : Math.max(1, Math.min(
@@ -133,13 +167,9 @@ export class PracticeEngine {
     if (!Number.isFinite(this.media.duration) || end > this.media.duration) {
       this.emit({ phase: 'error', error: 'The prepared section does not fit this video, or the video is still loading.' }); return;
     }
-    if ([this.prefs.leadIn.style, this.prefs.leadOut.style].includes('metronome')) {
-      let timeout: ReturnType<typeof setTimeout> | undefined;
-      try {
-        this.audio ||= new AudioContext();
-        await Promise.race([this.audio.resume(), new Promise((_, reject) => { timeout = setTimeout(() => reject(Error('Audio blocked')), 2000); })]);
-      } catch { if (this.alive(g)) this.emit({ phase: 'error', error: 'Click the video once to enable metronome audio, then try Play again.' }); return; }
-      finally { clearTimeout(timeout); }
+    if (this.weightClicksEnabled() || [this.prefs.leadIn.style, this.prefs.leadOut.style].includes('metronome')) {
+      try { await this.enableAudio(); }
+      catch { if (this.alive(g)) this.emit({ phase: 'error', error: 'Could not enable metronome audio. Try Play again.' }); return; }
     }
     if (!this.alive(g)) return;
     this.emit({ running: true, phase: 'seeking', error: undefined, cycle: 0 });

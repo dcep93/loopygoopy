@@ -59,3 +59,5 @@ The updated extension still needs installed-Chrome verification before a Chrome 
 Prepared guides can include a scrolling foot-weight strip below the controls: R/L for quick steps (half a numbered count), R/L followed by - for slow steps (one count), r/l for super-quick steps (quarter-count), and * for special actions without a weight transfer. The fixed center marker follows video time, including speed changes, pauses, seeks and track leads. The example uses the main choreography sequence and includes the initial pickup.
 
 Practice mode opens paused and holds off delayed video autoplay until you press Play. Ordinary YouTube playback is unchanged; exiting practice or explicitly using the manual controls releases the startup hold.
+
+Weight clicks, beside Lead-out, is checked by default and saved per video. It sounds on changes between weighted feet from the footwork cues, including the pickup and moving track leads. Holds and special actions remain silent. Switching it on or off does not restart the loop.
