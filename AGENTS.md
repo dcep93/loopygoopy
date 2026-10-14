@@ -5,3 +5,6 @@
   `cd extension/app && npm run build`
 - The extension manifest loads `extension/app/src/app/LoopyGoopy/contentScript.js` directly, so keep it in sync with `contentScript.ts`.
 - The extension popup loads `extension/app/build/index.html`; source changes under `extension/app/src` will not appear in Chrome until the React build is regenerated.
+
+- Do not add legacy migrations or backward-compatibility machinery. Support the current storage format directly; old-format settings do not need to be imported.
+- Loopy Goopy is independent of ktv420. Preserve its existing icon assets and publish only to Chrome Web Store item `addfplpnjjbiockjmfegacimgkcmfefn`.

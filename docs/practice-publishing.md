@@ -74,7 +74,7 @@ These are catalog-only additions. Publish the root catalog and regenerated READM
 
 After building, reload Loopy Goopy in Chrome's Extensions page and refresh the golden-example page. Browser automation cannot operate the extension-management page in this environment, so the reload requires the user.
 
-Check the embedded layout and player sizing; lead/speed combinations; consistent original popup behavior on all videos and explicit manual playback takeover; navigation between prepared and unprepared videos; idle/resume without a background-worker connection; and the real saved Ozzy bookmarks after the one-time migration. Before a public Chrome Web Store release, also assess migration from the currently published extension version: automatic transfer supports `v0.0.2` records only, and does not convert older `v0.0.1` records. Automated tests do not replace these installed-Chrome checks. Use the [release guide](chrome-web-store-release.md) and [privacy policy](../PRIVACY.md) for the store update.
+Check the embedded layout and player sizing; lead/speed combinations; consistent original popup behavior on all videos and explicit manual playback takeover; navigation between prepared and unprepared videos; idle/resume without a background-worker connection; and saved bookmarks in current Chrome extension storage. Old-format settings are not imported. Automated tests do not replace these installed-Chrome checks. Use the [release guide](chrome-web-store-release.md) and [privacy policy](../PRIVACY.md) for the store update.
 
 ## Optional weight stream
 

@@ -1,6 +1,5 @@
 import golden from './golden.json';
 jest.mock('./catalog',()=>({loadDefinition:jest.fn()}));
-jest.mock('./recordMigration',()=>({ensureRecordTransfer:jest.fn(async()=>{})}));
 let receive:Function;
 beforeEach(()=>{
   window.chrome={runtime:{getURL:(s:string)=>`chrome-extension://test/${s}`,onMessage:{addListener:(f:Function)=>{receive=f;}},onConnect:{addListener:jest.fn()}}};

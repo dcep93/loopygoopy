@@ -1,47 +1,5 @@
 "use strict";
 (() => {
-  // src/practice/recordMigration.ts
-  var migrationMarker = "loopy-record-port-v1";
-  var pending;
-  function ensureRecordTransfer() {
-    if (pending) return pending;
-    pending = transfer().catch((error) => {
-      pending = void 0;
-      throw error;
-    });
-    return pending;
-  }
-  function sameRecord(a, b) {
-    if (a === b) return true;
-    if (!a || !b || typeof a !== "object" || typeof b !== "object" || Array.isArray(a) !== Array.isArray(b)) return false;
-    const keys = Object.keys(a);
-    return keys.length === Object.keys(b).length && keys.every((key) => Object.prototype.hasOwnProperty.call(b, key) && sameRecord(a[key], b[key]));
-  }
-  async function transfer() {
-    const store = chrome.storage.local;
-    const existing = await store.get(null);
-    if (existing[migrationMarker]?.completed) return;
-    const url = chrome.runtime.getURL("runtime/migrate.html");
-    const contexts = await chrome.runtime.getContexts({ contextTypes: ["OFFSCREEN_DOCUMENT"], documentUrls: [url] });
-    if (!contexts.length) await chrome.offscreen.createDocument({ url: "runtime/migrate.html", reasons: ["LOCAL_STORAGE"], justification: "Preserve existing saved video configurations in shared extension storage." });
-    try {
-      const response = await chrome.runtime.sendMessage({ target: "record-migration", type: "read-legacy-records" });
-      if (!response?.records || response.error) throw Error("Could not read original settings. Original records are intact.");
-      const additions = {};
-      for (const [key, record] of Object.entries(response.records)) {
-        if (record?.version === "v0.0.2" && key === `loopy-goopy:${record.media?.id}` && existing[key] === void 0) additions[key] = record;
-      }
-      await store.set(additions);
-      const check = await store.get(Object.keys(additions));
-      for (const key of Object.keys(additions)) {
-        if (!sameRecord(check[key], additions[key])) throw Error("Could not verify saved settings. Original records are intact.");
-      }
-      await store.set({ [migrationMarker]: { completed: true, records: Object.keys(additions).length } });
-    } finally {
-      await chrome.offscreen.closeDocument();
-    }
-  }
-
   // src/practice/model.ts
   function validDefinition(v, id) {
     return Boolean(v && v.schemaVersion === 1 && /^youtube:[\w-]{11}$/.test(v.mediaId) && (!id || v.mediaId === id) && v.sourceUrl === `https://www.youtube.com/watch?v=${v.mediaId.slice(8)}` && typeof v.title === "string" && v.title.length > 0 && v.title.length < 200 && Number.isFinite(v.bpm) && v.bpm > 0 && v.bpm <= 400 && Number.isFinite(v.firstBeat) && v.firstBeat >= 0 && v.totalBeats === 32 && Number.isSafeInteger(v.revision) && v.revision > 0 && v.status === "published" && (v.footwork === void 0 || validFootwork(v.footwork)));
@@ -2097,7 +2055,7 @@
   var catalogUrl = "https://raw.githubusercontent.com/dcep93/loopygoopy/master/catalog.json";
   var catalogKey = "practice-catalog-v3";
   var refreshInterval = 60 * 60 * 1e3;
-  var pending2;
+  var pending;
   async function readCatalog(refresh) {
     const saved = (await chrome.storage.local.get(catalogKey))[catalogKey];
     const cached = validCatalog(saved?.catalog) ? saved.catalog : void 0;
@@ -2123,22 +2081,17 @@
     }
   }
   async function loadDefinition(id, refresh = false) {
-    const request = pending2 || (pending2 = readCatalog(refresh));
+    const request = pending || (pending = readCatalog(refresh));
     try {
       const result = await request;
       return { definition: result.catalog?.videos.find((video) => video.mediaId === id), notice: result.notice };
     } finally {
-      if (pending2 === request) pending2 = void 0;
+      if (pending === request) pending = void 0;
     }
   }
 
   // src/practice/background.ts
   chrome.runtime.onMessage.addListener((message, sender, reply) => {
-    if (message?.target === "record-migration") return;
-    if (message?.type === "ensure-record-transfer" && sender.url?.startsWith(chrome.runtime.getURL("app/build/index.html"))) {
-      ensureRecordTransfer().then(() => reply({ ok: true }), (error) => reply({ error: error instanceof Error ? error.message : String(error) }));
-      return true;
-    }
     if (message?.type === "practice-definition") {
       let allowed = false;
       try {

@@ -4,7 +4,7 @@ Approved October 12, 2026. Replace the background-worker relay and practice ifra
 
 Each watch-page session owns its preferences, playback engine, catalog definition, and subscribers. Navigation disposes the old session and ignores late asynchronous results. Player/container replacement rebinds to the new media and restores the panel. Exiting stops practice and restores YouTube sizing. Multiple tabs have separate engines; saved preferences continue to use per-video keys.
 
-Read/write preferences directly through chrome.storage.local. Serialize writes within a tab and keep playback usable if a save fails. Catalog fetch is a one-shot background request with a bounded timeout and cached/bundled fallback. Background restart cannot erase active playback state because no active-session map or port lives there. Keep the existing one-time record migration for the manual popup.
+Read/write preferences directly through chrome.storage.local. Serialize writes within a tab and keep playback usable if a save fails. Catalog fetch is a one-shot background request with a bounded timeout and cached/bundled fallback. Background restart cannot erase active playback state because no active-session map or port lives there. The manual popup uses current extension storage directly; it does not import old-format settings.
 
 Scope: no Firebase, no keepalive heartbeat, no new permissions, no bookmark format changes. Remove obsolete practice ports, tokens, embedded-manual route and messaging-based height reporting. The unsupported-video panel points users to the toolbar's manual controls.
 

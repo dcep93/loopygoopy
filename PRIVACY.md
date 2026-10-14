@@ -1,6 +1,6 @@
 # Loopy Goopy privacy policy
 
-Effective October 12, 2026. Applies to Loopy Goopy versions 5.0.0 through 5.0.14.
+Effective October 13, 2026. Applies to Loopy Goopy version 5.0.15.
 
 Loopy Goopy helps you practice parts of videos using loops, playback speed, and beat counts. It has no account system, analytics, advertising, Firebase service, or developer-operated data server.
 
@@ -8,7 +8,7 @@ Loopy Goopy helps you practice parts of videos using loops, playback speed, and 
 
 The extension reads the current supported media's identity, source URL, title, duration, and playback state so it can control playback and associate settings with the right video. It stores video identifiers and source metadata, named bookmarks and their loop settings, practice preferences, and a cached public practice catalog in your Chrome profile. Local file paths may be part of source metadata if you enable access to file URLs and use local media. These settings are not uploaded to the developer or synced by the extension.
 
-The extension can copy supported saved settings from its older local storage into Chrome extension storage. Original records are retained. Saved settings persist until deleted or the extension's data is removed. Removing the extension removes its local extension data; copies you make yourself are outside its control.
+Saved settings persist until deleted or the extension's data is removed. Removing the extension removes its local extension data; copies you make yourself are outside its control.
 
 ## Network requests and third parties
 
