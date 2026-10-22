@@ -12352,16 +12352,18 @@
         await this.wait(16, g);
       }
     }
-    async moving(from, to, phase, g) {
+    async moving(from, to, phase, g, continuePlayback = false) {
       if (!this.alive(g) || to <= from) return;
       this.activePhase = phase;
-      this.emit({ phase: "seeking" });
-      await this.seek(from, g);
-      if (!this.alive(g)) return;
-      this.media.playbackRate = this.prefs.speed;
-      this.media.loop = false;
-      await this.media.play();
-      if (!this.alive(g)) return;
+      if (!continuePlayback || this.media.paused || this.media.ended) {
+        this.emit({ phase: "seeking" });
+        await this.seek(from, g);
+        if (!this.alive(g)) return;
+        this.media.playbackRate = this.prefs.speed;
+        this.media.loop = false;
+        await this.media.play();
+        if (!this.alive(g)) return;
+      }
       const weightTimes = this.weightClickTimes.filter((time) => time >= from - 1e-3);
       let nextWeight = 0;
       let previous = from, movedAt = this.now();
@@ -12395,7 +12397,6 @@
         });
         await this.wait(16, g);
       }
-      if (this.alive(g)) this.media.pause();
     }
     async lead(lead, before, g) {
       if (!lead.beats || !this.alive(g)) return;
@@ -12413,7 +12414,7 @@
         await this.seek(0, g);
         await this.frozen(missing, phase, false, g);
       }
-      await this.moving(from, to, phase, g);
+      await this.moving(from, to, phase, g, !before);
       if (!before && missing) await this.frozen(missing, phase, false, g);
     }
     async play() {
@@ -12440,7 +12441,7 @@
           this.emit({ cycle: this.state.cycle + 1, beat: this.prefs.first });
           await this.lead(this.prefs.leadIn, true, g);
           const { start, end: end2 } = interval(this.definition, this.prefs);
-          await this.moving(start, end2, "practice", g);
+          await this.moving(start, end2, "practice", g, this.prefs.leadIn.style === "track" && this.prefs.leadIn.beats > 0);
           await this.lead(this.prefs.leadOut, false, g);
         }
       } catch (e) {

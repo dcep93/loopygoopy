@@ -118,14 +118,17 @@ export class PracticeEngine {
       await this.wait(16, g);
     }
   }
-  private async moving(from: number, to: number, phase: 'lead-in' | 'practice' | 'lead-out', g: number) {
+  private async moving(from: number, to: number, phase: 'lead-in' | 'practice' | 'lead-out', g: number, continuePlayback = false) {
     if (!this.alive(g) || to <= from) return;
     this.activePhase = phase;
-    this.emit({ phase: 'seeking' });
-    await this.seek(from, g); if (!this.alive(g)) return;
-    this.media.playbackRate = this.prefs.speed; this.media.loop = false;
-    await this.media.play();
-    if (!this.alive(g)) return;
+    // Adjacent track phases only change the UI; seeking here interrupts audio.
+    if (!continuePlayback || this.media.paused || this.media.ended) {
+      this.emit({ phase: 'seeking' });
+      await this.seek(from, g); if (!this.alive(g)) return;
+      this.media.playbackRate = this.prefs.speed; this.media.loop = false;
+      await this.media.play();
+      if (!this.alive(g)) return;
+    }
     // Keep future cues available when the selection grows. The live end is
     // exclusive so boundary cues belong to the next phase, without duplicates.
     const weightTimes = this.weightClickTimes.filter(time => time >= from - .001);
@@ -155,7 +158,7 @@ export class PracticeEngine {
         remaining });
       await this.wait(16, g);
     }
-    if (this.alive(g)) this.media.pause();
+    // The next phase pauses for frozen leads or seeks for a new cycle.
   }
   private async lead(lead: Lead, before: boolean, g: number) {
     if (!lead.beats || !this.alive(g)) return;
@@ -172,7 +175,7 @@ export class PracticeEngine {
     const missing = (before ? Math.max(0, lead.beats * beatSeconds - start) :
       Math.max(0, end + lead.beats * beatSeconds - this.media.duration)) / beatSeconds;
     if (before && missing) { await this.seek(0, g); await this.frozen(missing, phase, false, g); }
-    await this.moving(from, to, phase, g);
+    await this.moving(from, to, phase, g, !before);
     if (!before && missing) await this.frozen(missing, phase, false, g);
   }
   async play() {
@@ -193,7 +196,7 @@ export class PracticeEngine {
         this.emit({ cycle: this.state.cycle + 1, beat: this.prefs.first });
         await this.lead(this.prefs.leadIn, true, g);
         const { start, end } = interval(this.definition, this.prefs);
-        await this.moving(start, end, 'practice', g);
+        await this.moving(start, end, 'practice', g, this.prefs.leadIn.style === 'track' && this.prefs.leadIn.beats > 0);
         await this.lead(this.prefs.leadOut, false, g);
       }
     } catch (e) {

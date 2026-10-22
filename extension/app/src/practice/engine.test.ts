@@ -39,6 +39,35 @@ test('track leads play adjacent footage and zero leads skip immediately',async()
   await advance(2100);expect(engine.state.phase).toBe('lead-out');expect(media.currentTime).toBeGreaterThanOrEqual(12);
   engine.pause();const plays=media.play.mock.calls.length;await advance(3000);expect(media.play).toHaveBeenCalledTimes(plays);
 });
+test.each([.5, .75, 1, 1.5])('track boundaries keep playback continuous at %s speed and only rewind between cycles',async(speed)=>{
+  const seeks:number[]=[], phases:string[]=[];
+  let position=0;
+  Object.defineProperty(media,'currentTime',{get:()=>position,set:value=>{seeks.push(value);position=value;}});
+  const pause=jest.spyOn(media,'pause');
+  engine=new PracticeEngine(media,golden as Definition,{...defaults,last:4,speed,weightClicks:false},state=>{
+    if(phases[phases.length-1]!==state.phase) phases.push(state.phase);
+  },()=>time);
+  const tick=async(ms:number)=>{
+    for(let elapsed=0;elapsed<ms;elapsed+=10) {
+      time+=10;if(!media.paused)position+=.01*media.playbackRate;
+      jest.advanceTimersByTime(10);await flush();
+    }
+  };
+  void engine.play();await flush();
+  expect(engine.state.phase).toBe('lead-in');
+  const initialPosition=position;
+  pause.mockClear();seeks.length=0;phases.length=0;phases.push('lead-in');
+  const beatMs=60000/golden.bpm/speed;
+  await tick(2*beatMs+40);expect(engine.state.phase).toBe('practice');
+  await tick(4*beatMs);expect(engine.state.phase).toBe('lead-out');
+  expect(phases).toEqual(['lead-in','practice','lead-out']);
+  expect(pause).not.toHaveBeenCalled();expect(seeks).toEqual([]);
+  expect(media.play).toHaveBeenCalledTimes(1);expect(media.paused).toBe(false);
+  await tick(2*beatMs);
+  expect(engine.state.cycle).toBe(2);expect(engine.state.phase).toBe('lead-in');
+  expect(seeks).toEqual([initialPosition]);expect(pause).toHaveBeenCalledTimes(1);
+  expect(media.play).toHaveBeenCalledTimes(2);
+});
 test('track lead countdown tolerates rounded seek times without phantom lead steps',async()=>{
   const seeks:number[]=[], updates:any[]=[];
   let current=0;
